@@ -39,11 +39,18 @@ spec:
                       minLength: 1
                       type: string
                     containerPort:
+                      maximum: 65535
+                      minimum: 1
                       type: integer
                     hostPrefix:
                       minLength: 1
                       type: string
                     kind:
+                      enum:
+                      - tcp
+                      - tcp-ssl
+                      - http
+                      - https
                       type: string
                     shouldDisplay:
                       type: boolean
@@ -3925,6 +3932,11 @@ spec:
                     host:
                       type: string
                     kind:
+                      enum:
+                      - tcp
+                      - tcp-ssl
+                      - http
+                      - https
                       type: string
                     port:
                       type: integer
