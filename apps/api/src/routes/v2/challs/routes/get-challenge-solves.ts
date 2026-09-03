@@ -1,40 +1,16 @@
-import { config } from '@rctf/config'
 import { GetChallengeSolvesRouteV2 } from '@rctf/types'
-import { getChallengeSolvesWithPosition } from '../../../../services/challenges'
+import { getChallengeSolvesResponse } from '../../../../services/challenge-solves'
 import challsGroup from '../group'
 
 challsGroup.route(
   GetChallengeSolvesRouteV2,
-  async ({ res, ctx, params, query, user }) => {
-    // NOTE: Handling manually because the values are loaded from config
-    if (
-      query.limit > config.leaderboard.maxLimit ||
-      query.offset > config.leaderboard.maxOffset
-    ) {
-      return res.badBody({
-        reason: 'Invalid limit or offset',
-      })
-    }
-
-    const { challengeExists, solves, solvePosition } =
-      await getChallengeSolvesWithPosition(
-        ctx.var.db,
-        params.id,
-        user?.id ?? null,
-        query.limit,
-        query.offset
-      )
-
-    if (!challengeExists) {
-      return res.badChallenge()
-    }
-
-    return res.goodChallengeSolvesV2({
-      solves: solves.map(solve => ({
-        ...solve,
-        createdAt: new Date(solve.createdAt).getTime(),
-      })),
-      mySolvePosition: solvePosition,
+  ({ res, ctx, params, query, user }) =>
+    getChallengeSolvesResponse({
+      res,
+      db: ctx.var.db,
+      challengeId: params.id,
+      userId: user?.id ?? null,
+      limit: query.limit,
+      offset: query.offset,
     })
-  }
 )
