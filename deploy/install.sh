@@ -20,104 +20,90 @@ get_key() {
   head -c 32 /dev/urandom | base64 -w 0
 }
 
+repo_root() {
+  script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+  CDPATH= cd -- "$script_dir/.." && pwd
+}
+
 do_install() {
-  info "Installing rCTF..."
+  info "Installing rCTF from this repository..."
 
   if [ ! "$(id -u)" = 0 ]; then
     error "You must run this script as root."
     exit 1
   fi
 
-  if [ ! -x "$(command -v curl)" ]; then
-    error "curl is not available. You must have curl to install rCTF."
+  cd "$(repo_root)"
+
+  if [ ! -f compose.yml ] || [ ! -f deploy/rctf/Dockerfile ]; then
+    error "This script must live in the rCTF repository. compose.yml or deploy/rctf/Dockerfile is missing."
     exit 1
   fi
-
-  RCTF_INSTALL_PATH="${RCTF_INSTALL_PATH:-"/opt/rctf"}"
-
-  if [ ! -d "$(dirname "$RCTF_INSTALL_PATH")" ]; then
-    error "The parent of \$RCTF_INSTALL_PATH ($(dirname "$RCTF_INSTALL_PATH")) does not exist."
-    exit 1
-  fi
-
-  if [ -d "$RCTF_INSTALL_PATH" ]; then
-    error "rCTF appears to already be installed in ${RCTF_INSTALL_PATH}"
-
-    info "... If you're trying to start rCTF, run 'docker compose up -d'."
-    info "... If you're trying to reinstall rCTF, 'rm -rf $RCTF_INSTALL_PATH' then re-run this script."
-
-    exit 1
-  fi
-
-  mkdir "$RCTF_INSTALL_PATH"
-  cd "$RCTF_INSTALL_PATH"
-
-  info "Installing dependencies..."
 
   if [ ! -x "$(command -v docker)" ]; then
+    if [ ! -x "$(command -v curl)" ]; then
+      error "curl is not available. You must have curl to install Docker."
+      exit 1
+    fi
+
+    info "Installing Docker..."
     curl -fsS https://get.docker.com | sh
   fi
 
   info "Configuring rCTF..."
 
-  RCTF_GIT_REF="${RCTF_GIT_REF:-"main"}"
-
   mkdir -p rctf.d .data/postgres .data/redis .data/uploads
 
-  printf "%s\n" \
-  "RCTF_DATABASE_PASSWORD=$(get_key)" \
-  "RCTF_REDIS_PASSWORD=$(get_key)" \
-  "RCTF_GIT_REF=$RCTF_GIT_REF" \
-  > .env
-
-  printf "%s\n" \
-  "ctfName: rCTF" \
-  "meta:" \
-  "  description: 'A description of your CTF'" \
-  "  imageUrl: 'https://example.com'" \
-  "homeContent: 'A description of your CTF. Markdown supported.'" \
-  > rctf.d/01-ui.yaml
-
-  printf "%s\n" \
-  "origin: http://127.0.0.1:8080" \
-  "divisions:" \
-  "  open: Open" \
-  "tokenKey: '$(get_key)'" \
-  "startTime: $(date +%s)000" \
-  "endTime: $(($(date +%s) + 604800))000" \
-  > rctf.d/02-ctf.yaml
-
-  printf "%s\n" \
-  "database:" \
-  "  sql:" \
-  "    host: postgres" \
-  "    user: rctf" \
-  "    database: rctf" \
-  "  redis:" \
-  "    host: redis" \
-  "  migrate: before" \
-  > rctf.d/03-db.yaml
-
-  info "Downloading rCTF..."
-
-  curl -fsSO "https://raw.githubusercontent.com/otter-sec/rctf/$RCTF_GIT_REF/compose.yml"
-  docker compose pull
-
-  info "Finished installation to ${RCTF_INSTALL_PATH}."
-
-  printf "Would you like to start rCTF now (y/N)? "
-
-  read -r result </dev/tty
-
-  if [ "$result" = "y" ]; then
-    info "Running 'docker compose up -d'..."
-    docker compose up -d
-    info "rCTF is now running at 127.0.0.1:8080."
-    exit 0
+  if [ ! -f .env ]; then
+    printf "%s\n" \
+    "RCTF_DATABASE_PASSWORD=$(get_key)" \
+    "RCTF_REDIS_PASSWORD=$(get_key)" \
+    "RCTF_GIT_REF=local" \
+    > .env
+    info "Wrote .env"
   else
-    info "If you would like to start rCTF, run 'docker compose up -d' in $RCTF_INSTALL_PATH."
-    exit 0
+    info "Keeping existing .env"
   fi
+
+  if [ ! -f rctf.d/01-ui.yaml ]; then
+    printf "%s\n" \
+    "ctfName: rCTF" \
+    "meta:" \
+    "  description: 'A description of your CTF'" \
+    "  imageUrl: 'https://example.com'" \
+    "homeContent: 'A description of your CTF. Markdown supported.'" \
+    > rctf.d/01-ui.yaml
+  fi
+
+  if [ ! -f rctf.d/02-ctf.yaml ]; then
+    printf "%s\n" \
+    "origin: http://127.0.0.1:8080" \
+    "divisions:" \
+    "  open: Open" \
+    "tokenKey: '$(get_key)'" \
+    "startTime: $(date +%s)000" \
+    "endTime: $(($(date +%s) + 604800))000" \
+    > rctf.d/02-ctf.yaml
+  fi
+
+  if [ ! -f rctf.d/03-db.yaml ]; then
+    printf "%s\n" \
+    "database:" \
+    "  sql:" \
+    "    host: postgres" \
+    "    user: rctf" \
+    "    database: rctf" \
+    "  redis:" \
+    "    host: redis" \
+    "  migrate: before" \
+    > rctf.d/03-db.yaml
+  fi
+
+  info "Building the local image and starting rCTF..."
+  docker compose build
+  docker compose up -d
+
+  info "rCTF is now running at 127.0.0.1:8080."
 }
 
 do_install
