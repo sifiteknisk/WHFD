@@ -1,4 +1,0 @@
-[test]
-preload = ["./setup.ts"]
-root = "./tests"
-coverageSkipTestFiles = true
