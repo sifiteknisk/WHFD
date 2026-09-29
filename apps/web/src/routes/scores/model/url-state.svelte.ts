@@ -55,9 +55,7 @@ export function createScoresRouteState() {
     )
   )
 
-  const division = $derived(
-    pageState.url.searchParams.get('division') ?? undefined
-  )
+  const division = 'competitive'
 
   const focusedChallengeId = $derived(
     pageState.url.searchParams.get('challenge') ?? null

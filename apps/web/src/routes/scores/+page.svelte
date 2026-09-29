@@ -12,9 +12,10 @@
 
   const configQuery = useClientConfig()
   const ctfName = $derived(configQuery.data?.ctfName)
-  const divisions = $derived(configQuery.data?.divisions ?? {})
+  //const divisions = $derived(configQuery.data?.divisions ?? {})
+  const divisions = {competitive: 'Competitive'}
+  
   const startTime = $derived(configQuery.data?.startTime ?? 0)
-
   const urlState = createScoresRouteState()
 
   const data = createScoresData({
