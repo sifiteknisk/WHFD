@@ -17,7 +17,7 @@
 
   let { data, entry, index, divisions, showDivision }: Props = $props()
 
-  const rank = $derived(entry.globalPlace ?? index + 1)
+  const rank = $derived(entry.divisionPlace || index + 1)
   const delta = $derived(data.rankDeltaByTeam.get(entry.id))
   const color = $derived(
     data.teamColorMap.get(entry.id) ?? 'var(--foreground-l3)'
