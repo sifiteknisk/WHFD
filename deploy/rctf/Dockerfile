@@ -14,13 +14,9 @@ COPY packages/db/package.json ./packages/db/
 COPY packages/scoring/package.json ./packages/scoring/
 COPY packages/types/package.json ./packages/types/
 COPY packages/util/package.json ./packages/util/
-COPY tests/server/package.json ./tests/server/
-COPY tests/admin-bot/package.json ./tests/admin-bot/
-COPY tests/admin-bot-e2e/package.json ./tests/admin-bot-e2e/
 COPY apps/admin-bot/package.json ./apps/admin-bot/
 COPY apps/api/package.json ./apps/api/
 COPY apps/cli/package.json ./apps/cli/
-COPY apps/docs/package.json ./apps/docs/
 COPY apps/web/package.json ./apps/web/
 
 FROM build-base AS deps
@@ -31,11 +27,7 @@ RUN bun install \
     --linker=hoisted \
     --backend=copyfile \
     --no-cache \
-    --filter '!@rctf/admin-bot' \
-    --filter '!@rctf/docs' \
-    --filter '!server-tests' \
-    --filter '!admin-bot-tests' \
-    --filter '!admin-bot-e2e-tests'
+    --filter '!@rctf/admin-bot'
 
 FROM build-base AS build-src
 

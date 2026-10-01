@@ -14,18 +14,5 @@ export default defineConfig({
   sortImports: false,
   sortPackageJson: false,
   sortTailwindcss: false,
-  ignorePatterns: [
-    'apps/docs/src/content/**/*.md',
-    'apps/docs/src/content/**/*.mdx',
-    'apps/web/src/styles/**',
-  ],
-  overrides: [
-    {
-      files: ['apps/docs/**/*'],
-      options: {
-        printWidth: 100,
-        proseWrap: 'never',
-      },
-    },
-  ],
+  ignorePatterns: ['apps/web/src/styles/**'],
 })
