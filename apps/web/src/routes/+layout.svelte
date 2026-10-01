@@ -12,6 +12,7 @@
   import { QueryClientProvider } from '@tanstack/svelte-query'
   import favicon from '$lib/assets/favicon.svg'
   import Brainrot from '$lib/components/brainrot.svelte'
+  import CountdownGate from '$lib/components/countdown-gate.svelte'
   import Navigation from '$lib/components/navigation.svelte'
   import RootEdgeFades from '$lib/components/root-edge-fades.svelte'
   import { resetSessionQueries } from '$lib/query/core'
@@ -86,7 +87,9 @@
     <Navigation />
 
     <main id="main-content" tabindex="-1">
-      {@render children()}
+      <CountdownGate>
+        {@render children()}
+      </CountdownGate>
     </main>
 
     <RootEdgeFades />

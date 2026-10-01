@@ -843,13 +843,14 @@ const buildDynamicFlagData = (
 }
 
 const buildSettings = (config: ServerConfig, timing: SeedTiming): Settings => {
+  const scheduled = config.startTime > Date.now()
   return {
     id: 'value-0',
     data: {
       ctfName: config.ctfName,
       homeContent: config.homeContent,
-      startTime: timing.startTime,
-      endTime: timing.endTime,
+      startTime: scheduled ? config.startTime : timing.startTime,
+      endTime: scheduled ? config.endTime : timing.endTime,
       sponsors: config.sponsors,
       meta: config.meta,
       faviconUrl: config.faviconUrl,
