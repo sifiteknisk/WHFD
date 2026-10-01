@@ -19,7 +19,7 @@ const BASE_CSP: Csp = {
   'base-uri': ["'self'"],
   'form-action': ["'self'"],
   'object-src': ["'none'"],
-  'media-src': ["'none'"],
+  'media-src': ["'self'"],
   'manifest-src': ["'self'"],
 }
 
