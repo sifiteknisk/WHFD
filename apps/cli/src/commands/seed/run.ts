@@ -2,6 +2,7 @@ import { cacheLeaderboardAndGraph } from '@rctf/api/src/cache/leaderboard'
 import { insertInChunks } from '@rctf/api/src/lib/db-bulk'
 import { createToken, TokenKind } from '@rctf/api/src/lib/tokens'
 import { calculateLeaderboard } from '@rctf/api/src/services/leaderboard-calculation'
+import { updateSettings } from '@rctf/api/src/services/settings'
 import { config } from '@rctf/config'
 import {
   challenges,
@@ -20,6 +21,7 @@ import {
   buildSeedData,
   EXTERNAL_APP_CLIENT_SECRET,
   EXTERNAL_APP_WEBHOOK_SECRET,
+  MOCK_START_DELAY,
   type SeedData,
 } from './data'
 
@@ -103,6 +105,11 @@ export const runSeed = async () => {
     await step('reset and insert', () => resetAndSeedDatabase(db, data))
     await step('leaderboard cache', async () =>
       cacheLeaderboardAndGraph(db, redis, await calculateLeaderboard(db))
+    )
+    await updateSettings(
+      db,
+      { startTime: Date.now() + MOCK_START_DELAY },
+      redis
     )
 
     const adminToken = await createToken(TokenKind.Team, data.admin.id)
