@@ -43,6 +43,16 @@ def _split_image_ref(image: str) -> tuple[str, str | None]:
     return image, None
 
 
+def _ghcr_auth(image: str) -> dict[str, str] | None:
+    token = config.GHCR_TOKEN.get_secret_value()
+    if not token or not image.startswith('ghcr.io/'):
+        return None
+    return {
+        'username': config.GHCR_USERNAME,
+        'password': token,
+    }
+
+
 async def _ensure_image(docker: Docker, image: str) -> None:
     try:
         await docker.images.get(image)
@@ -51,12 +61,13 @@ async def _ensure_image(docker: Docker, image: str) -> None:
     else:
         return
 
+    auth = _ghcr_auth(image)
     if '@' in image:
-        await docker.images.pull(image)
+        await docker.images.pull(image, auth=auth)
         return
 
     name, tag = _split_image_ref(image)
-    await docker.images.pull(name, tag=tag or 'latest')
+    await docker.images.pull(name, tag=tag or 'latest', auth=auth)
 
 
 async def _show_containers(containers: list[DockerContainer]) -> list[dict]:
