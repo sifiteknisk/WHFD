@@ -39,6 +39,7 @@ export type SeedData = {
 
 const DAY = 24 * 60 * 60 * 1000
 const SOLVE_END_OFFSET = 5 * 60_000
+export const MOCK_START_DELAY = 30_000
 
 const TEAM_COUNT = 1000
 const FLAG_CHALLENGE_COUNT = 38
@@ -843,14 +844,13 @@ const buildDynamicFlagData = (
 }
 
 const buildSettings = (config: ServerConfig, timing: SeedTiming): Settings => {
-  const scheduled = config.startTime > Date.now()
   return {
     id: 'value-0',
     data: {
       ctfName: config.ctfName,
       homeContent: config.homeContent,
-      startTime: scheduled ? config.startTime : timing.startTime,
-      endTime: scheduled ? config.endTime : timing.endTime,
+      startTime: Date.now() + MOCK_START_DELAY,
+      endTime: timing.endTime,
       sponsors: config.sponsors,
       meta: config.meta,
       faviconUrl: config.faviconUrl,
