@@ -44,6 +44,9 @@ class Settings(BaseSettings):
 
     PRUNNER_INTERVAL_SECONDS: int = 3
 
+    GHCR_USERNAME: str = ''
+    GHCR_TOKEN: SecretStr = SecretStr('')
+
     @property
     def cache_connection_url(self) -> str:
         return f'redis://:{self.REDIS_PASSWORD.get_secret_value()}@{self.REDIS_HOST}:{self.REDIS_PORT_NUMBER}'
