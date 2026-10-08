@@ -10,7 +10,7 @@
     ADMIN_PANEL_PERMISSIONS,
     hasAnyPermission,
   } from '$lib/utils/permissions'
-  import { tick, type Snippet } from 'svelte'
+  import { onMount, tick, type Snippet } from 'svelte'
 
   const BLUESCREEN_HOLD = 1500
 
@@ -35,15 +35,69 @@
   let bluescreen = $state(false)
   let crashing = false
   let primed = false
+  let watched = false
+  let soundUnlocked = false
+  let crashAudio: HTMLAudioElement | undefined
+
+  function crashSound() {
+    crashAudio ??= new Audio('/sound/error.mp3')
+    crashAudio.preload = 'auto'
+    return crashAudio
+  }
+
+  function unlockSound() {
+    const node = crashSound()
+    if (crashing) {
+      node.muted = false
+      node.volume = 1
+      if (node.paused) void node.play().catch(() => {})
+      soundUnlocked = true
+      return
+    }
+    if (soundUnlocked) return
+    node.muted = true
+    void node.play().then(
+      () => {
+        if (crashing) {
+          node.muted = false
+          soundUnlocked = true
+          return
+        }
+        node.pause()
+        node.currentTime = 0
+        node.muted = false
+        soundUnlocked = true
+      },
+      () => {
+        node.muted = false
+      }
+    )
+  }
+
+  function playCrashSound() {
+    const node = crashSound()
+    node.muted = false
+    node.volume = 1
+    if (node.readyState >= 1) node.currentTime = 0
+    void node.play().catch(() => {})
+  }
 
   function primeFinale() {
     if (primed) return
     primed = true
     const img = new Image()
     img.src = '/images/bluescreen.png'
-    const audio = new Audio('/sound/error.mp3')
-    audio.preload = 'auto'
+    crashSound()
   }
+
+  onMount(() => {
+    window.addEventListener('pointerdown', unlockSound)
+    window.addEventListener('keydown', unlockSound)
+    return () => {
+      window.removeEventListener('pointerdown', unlockSound)
+      window.removeEventListener('keydown', unlockSound)
+    }
+  })
 
   const showHero = $derived(
     !released && !isAdmin && configQuery.data != null && (now < startTime || hold)
@@ -54,8 +108,7 @@
     if (crashing) return
     crashing = true
     bluescreen = true
-    const audio = new Audio('/sound/error.mp3')
-    void audio.play().catch(() => {})
+    playCrashSound()
     await new Promise(resolve => setTimeout(resolve, BLUESCREEN_HOLD))
     await playErrorWipe(async () => {
       bluescreen = false
@@ -69,26 +122,44 @@
   $effect(() => {
     if (released || isAdmin || configQuery.data == null) return
     const start = startTime
-    if (Date.now() >= start) return
+    let clock = 0
 
-    let timeout = 0
-    const tickClock = () => {
+    const crossed = () => {
+      clearTimeout(clock)
       now = Date.now()
-      if (now >= start) {
-        hold = true
-        void crash()
-        return
-      }
-      if (start - now <= 60_000) primeFinale()
-      const delay = (start - Date.now()) % 1000 || 1000
-      timeout = window.setTimeout(tickClock, delay)
+      hold = true
+      void crash()
     }
 
-    now = Date.now()
-    if (start - now <= 60_000) primeFinale()
-    const delay = (start - Date.now()) % 1000 || 1000
-    timeout = window.setTimeout(tickClock, delay)
-    return () => clearTimeout(timeout)
+    if (Date.now() >= start) {
+      now = Date.now()
+      if (watched) crossed()
+      return
+    }
+
+    watched = true
+    const tickClock = () => {
+      const current = Date.now()
+      if (current >= start) {
+        crossed()
+        return
+      }
+      now = current
+      if (start - current <= 60_000) primeFinale()
+      const remain = start - current
+      clock = window.setTimeout(
+        tickClock,
+        Math.min(remain, remain % 1000 || 1000)
+      )
+    }
+
+    if (start - Date.now() <= 60_000) primeFinale()
+    const remain = start - Date.now()
+    clock = window.setTimeout(
+      tickClock,
+      Math.min(remain, remain % 1000 || 1000)
+    )
+    return () => clearTimeout(clock)
   })
 </script>
 

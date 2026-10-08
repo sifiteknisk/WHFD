@@ -14,7 +14,6 @@
 
 <script lang="ts">
   import { onNavigate } from '$app/navigation'
-  import { getClientConfig } from '$lib/api'
   import ErrorWindow from '$lib/components/error-window.svelte'
   import { tick } from 'svelte'
 
@@ -70,11 +69,22 @@
     })
   }
 
+  const phaseMs: Record<Phase, number> = {
+    cover: ROW_SPREAD + JITTER + DROP,
+    reveal: ROW_SPREAD + JITTER + FALL,
+  }
+
   async function play(next: Phase) {
     phase = next
     await tick()
     const animations = overlay?.getAnimations({ subtree: true }) ?? []
-    await Promise.all(animations.map(animation => animation.finished))
+    const finished = Promise.all(
+      animations.map(animation => animation.finished.then(() => {}, () => {}))
+    )
+    await Promise.race([
+      finished,
+      new Promise(resolve => setTimeout(resolve, phaseMs[next] + 40)),
+    ])
   }
 
   async function reveal() {
@@ -99,13 +109,12 @@
     })
   }
 
-  function ctfHasStarted() {
-    const startTime = getClientConfig()?.startTime ?? 0
-    return Date.now() >= startTime
+  function heroIsUp() {
+    return document.querySelector('countdown-hero') != null
   }
 
   onNavigate(navigation => {
-    if (navigation.willUnload || phase || !ctfHasStarted()) return
+    if (navigation.willUnload || phase || heroIsUp()) return
     const sameRoute = navigation.from?.route.id === navigation.to?.route.id
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
     if (sameRoute || reducedMotion) return crossfade(navigation.complete)
