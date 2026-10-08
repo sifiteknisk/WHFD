@@ -38,9 +38,11 @@
     inline-size: 20rem;
     height: var(--height);
     padding: var(--space-2xs) var(--space-xs);
-    background: var(--background-l1);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
+    box-shadow: var(--space-3xs) var(--space-3xs) 0 var(--tui-shadow);
     translate: var(--x) var(--y);
     scale: var(--scale);
     opacity: var(--opacity);

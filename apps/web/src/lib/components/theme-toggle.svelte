@@ -23,15 +23,22 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem 1rem;
+    block-size: var(--nav-control-height, 3rem);
+    padding-inline: 0.875rem;
     font-size: 1.5rem;
-    color: var(--foreground-l2);
-    background: var(--background-l2);
-    border-radius: var(--radius-lg);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     cursor: pointer;
 
     &:hover {
-      background: var(--background-l3);
+      background: var(--tui-surface-light);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
     }
   }
 </style>

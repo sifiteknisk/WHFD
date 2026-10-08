@@ -301,8 +301,8 @@
     margin: 0;
     padding: var(--space-2xs);
     font-size: var(--step--1);
-    color: var(--foreground-destructive);
-    background: var(--background-destructive);
-    border-radius: var(--radius-md);
+    color: var(--tui-danger);
+    background: var(--tui-surface-light);
+    border: 1px solid var(--tui-danger);
   }
 </style>

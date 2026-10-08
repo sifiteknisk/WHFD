@@ -68,14 +68,35 @@
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    gap: var(--space-2xs);
+    gap: var(--space-3xs);
     block-size: 2.25rem;
-    padding-inline: var(--space-s);
-    color: var(--foreground-l1);
+    padding-inline: var(--space-xs);
+    color: var(--tui-text);
     text-decoration: none;
     white-space: nowrap;
     cursor: pointer;
-    border-radius: var(--radius-md);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
+
+    &:not([data-size^='icon'], [data-variant='ghost'], [data-variant='link']) {
+      &::before {
+        content: '<' / '';
+      }
+
+      &::after {
+        content: '>' / '';
+      }
+    }
+
+    &:hover {
+      background: var(--tui-surface-light);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
+    }
 
     :global(svg) {
       inline-size: 1em;
@@ -112,46 +133,32 @@
     }
 
     &[data-variant='default'] {
-      color: var(--foreground-accent);
-      background: var(--background-accent);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
 
       &:hover {
-        background: var(--background-accent-hover);
+        background: color-mix(in oklab, var(--tui-selection-bg) 85%, white);
       }
     }
 
     &[data-variant='destructive'] {
-      color: var(--foreground-destructive);
-      background: var(--background-destructive);
-
-      &:hover {
-        background: var(--background-destructive-hover);
-      }
+      font-weight: 700;
+      color: var(--tui-danger);
     }
 
-    &[data-variant='outline'] {
-      background: var(--background-l1);
-      border: 2px solid var(--border);
-
-      &:hover {
-        background: var(--background-l2);
-      }
-    }
-
-    &[data-variant='secondary'] {
-      background: var(--background-l4);
-
-      &:hover {
-        background: var(--background-l5);
-      }
+    &[data-variant='ghost'],
+    &[data-variant='link'] {
+      background: transparent;
+      border-color: transparent;
     }
 
     &[data-variant='ghost']:hover {
-      background: var(--background-l3);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
     }
 
     &[data-variant='link'] {
-      color: var(--foreground-prose-link);
+      color: var(--tui-link);
       text-underline-offset: 4px;
 
       &:hover {
@@ -162,11 +169,13 @@
     &:disabled,
     &[aria-disabled='true'] {
       pointer-events: none;
-      opacity: 0.5;
+      color: var(--tui-muted);
+      background: var(--tui-surface);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
   }
 </style>

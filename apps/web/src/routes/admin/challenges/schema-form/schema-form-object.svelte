@@ -97,7 +97,7 @@
     gap: var(--space-2xs);
     padding-block: var(--space-3xs);
     padding-inline-start: var(--space-s);
-    border-inline-start: 2px solid var(--border);
+    border-inline-start: 1px dashed var(--tui-border-mid);
   }
 
   sf-object-heading {
@@ -108,7 +108,7 @@
 
   sf-required {
     margin-inline-start: 0.125rem;
-    color: var(--foreground-destructive);
+    color: var(--tui-danger);
   }
 
   sf-nullable {
@@ -122,7 +122,7 @@
   }
 
   sf-empty {
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
     font-size: var(--step--1);
   }
 </style>

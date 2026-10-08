@@ -71,9 +71,11 @@
       </profile-body>
     </profile-identity>
 
-    {#if user.globalPlace !== null || user.divisionPlace !== null}
+    {#if (user.globalPlace !== null &&
+      user.division.toLowerCase() !== 'relaxed') ||
+    user.divisionPlace !== null}
       <profile-ranks>
-        {#if user.globalPlace !== null}
+        {#if user.globalPlace !== null && user.division.toLowerCase() !== 'relaxed'}
           <profile-rank>
             <rank-place>#{user.globalPlace}</rank-place>
             <rank-label>global</rank-label>
@@ -123,7 +125,8 @@
 
   profile-name {
     overflow: hidden;
-    color: var(--foreground-l0);
+    color: var(--tui-text);
+    font-weight: 700;
     font-size: var(--step-1);
     line-height: 1.2;
     text-overflow: ellipsis;
@@ -138,20 +141,20 @@
     font-size: var(--step--1);
 
     dt {
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
     }
 
     dd {
       min-inline-size: 0;
       margin: 0;
       overflow: hidden;
-      color: var(--foreground-l2);
+      color: var(--tui-text);
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     dd[data-value='unspecified'] {
-      color: var(--foreground-l5);
+      color: var(--tui-muted);
     }
 
     dd[data-value='country'] {
@@ -167,7 +170,7 @@
     }
 
     a {
-      color: var(--foreground-prose-link);
+      color: var(--tui-link);
 
       &:hover {
         text-decoration: underline;
@@ -189,11 +192,11 @@
   }
 
   rank-place {
-    color: var(--foreground-l2);
+    color: var(--tui-text);
   }
 
   rank-label {
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
   }
 
   @container (min-inline-size: 30rem) {

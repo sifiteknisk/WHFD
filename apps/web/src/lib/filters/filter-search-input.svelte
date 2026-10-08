@@ -27,10 +27,18 @@
     flex-shrink: 0;
     align-items: center;
     gap: var(--space-2xs);
-    block-size: 2.75rem;
-    padding-inline: 0.75rem;
-    color: var(--foreground-l3);
-    border-block-end: 2px solid var(--border);
+    block-size: 2rem;
+    margin: var(--space-3xs);
+    padding-inline: 0.5rem;
+    color: var(--tui-muted);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
+
+    &:focus-within {
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: -4px;
+    }
 
     :global(svg) {
       flex-shrink: 0;
@@ -40,22 +48,24 @@
 
     &[data-variant='mobile'] {
       block-size: 2.5rem;
-      background: var(--background-l2);
-      border: 2px solid var(--border);
-      border-radius: var(--radius-md);
+      margin: 0;
+
+      &:focus-within {
+        outline-offset: 2px;
+      }
     }
   }
 
   input {
     min-inline-size: 0;
     flex: 1;
-    color: var(--foreground-l1);
+    color: var(--tui-text);
     background: transparent;
     border: none;
     font-size: var(--step--1);
 
     &::placeholder {
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
     }
 
     &:focus-visible {

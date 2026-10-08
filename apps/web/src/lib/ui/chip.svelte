@@ -21,7 +21,7 @@
     color: inherit;
     white-space: nowrap;
     background: var(--background-l2);
-    border-radius: var(--radius-sm);
+    border: 1px solid var(--tui-border-mid);
 
     @media (width >= 40rem) {
       font-size: 0.875rem;

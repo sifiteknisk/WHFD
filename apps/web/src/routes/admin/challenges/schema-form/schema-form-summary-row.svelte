@@ -71,18 +71,25 @@
     align-items: center;
     gap: var(--space-2xs);
     inline-size: 100%;
-    padding: 0.5rem 0.75rem;
+    padding: 0.375rem 0.75rem;
     text-align: start;
     cursor: pointer;
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
 
     &:hover {
-      background: var(--background-l3);
+      background: var(--tui-surface-light);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
   }
 
@@ -90,7 +97,7 @@
     flex: 1;
     min-inline-size: 0;
     overflow: hidden;
-    color: var(--foreground-l1);
+    color: var(--tui-text);
     font-size: var(--step--1);
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -98,12 +105,12 @@
 
   row-required {
     margin-inline-start: 0.125rem;
-    color: var(--foreground-destructive);
+    color: var(--tui-danger);
   }
 
   row-summary {
     flex-shrink: 0;
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
     font-size: var(--step--1);
   }
 
@@ -115,14 +122,14 @@
 
   button[data-invalid] row-status,
   button[data-incomplete] row-status {
-    color: var(--foreground-destructive);
+    color: var(--tui-danger);
   }
 
   row-chevron {
     display: flex;
     flex-shrink: 0;
     align-items: center;
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
 
     :global(svg) {
       inline-size: 0.875rem;

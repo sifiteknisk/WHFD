@@ -46,6 +46,6 @@
 }
 
 :root {
-  --font-sans: 'Outfit', 'Outfit Fallback', sans-serif;
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
+  --font-sans: var(--tui-font);
+  --font-mono: var(--tui-font);
 }

@@ -130,28 +130,24 @@
   profile-analytics {
     display: flex;
     flex-direction: column;
+    gap: var(--space-m);
   }
 
   section {
-    padding-block: var(--space-s);
-    border-block-end: 1px solid
-      color-mix(in srgb, var(--border) 50%, transparent);
-
-    &:first-child {
-      padding-block-start: 0;
-    }
-
-    &:last-child {
-      padding-block-end: 0;
-      border-block-end: none;
-    }
+    overflow: clip;
+    padding: 0 1rem 0.5rem;
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
   }
 
   h2 {
-    margin: 0 0 var(--space-xs);
-    font-size: var(--step--1);
-    font-weight: var(--font-weight-normal);
-    color: var(--foreground-l1);
+    margin: 0 -1rem 0.5rem;
+    padding: 0.25rem 1rem;
+    font-size: inherit;
+    font-weight: 700;
+    color: var(--tui-selection-text);
+    background: var(--tui-selection-bg);
   }
 
   graph-frame {

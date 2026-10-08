@@ -1,5 +1,7 @@
 <script lang="ts">
+  import HomeHero from '$lib/components/home-hero.svelte'
   import Markdown from '$lib/components/markdown.svelte'
+  import { IconDiscordLogo } from '$lib/icons'
   import Card from '$lib/ui/card.svelte'
   import type { PageProps } from './$types'
 
@@ -7,9 +9,7 @@
 </script>
 
 <home-page>
-  <Card>
-    <Markdown content={data.clientConfig.homeContent} />
-  </Card>
+  <HomeHero />
 
   {#if data.clientConfig.sponsors.length > 0}
     <Card title="Sponsors">
@@ -54,27 +54,32 @@
   {/if}
 
   <footer>
-    Powered by
-    <a href="https://rctf.osec.io" target="_blank" rel="noopener noreferrer"
-      >rCTF</a
+    <made-with>
+      made with
+      <a href="https://rctf.osec.io" target="_blank" rel="noopener noreferrer"
+        >rCTF</a
+      >
+    </made-with>
+    <a
+      class="discord"
+      href="https://discord.gg/ZnsrgrtqDG"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Join our Discord"
     >
+      <IconDiscordLogo />
+    </a>
   </footer>
 </home-page>
 
 <style>
   home-page {
+    position: relative;
     display: flex;
+    flex: 1;
     flex-direction: column;
     gap: var(--space-s);
-    inline-size: 100%;
-    max-inline-size: calc(var(--measure) + 2rem);
-    margin-inline: auto;
-    padding-inline: 1rem;
-
-    @media (width >= 48rem) {
-      max-inline-size: calc(var(--measure) + 4.5rem);
-      padding-inline: 2.25rem;
-    }
+    padding: var(--space-xs) var(--space-m-l);
   }
 
   sponsor-grid {
@@ -88,16 +93,19 @@
       flex-direction: column;
       gap: var(--space-xs);
       padding: var(--space-s);
-      border-radius: var(--radius-md);
-      background: var(--background-l2);
+      background: var(--tui-surface-light);
+      border: var(--tui-border-width) solid;
+      border-color: var(--bevel-recessed);
     }
 
     a {
+      color: inherit;
       text-decoration: none;
     }
 
     a:hover {
-      background: var(--background-l3);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
     }
 
     sponsor-icon[data-invert] img {
@@ -118,14 +126,65 @@
     }
   }
 
+  .discord {
+    display: grid;
+    place-items: center;
+    inline-size: 4rem;
+    block-size: 4rem;
+    font-size: 2.25rem;
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
+    box-shadow: var(--tui-shadow-offset) var(--tui-shadow-offset) 0
+      var(--tui-shadow);
+
+    &:hover,
+    &:focus-visible {
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      box-shadow: none;
+      translate: var(--tui-shadow-offset) var(--tui-shadow-offset);
+    }
+
+    &:focus-visible {
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
+    }
+  }
+
   footer {
-    padding-block: var(--space-s);
-    text-align: center;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-s);
+
+    @media (width >= 64rem) {
+      position: absolute;
+      inset-block-end: var(--space-s);
+      inset-inline-end: var(--space-m-l);
+    }
+  }
+
+  made-with {
+    padding: var(--space-3xs) var(--space-xs);
     font-size: var(--step--1);
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
+    box-shadow: var(--tui-shadow-offset) var(--tui-shadow-offset) 0
+      var(--tui-shadow);
 
     a {
       --underline: currentColor;
+      color: var(--tui-text);
     }
   }
 </style>

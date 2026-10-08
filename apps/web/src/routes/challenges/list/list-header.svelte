@@ -152,15 +152,13 @@
     block-size: 2.5rem;
     padding-inline: 0.75rem;
     color: var(--foreground-l3);
-    background: var(--background-l4);
-    border-radius: 20px;
-
-    @container challenges-list (width >= 24rem) {
-      border-radius: 20px var(--radius-sm) var(--radius-sm) 20px;
-    }
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     &:focus-within {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     :global(svg) {
@@ -189,24 +187,14 @@
     justify-content: center;
     block-size: 2.5rem;
     padding-inline: 1rem;
-    color: var(--foreground-l1);
-    background: var(--background-l4);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     cursor: pointer;
 
     @container challenges-list (width >= 24rem) {
       flex: initial;
-    }
-
-    &[data-slot='hide-solved'] {
-      border-radius: 20px var(--radius-sm) var(--radius-sm) 20px;
-
-      @container challenges-list (width >= 24rem) {
-        border-radius: var(--radius-sm);
-      }
-    }
-
-    &[data-slot='collapse'] {
-      border-radius: var(--radius-sm) 20px 20px var(--radius-sm);
     }
 
     :global(svg) {
@@ -214,16 +202,18 @@
     }
 
     &:hover {
-      background: var(--background-l5);
+      background: var(--tui-surface-light);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
     }
 
     &[data-active] {
-      color: var(--foreground-accent);
-      background: var(--background-accent);
-
-      &:hover {
-        background: var(--background-accent-hover);
-      }
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+      border-color: var(--bevel-recessed);
     }
 
     &:focus-visible {

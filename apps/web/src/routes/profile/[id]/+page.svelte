@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state'
+  import ErrorWindow from '$lib/components/error-window.svelte'
   import { IconQuestion } from '$lib/icons'
   import { useClientConfig } from '$lib/query/config'
   import {
@@ -7,29 +8,53 @@
     useLeaderboardChallenges,
     useSelfUserGraph,
   } from '$lib/query/leaderboard'
-  import { useUserById } from '$lib/query/user'
+  import { useCurrentUser, useUserById } from '$lib/query/user'
   import Button from '$lib/ui/button.svelte'
   import StatusCard from '$lib/ui/status-card.svelte'
+  import {
+    ADMIN_PANEL_PERMISSIONS,
+    hasAnyPermission,
+  } from '$lib/utils/permissions'
   import { toChallengeInfos } from '../analytics/analytics-data'
   import ProfileAnalytics from '../analytics/analytics.svelte'
   import type { GraphSampleInput } from '../analytics/graph-data'
   import ProfileHeader from '../profile-header.svelte'
   import ProfileShell from '../shell.svelte'
   import ProfileSolves from '../solves/solves.svelte'
+  import { canViewTeamProfile, isRelaxedDivision } from '../visibility'
+
+  const HIDDEN_SCORE_MESSAGE =
+    'Team is relaxed, score is therefore hidden to others'
 
   const userId = $derived(page.params.id ?? '')
   const userQuery = useUserById(() => userId)
+  const currentUserQuery = useCurrentUser()
   const configQuery = useClientConfig()
   const challengesQuery = useLeaderboardChallenges()
 
   const user = $derived(userQuery.data)
+  const viewer = $derived(currentUserQuery.data)
   const clientConfig = $derived(configQuery.data)
   const ctfName = $derived(clientConfig?.ctfName)
+  const isAdmin = $derived(hasAnyPermission(viewer, ADMIN_PANEL_PERMISSIONS))
+  const viewerPending = $derived(
+    !!user && isRelaxedDivision(user.division) && currentUserQuery.isPending
+  )
+  const scoreHidden = $derived(
+    !!user &&
+      !viewerPending &&
+      !canViewTeamProfile({
+        division: user.division,
+        viewerId: viewer?.id ?? null,
+        teamId: userId,
+        isAdmin,
+      })
+  )
 
   const challenges = $derived(toChallengeInfos(challengesQuery.data))
 
   const graphQuery = useSelfUserGraph(
-    () => user?.globalPlace ?? null,
+    () => (scoreHidden || viewerPending ? null : (user?.globalPlace ?? null)),
     () => userId,
     PUBLIC_GRAPH_CACHING
   )
@@ -41,16 +66,18 @@
   ]
 
   const status = $derived(
-    userQuery.isPending
+    userQuery.isPending || viewerPending
       ? 'loading'
-      : !user || !clientConfig
+      : !user || !clientConfig || scoreHidden
         ? 'unavailable'
         : 'ready'
   )
 </script>
 
 <svelte:head>
-  {#if user && ctfName}
+  {#if scoreHidden && ctfName}
+    <title>Profile | {ctfName}</title>
+  {:else if user && ctfName}
     <title>{user.name} | {ctfName}</title>
   {:else if ctfName}
     <title>Profile not found | {ctfName}</title>
@@ -59,14 +86,18 @@
 
 <ProfileShell {tabs} desktopColumn="analytics" hideTablistOnDesktop {status}>
   {#snippet unavailable()}
-    <StatusCard
-      icon={IconQuestion}
-      title="Profile not found"
-      subtitle={userQuery.error?.message ??
-        'The requested profile could not be found.'}
-    >
-      <Button href="/scores">View leaderboard</Button>
-    </StatusCard>
+    {#if scoreHidden}
+      <ErrorWindow message={HIDDEN_SCORE_MESSAGE} />
+    {:else}
+      <StatusCard
+        icon={IconQuestion}
+        title="Profile not found"
+        subtitle={userQuery.error?.message ??
+          'The requested profile could not be found.'}
+      >
+        <Button href="/scores">View leaderboard</Button>
+      </StatusCard>
+    {/if}
   {/snippet}
 
   {#snippet header()}

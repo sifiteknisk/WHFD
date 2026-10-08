@@ -142,34 +142,41 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-3xs);
-    padding: var(--space-xl);
-    color: var(--foreground-l3);
+    padding: var(--space-l);
+    color: var(--tui-muted);
     text-align: center;
     cursor: pointer;
-    border: 2px dashed var(--border);
-    border-radius: var(--radius-lg);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
+    outline: 1px dashed var(--tui-border-mid);
+    outline-offset: -0.5rem;
 
-    &:hover,
-    &:focus-visible {
-      color: var(--foreground-l2);
-      background: var(--background-l3);
-      border-color: var(--foreground-l4);
+    &:hover {
+      color: var(--tui-text);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      color: var(--tui-text);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     &[data-dragging] {
-      color: var(--foreground-l1);
-      background: var(--background-l3);
-      border-color: var(--ring);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+      outline-color: var(--tui-selection-text);
+
+      :global(svg),
+      zone-hint {
+        color: inherit;
+      }
     }
 
     :global(svg) {
       inline-size: 2rem;
       block-size: 2rem;
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
     }
   }
 
@@ -179,25 +186,30 @@
 
   zone-hint {
     font-size: var(--step--2);
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
   }
 
   file-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3xs);
+    padding: 0.125rem;
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
   }
 
   file-row {
     display: flex;
     align-items: center;
     gap: var(--space-2xs);
-    padding: var(--space-2xs) var(--space-s);
-    background: var(--background-l3);
-    border-radius: var(--radius-md);
+    padding: 0.125rem 0.125rem 0.125rem var(--space-2xs);
+
+    & + & {
+      border-block-start: 1px dashed var(--tui-border-mid);
+    }
 
     &:hover {
-      background: var(--background-l4);
+      background: var(--background-accent);
     }
 
     &:not(:hover) :global(button:not(:focus-visible)) {
@@ -208,7 +220,7 @@
       flex-shrink: 0;
       inline-size: 1.25rem;
       block-size: 1.25rem;
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
     }
   }
 
@@ -225,12 +237,14 @@
     }
 
     &:focus-visible {
+      outline: 2px dotted var(--tui-focus);
       outline-offset: 0;
     }
   }
 
   file-name {
     overflow: hidden;
+    color: var(--tui-link);
     font-size: var(--step--1);
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -238,6 +252,6 @@
 
   file-size {
     font-size: var(--step--2);
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
   }
 </style>

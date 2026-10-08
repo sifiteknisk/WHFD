@@ -7,7 +7,11 @@
 
   const userQuery = useCurrentUser()
   const user = $derived(userQuery.data)
-  const globalPlace = $derived(user?.globalPlace ?? null)
+  const globalPlace = $derived(
+    user?.division.toLowerCase() === 'relaxed'
+      ? null
+      : (user?.globalPlace ?? null)
+  )
 
   const leaderboardQuery = useLeaderboard(() => ({ limit: 1, offset: 0 }))
   const totalTeams = $derived(leaderboardQuery.data?.total ?? null)
@@ -66,8 +70,8 @@
       <svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" />
-            <stop offset="100%" />
+            <stop offset="0%" stop-color="var(--sparkline-stroke)" stop-opacity="0" />
+            <stop offset="100%" stop-color="var(--sparkline-stroke)" />
           </linearGradient>
         </defs>
         <path
@@ -85,18 +89,19 @@
 <style>
   nav-team-stats {
     --sparkline-stroke: var(--foreground-l3);
-    --stat-strong: var(--foreground-l0);
+    --stat-strong: var(--foreground-l2);
     --stat-soft: var(--foreground-l3);
 
     display: flex;
     gap: var(--space-2xs);
     align-items: center;
-    block-size: 3rem;
+    block-size: var(--nav-control-height, 3rem);
     inline-size: 10rem;
     overflow: hidden;
     padding-inline: var(--space-s) var(--space-2xs);
-    background: var(--background-l2);
-    border-radius: var(--radius-lg);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     &[data-place='gold'] {
       --sparkline-stroke: var(--foreground-gold-l0);
@@ -156,14 +161,6 @@
       stroke-width: 2;
       stroke-linecap: round;
       stroke-linejoin: round;
-    }
-
-    stop {
-      stop-color: var(--sparkline-stroke);
-
-      &:first-of-type {
-        stop-opacity: 0;
-      }
     }
   }
 

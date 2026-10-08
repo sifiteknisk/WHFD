@@ -39,13 +39,13 @@
   [data-part='track'] {
     overflow: hidden;
     block-size: var(--progress-height, var(--space-2xs));
-    background: var(--background-l2);
-    border-radius: var(--radius-full);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
   }
 
   [data-part='range'] {
     block-size: 100%;
-    background: var(--background-accent);
-    border-radius: var(--radius-full);
+    background: var(--tui-selection-bg);
   }
 </style>

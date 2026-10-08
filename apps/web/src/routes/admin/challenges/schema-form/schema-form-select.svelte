@@ -56,36 +56,32 @@
     inline-size: 100%;
     block-size: 2.25rem;
     padding-inline: var(--space-2xs);
-    color: var(--foreground-l0);
+    color: var(--tui-text);
     text-align: start;
     cursor: pointer;
-    background: var(--background-l4);
-    border: 2px solid transparent;
-    border-radius: var(--radius-md);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     &[data-placeholder] span {
-      color: var(--foreground-l4);
-    }
-
-    &:hover:not(:disabled) {
-      background: var(--background-l5);
+      color: var(--tui-muted);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -1px;
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     &:disabled {
       cursor: not-allowed;
-      opacity: 0.5;
+      color: var(--tui-muted);
     }
 
     :global(svg) {
       flex-shrink: 0;
       inline-size: 1em;
       block-size: 1em;
-      color: var(--foreground-l3);
+      color: var(--tui-muted);
     }
   }
 

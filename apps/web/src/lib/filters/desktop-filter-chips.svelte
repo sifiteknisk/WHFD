@@ -131,9 +131,9 @@
     flex-shrink: 0;
     block-size: 2rem;
     align-items: stretch;
-    background: var(--background-l2);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
     font-size: var(--step--1);
 
     &[data-width='challenge'] {
@@ -149,8 +149,8 @@
     align-items: center;
     gap: var(--space-3xs);
     padding-inline: 0.5rem;
-    color: var(--foreground-l3);
-    border-inline-end: 2px solid var(--border);
+    color: var(--tui-muted);
+    border-inline-end: 1px solid var(--tui-border-mid);
     white-space: nowrap;
 
     :global(svg) {
@@ -165,18 +165,18 @@
     align-items: center;
     gap: var(--space-3xs);
     padding-inline: 0.5rem;
-    color: var(--foreground-l1);
+    color: var(--tui-text);
     background: transparent;
     border: none;
     cursor: pointer;
 
     &:hover,
     &[data-state='open'] {
-      background: var(--background-l3);
+      background: var(--background-accent);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
       outline-offset: -2px;
     }
 
@@ -184,7 +184,7 @@
       flex-shrink: 0;
       inline-size: 0.75rem;
       block-size: 0.75rem;
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
     }
   }
 
@@ -230,7 +230,6 @@
     inline-size: 0.375rem;
     block-size: 0.375rem;
     background: var(--result-color, var(--foreground-l3));
-    border-radius: 50%;
   }
 
   chip-text {
@@ -253,7 +252,6 @@
   chip-count {
     min-inline-size: 0;
     overflow: hidden;
-    color: var(--foreground-l1);
     white-space: nowrap;
     text-overflow: ellipsis;
   }
@@ -264,18 +262,19 @@
     align-items: center;
     justify-content: center;
     inline-size: 1.75rem;
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
     background: transparent;
     border: none;
-    border-inline-start: 2px solid var(--border);
+    border-inline-start: 1px solid var(--tui-border-mid);
     cursor: pointer;
 
     &:hover {
-      color: var(--foreground-l1);
+      color: var(--tui-danger);
+      background: var(--background-accent);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
       outline-offset: -2px;
     }
 

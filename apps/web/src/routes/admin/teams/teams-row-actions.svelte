@@ -148,7 +148,6 @@
     justify-content: center;
     inline-size: 2rem;
     block-size: 2rem;
-    border-radius: var(--radius-md);
 
     :global(svg) {
       inline-size: 1rem;
@@ -157,40 +156,39 @@
   }
 
   button {
-    color: var(--foreground-l2);
-    background: var(--background-l4);
-    border: 2px solid transparent;
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     cursor: pointer;
 
     &:hover {
-      color: var(--foreground-l1);
-      background: var(--background-l5);
+      background: var(--tui-surface-light);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
     }
 
     &[data-tone='danger'] {
-      color: var(--foreground-destructive);
-
-      &:hover {
-        background: color-mix(
-          in srgb,
-          var(--foreground-destructive) 16%,
-          var(--background-l4)
-        );
-      }
+      color: var(--tui-danger);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     &:disabled {
       pointer-events: none;
-      opacity: 0.6;
+      color: var(--tui-muted);
     }
   }
 
   admin-badge {
-    color: var(--foreground-accent);
-    background: var(--background-accent);
+    color: var(--tui-link);
+    background: var(--tui-surface-light);
+    border: 1px solid var(--tui-border-mid);
   }
 </style>

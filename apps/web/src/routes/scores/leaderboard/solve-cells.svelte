@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { IconTriangleFilled, IconTriangleInvertedFilled } from '$lib/icons'
   import type { LeaderboardEntry } from '$lib/query/leaderboard'
   import type { ScoresData } from '../model/data.svelte'
   import {
@@ -9,7 +8,6 @@
     type CategoryGroup,
     type ChallengeInfo,
   } from '../model/transforms'
-  import { BLOOD_PATHS, CHECK_PATH } from './cell-icons'
   import { CELL_KIND, pointDeltaTrend } from './cell-tooltip'
   import type { SortMode, ViewMode } from './url-params'
 
@@ -30,9 +28,6 @@
     focusedChallengeId,
     hoveredColumnId,
   }: Props = $props()
-
-  const RING_RADIUS = 8.75
-  const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
 
   const lookups = $derived(getTeamSolveLookups(entry))
 
@@ -73,7 +68,6 @@
     color: CategoryGroup['config']['color']
     solved: number
     total: number
-    percent: number
     state: 'full' | 'partial' | 'none' | 'all-dynamic'
   }
 
@@ -86,7 +80,6 @@
         color: group.config.color,
         solved: stats.solved,
         total: stats.total,
-        percent: stats.percent,
         state: stats.state,
       }
     })
@@ -132,12 +125,9 @@
           >{cell.teamPoints.toLocaleString()} <span>pts</span></dyn-value
         >
         <dyn-delta data-trend={pointDeltaTrend(cell.pointDelta)}>
-          {#if cell.pointDelta > 0}
-            <IconTriangleFilled data-icon />
-          {:else if cell.pointDelta < 0}
-            <IconTriangleInvertedFilled data-icon />
-          {/if}
-          {Math.abs(cell.pointDelta).toLocaleString()} pts
+          {cell.pointDelta > 0 ? '+' : cell.pointDelta < 0 ? '-' : ''}{Math.abs(
+            cell.pointDelta
+          ).toLocaleString()}
         </dyn-delta>
       </dyn-points>
     </solve-cell>
@@ -157,14 +147,11 @@
       style:--cell-width={`${cell.width}px`}
     >
       {#if cell.blood >= 0 && cell.blood < 3}
-        <svg viewBox="0 0 24 24" data-mark="blood" data-medal={cell.blood + 1}>
-          <path fill="currentColor" d={BLOOD_PATHS[cell.blood]} />
-        </svg>
+        <cell-mark data-medal={cell.blood + 1}>[{cell.blood + 1}]</cell-mark>
+      {:else if cell.solved}
+        <cell-mark data-solved>[*]</cell-mark>
       {:else}
-        <cell-circle
-          data-solved={cell.solved || undefined}
-          data-unsolved={!cell.solved || undefined}
-        ></cell-circle>
+        <cell-mark data-unsolved>[ ]</cell-mark>
       {/if}
     </solve-cell>
   {/if}
@@ -186,28 +173,13 @@
         data-stripe
       >
         {#if cell.state === 'full'}
-          <svg viewBox="0 0 24 24" data-mark="check"
-            ><path fill="currentColor" d={CHECK_PATH} /></svg
-          >
+          <cell-mark data-category-mark>[*]</cell-mark>
         {:else if cell.state === 'partial'}
-          <svg viewBox="0 0 24 24" data-mark="ring">
-            <g transform="rotate(-90 12 12)">
-              <circle cx="12" cy="12" r={RING_RADIUS} data-track />
-              <circle
-                cx="12"
-                cy="12"
-                r={RING_RADIUS}
-                data-progress
-                stroke-dasharray={RING_CIRCUMFERENCE}
-                stroke-dashoffset={RING_CIRCUMFERENCE *
-                  (1 - cell.percent / 100)}
-              />
-            </g>
-          </svg>
+          <cell-mark data-category-mark>{cell.solved}/{cell.total}</cell-mark>
         {:else if cell.state === 'all-dynamic'}
-          <cell-dash></cell-dash>
+          <cell-mark data-unsolved>-</cell-mark>
         {:else}
-          <cell-circle data-unsolved></cell-circle>
+          <cell-mark data-unsolved>[ ]</cell-mark>
         {/if}
       </solve-cell>
     {/each}
@@ -243,7 +215,7 @@
     flex-shrink: 0;
 
     &:nth-of-type(odd) {
-      background: color-mix(in oklab, var(--foreground-l0) 4%, transparent);
+      background: color-mix(in oklab, var(--tui-border-mid) 14%, transparent);
     }
   }
 
@@ -254,135 +226,98 @@
     justify-content: center;
     inline-size: var(--cell-width, 48px);
     flex-shrink: 0;
+    font-size: var(--step--1);
+    font-variant-numeric: tabular-nums;
+    white-space: pre;
 
     &::after {
       content: '';
       position: absolute;
-      inset: 0 -4px -4px 0;
+      inset: 0 -4px -1px 0;
     }
 
     &[data-stripe]:nth-of-type(odd) {
-      background: color-mix(in oklab, var(--foreground-l0) 4%, transparent);
+      background: color-mix(in oklab, var(--tui-border-mid) 14%, transparent);
     }
 
     &[data-tooltip-cell][data-col-hover] {
-      background: color-mix(in oklab, var(--foreground-l0) 8%, transparent);
+      background: color-mix(in oklab, var(--tui-selection-bg) 16%, transparent);
     }
 
     :global(row-content[data-hovered]) &[data-tooltip-cell][data-col-hover] {
-      background: color-mix(in oklab, var(--foreground-l0) 12%, transparent);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+
+      cell-mark,
+      dyn-value,
+      dyn-value span,
+      dyn-delta {
+        color: inherit;
+      }
     }
 
     &[data-dimmed] {
       opacity: 0.25;
     }
-
-    &[data-tooltip-cell][data-col-hover] cell-circle[data-unsolved] {
-      border-color: var(--foreground-l3);
-    }
   }
 
-  cell-circle {
-    inline-size: 1.25rem;
-    block-size: 1.25rem;
-    border-radius: var(--radius-full);
-    box-sizing: border-box;
+  cell-mark {
+    font-weight: 700;
 
     &[data-solved] {
-      border: 2px solid
-        color-mix(in oklab, var(--foreground-success) 75%, transparent);
+      color: var(--tui-success);
     }
 
     &[data-unsolved] {
-      border: 2px dashed var(--foreground-l5);
-    }
-  }
-
-  cell-dash {
-    inline-size: 0.875rem;
-    block-size: 2px;
-    border-radius: var(--radius-full);
-    background: color-mix(in oklab, var(--foreground-l5) 35%, transparent);
-  }
-
-  svg[data-mark] {
-    inline-size: 1.5rem;
-    block-size: 1.5rem;
-  }
-
-  svg[data-mark='check'] {
-    color: var(--category-foreground-l1, var(--foreground-l1));
-  }
-
-  svg[data-mark='ring'] {
-    color: var(--category-foreground-l1, var(--foreground-l1));
-
-    circle {
-      fill: none;
-      stroke-width: 2.5;
+      color: var(--tui-border-mid);
+      font-weight: var(--font-weight-normal);
     }
 
-    circle[data-track] {
-      stroke: color-mix(in oklab, var(--foreground-l5) 20%, transparent);
+    &[data-medal='1'] {
+      color: var(--foreground-gold-l0);
     }
 
-    circle[data-progress] {
-      stroke: currentColor;
-      stroke-linecap: round;
+    &[data-medal='2'] {
+      color: var(--foreground-silver-l0);
     }
-  }
 
-  svg[data-mark='blood'][data-medal='1'] {
-    color: var(--foreground-gold-l0);
-  }
+    &[data-medal='3'] {
+      color: var(--foreground-bronze-l0);
+    }
 
-  svg[data-mark='blood'][data-medal='2'] {
-    color: var(--foreground-silver-l0);
-  }
-
-  svg[data-mark='blood'][data-medal='3'] {
-    color: var(--foreground-bronze-l0);
+    &[data-category-mark] {
+      color: var(--category-foreground-l1);
+    }
   }
 
   dyn-points {
     display: flex;
     flex-direction: column;
     align-items: center;
+    line-height: 1.2;
   }
 
   dyn-value {
-    color: var(--foreground-l1);
-    font-size: var(--step--1);
-    font-variant-numeric: tabular-nums;
+    color: var(--tui-text);
 
     span {
-      color: var(--foreground-l3);
+      color: var(--tui-muted);
     }
   }
 
   dyn-delta {
-    display: flex;
-    align-items: center;
-    gap: 0.125rem;
     font-size: var(--step--2);
-    font-variant-numeric: tabular-nums;
-
-    :global(svg[data-icon]) {
-      flex-shrink: 0;
-      inline-size: 0.625rem;
-      block-size: 0.625rem;
-    }
 
     &[data-trend='positive'] {
-      color: var(--foreground-success);
+      color: var(--tui-success);
     }
 
     &[data-trend='negative'] {
-      color: var(--foreground-destructive);
+      color: var(--tui-danger);
     }
 
     &[data-trend='neutral'] {
-      color: var(--foreground-l3);
+      color: var(--tui-muted);
     }
   }
 </style>

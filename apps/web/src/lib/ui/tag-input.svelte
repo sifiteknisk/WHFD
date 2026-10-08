@@ -108,13 +108,13 @@
     inline-size: 100%;
     min-block-size: 2.25rem;
     padding: var(--space-3xs) var(--space-2xs);
-    background: var(--background-l4);
-    border: 2px solid transparent;
-    border-radius: var(--radius-md);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     &:focus-within {
-      outline: 2px solid var(--ring);
-      outline-offset: -1px;
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     &[data-invalid],
@@ -123,8 +123,8 @@
     }
 
     &[data-disabled] {
+      color: var(--tui-muted);
       cursor: not-allowed;
-      opacity: 0.5;
     }
   }
 
@@ -168,16 +168,17 @@
     flex: 1;
     min-inline-size: 6rem;
     padding-block: 0.125rem;
-    color: var(--foreground-l0);
+    color: var(--tui-text);
     background: transparent;
     border: none;
     outline: none;
 
     &::placeholder {
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
     }
 
     tag-input[data-disabled] & {
+      color: var(--tui-muted);
       cursor: not-allowed;
     }
   }

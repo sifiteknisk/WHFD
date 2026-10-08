@@ -1,0 +1,66 @@
+:root {
+  --tui-desktop-bg: #3f6fa3;
+  --tui-surface: #d6d3ce;
+  --tui-surface-light: #eeeeec;
+  --tui-text: #111111;
+  --tui-muted: #4a4a4a;
+  --tui-title: #c90000;
+  --tui-selection-bg: #2f5f93;
+  --tui-selection-text: #ffffff;
+  --tui-help: #c90000;
+  --tui-border-light: #ffffff;
+  --tui-border-mid: #9a9a9a;
+  --tui-border-dark: #4b4b4b;
+  --tui-shadow: #24476d;
+  --tui-focus: #000000;
+  --tui-danger: #a40000;
+  --tui-success: #176b22;
+
+  --tui-font: "DejaVu Sans Mono", "Liberation Mono", "Noto Sans Mono", "Roboto Mono", "Courier New", monospace;
+  --tui-font-size: 16px;
+  --tui-line-height: 1.35;
+
+  --tui-space-1: 0.25rem;
+  --tui-space-2: 0.5rem;
+  --tui-space-3: 0.75rem;
+  --tui-space-4: 1rem;
+  --tui-space-5: 1.5rem;
+  --tui-space-6: 2rem;
+
+  --tui-border-width: 2px;
+  --tui-shadow-offset: 0.45rem;
+  --tui-window-max: 58rem;
+  --tui-dialog-max: 62rem;
+  --tui-control-min-height: 2rem;
+  --tui-list-row-min-height: 1.85rem;
+  --tui-scrollbar-size: 1rem;
+  --tui-progress-height: 1.35rem;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --tui-control-min-height: 2.75rem;
+    --tui-list-row-min-height: 2.75rem;
+  }
+}
+
+@media (forced-colors: active) {
+  :root {
+    --tui-desktop-bg: Canvas;
+    --tui-surface: Canvas;
+    --tui-surface-light: Canvas;
+    --tui-text: CanvasText;
+    --tui-muted: GrayText;
+    --tui-title: CanvasText;
+    --tui-selection-bg: Highlight;
+    --tui-selection-text: HighlightText;
+    --tui-help: LinkText;
+    --tui-border-light: CanvasText;
+    --tui-border-mid: CanvasText;
+    --tui-border-dark: CanvasText;
+    --tui-shadow: CanvasText;
+    --tui-focus: CanvasText;
+    --tui-danger: CanvasText;
+    --tui-success: CanvasText;
+  }
+}

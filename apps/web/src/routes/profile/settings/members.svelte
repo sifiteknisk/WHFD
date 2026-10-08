@@ -115,12 +115,12 @@
     align-self: flex-end;
     min-inline-size: 1.5rem;
     padding: 0.0625rem 0.375rem;
-    color: var(--foreground-l3);
+    color: var(--tui-text);
     font-size: var(--step--2);
     font-variant-numeric: tabular-nums;
     text-align: center;
-    background: var(--background-l2);
-    border-radius: var(--radius-sm);
+    background: var(--tui-surface-light);
+    border: 1px solid var(--tui-border-mid);
   }
 
   members-field {
@@ -131,7 +131,7 @@
 
   members-error {
     display: block;
-    color: var(--foreground-destructive);
+    color: var(--tui-danger);
     font-size: var(--step--1);
   }
 </style>

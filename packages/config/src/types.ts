@@ -158,7 +158,7 @@ export const ServerConfigSchema = z.object({
   ),
   logoLightUrl: z._default(z.string(), ''),
   logoDarkUrl: z._default(z.string(), ''),
-  flagFormatPlaceholder: z._default(z.string(), 'flag{[\\x20-\\x7e]+}'),
+  flagFormatPlaceholder: z._default(z.string(), 'WHFD{example}'),
 
   // Analytics
   analytics: z.optional(

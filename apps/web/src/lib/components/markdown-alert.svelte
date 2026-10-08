@@ -113,18 +113,24 @@
 
     &[data-type='connection'] {
       overflow: hidden;
-      border: 2px solid var(--border);
-      border-radius: var(--radius-md);
+      background: var(--tui-surface-light);
+      border: var(--tui-border-width) solid;
+      border-color: var(--bevel-recessed);
 
       alert-header {
-        padding: var(--space-3xs) var(--space-s);
-        color: var(--foreground-l3);
-        font-weight: inherit;
-        background: var(--background-l3);
+        padding: 0.125rem var(--space-s);
+        color: var(--tui-selection-text);
+        background: var(--tui-selection-bg);
       }
 
       alert-body {
         padding: var(--space-3xs) var(--space-s);
+      }
+
+      button:focus-visible {
+        opacity: 1;
+        outline: 1px dotted var(--tui-selection-text);
+        outline-offset: -2px;
       }
     }
   }
@@ -135,7 +141,7 @@
     gap: var(--space-2xs);
     padding-block-end: var(--space-3xs);
     color: var(--accent);
-    font-weight: var(--font-weight-medium);
+    font-weight: 700;
 
     :global(svg) {
       flex-shrink: 0;
@@ -159,8 +165,9 @@
     display: flex;
     margin-inline-start: auto;
     padding: var(--space-3xs);
+    color: inherit;
     cursor: pointer;
-    opacity: 0.6;
+    opacity: 0.7;
 
     &:hover {
       opacity: 1;
@@ -175,12 +182,11 @@
 
   code {
     padding: 0;
-    color: var(--foreground-l1);
+    color: var(--tui-text);
     background: transparent;
-    border-radius: 0;
   }
 
   a {
-    color: var(--foreground-prose-link);
+    color: var(--tui-link);
   }
 </style>

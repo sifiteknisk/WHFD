@@ -7,6 +7,7 @@ import {
 } from '$lib/query/leaderboard'
 import { useCurrentUser } from '$lib/query/user'
 import type { SortMode } from '../leaderboard/url-params'
+import { nextPollAnchor, type PollAnchor } from './poll-countdown'
 import {
   getBloodIndex,
   getCategoryGroups,
@@ -79,6 +80,22 @@ export function createScoresData(config: ScoresDataConfig) {
     getRankDeltaByTeam(config.search(), allGraphData, selfGraphQuery.data)
   )
 
+  let pollAnchor: PollAnchor = {
+    anchor: 0,
+    key: '',
+    updatedAt: 0,
+    fetchingNextPage: false,
+  }
+
+  const readPollUpdatedAt = () => {
+    pollAnchor = nextPollAnchor(pollAnchor, {
+      key: `${config.division() ?? ''}|${config.search() ?? ''}|${config.focusedChallengeId() ?? ''}`,
+      updatedAt: leaderboardQuery.dataUpdatedAt,
+      fetchingNextPage: leaderboardQuery.isFetchingNextPage,
+    })
+    return pollAnchor.anchor
+  }
+
   const isLoading = $derived(
     leaderboardQuery.isLoading || challengesQuery.isLoading
   )
@@ -140,6 +157,9 @@ export function createScoresData(config: ScoresDataConfig) {
     },
     get isBoardFetching() {
       return isBoardFetching
+    },
+    get pollUpdatedAt() {
+      return readPollUpdatedAt()
     },
     get isNotStarted() {
       return isNotStarted

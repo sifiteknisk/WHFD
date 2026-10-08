@@ -44,8 +44,9 @@
     inline-size: 100%;
     max-inline-size: 24rem;
     padding: var(--space-m);
-    background: var(--background-l1);
-    border-radius: var(--radius-lg);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
   }
 
   status-icon {

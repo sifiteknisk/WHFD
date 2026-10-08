@@ -156,12 +156,14 @@
     position: absolute;
     z-index: 25;
     display: block;
+    background: var(--tui-surface);
 
     &[data-axis='y'] {
       inset-block-start: 0;
       inset-block-end: 0;
       inset-inline-end: 0;
-      inline-size: 0.5rem;
+      inline-size: 0.75rem;
+      border-inline-start: 1px solid var(--tui-border-mid);
 
       scroll-thumb {
         inline-size: 100%;
@@ -173,7 +175,8 @@
       inset-inline-start: 0;
       inset-inline-end: 0;
       inset-block-end: 0;
-      block-size: 0.375rem;
+      block-size: 0.75rem;
+      border-block-start: 1px solid var(--tui-border-mid);
 
       scroll-thumb {
         block-size: 100%;
@@ -186,19 +189,20 @@
     inset-block-start: 0;
     inset-inline-start: 0;
     display: block;
-    border-radius: var(--radius-full);
-    background: var(--background-l4);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
 
     &:hover,
     &:active {
-      background: var(--background-l5);
+      background: var(--tui-border-mid);
     }
   }
 
   @media (width >= 48rem) {
     scroll-track[data-axis='y'] {
       inset-block-start: var(--score-header-height);
-      inset-block-end: 0.5rem;
+      inset-block-end: 0.75rem;
     }
 
     scroll-track[data-axis='x'] {

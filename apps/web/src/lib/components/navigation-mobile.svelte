@@ -13,10 +13,12 @@
     IconGear,
     IconGlobeHemisphereWest,
     IconHouse,
+    IconInfo,
     IconMenu2,
     IconSignIn,
     IconSignOut,
     IconTableFilled,
+    IconTicket,
     IconUserGear,
     IconX,
   } from '$lib/icons'
@@ -80,6 +82,13 @@
         show: true,
       },
       {
+        href: '/info',
+        activePath: '/info',
+        label: 'Info & Rules',
+        icon: IconInfo,
+        show: true,
+      },
+      {
         href: '/profile',
         activePath: '/profile',
         label: 'Manage team',
@@ -106,6 +115,13 @@
         label: 'Submissions',
         icon: IconTableFilled,
         show: isAdmin && canReadChallenges && canManageUsers,
+      },
+      {
+        href: '/admin/bongs',
+        activePath: '/admin/bongs',
+        label: 'Bongs',
+        icon: IconTicket,
+        show: isAdmin && canManageUsers,
       },
       {
         href: '/admin/settings',
@@ -211,15 +227,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem 1rem;
+    block-size: var(--nav-control-height, 3rem);
+    padding-inline: 0.875rem;
     font-size: 1.5rem;
-    color: var(--foreground-l2);
-    background: var(--background-l2);
-    border-radius: var(--radius-lg);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     cursor: pointer;
 
     &:hover {
-      background: var(--background-l3);
+      background: var(--tui-surface-light);
     }
 
     &:focus-visible {
@@ -250,12 +268,12 @@
       align-items: center;
       gap: var(--space-2xs);
       padding: var(--space-2xs) var(--space-xs);
-      color: var(--foreground-l1);
+      color: var(--tui-text);
       text-decoration: none;
-      border-radius: var(--radius-lg);
 
       &:hover {
-        background: var(--background-l2);
+        color: var(--tui-selection-text);
+        background: var(--tui-selection-bg);
       }
 
       &:focus-visible {
@@ -263,8 +281,9 @@
       }
 
       &[data-active] {
-        color: var(--foreground-accent);
-        background: var(--background-accent);
+        font-weight: 700;
+        color: var(--tui-selection-text);
+        background: var(--tui-selection-bg);
       }
 
       :global(svg) {

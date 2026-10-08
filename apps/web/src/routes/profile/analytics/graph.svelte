@@ -283,7 +283,7 @@
   [data-y-label] {
     font-size: 0.6875rem;
     font-variant-numeric: tabular-nums;
-    fill: var(--foreground-l3);
+    fill: var(--tui-muted);
   }
 
   [data-line-role='total'] {
@@ -327,12 +327,12 @@
     [data-label] {
       align-self: center;
       font-size: 0.625rem;
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
     }
 
     [data-value] {
       text-align: end;
-      color: var(--foreground-l1);
+      color: var(--tui-text);
     }
   }
 </style>

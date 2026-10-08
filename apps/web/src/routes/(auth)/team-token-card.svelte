@@ -83,9 +83,10 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3xs);
-    padding: var(--space-2xs) var(--space-xs) var(--space-xs);
-    background: var(--background-l2);
-    border-radius: var(--radius-md);
+    padding: var(--space-3xs) var(--space-xs) var(--space-xs);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
   }
 
   box-header {
@@ -96,19 +97,21 @@
 
     span {
       font-size: var(--step--1);
-      color: var(--foreground-l3);
+      font-weight: 700;
+      color: var(--tui-muted);
     }
   }
 
   code {
     font-family: var(--font-mono);
     font-size: var(--step--1);
+    color: var(--tui-text);
     word-break: break-all;
     user-select: all;
   }
 
   p {
     font-size: var(--step--1);
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
   }
 </style>

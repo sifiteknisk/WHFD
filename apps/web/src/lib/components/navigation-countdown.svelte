@@ -53,11 +53,12 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    block-size: 3rem;
+    block-size: var(--nav-control-height, 3rem);
     min-inline-size: 8rem;
     padding-inline: var(--space-s);
-    background: var(--background-l2);
-    border-radius: var(--radius-lg);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     @media (width < 64rem) {
       display: none;
@@ -66,7 +67,8 @@
 
   countdown-time {
     display: block;
-    color: var(--foreground-l0);
+    color: var(--tui-text);
+    font-weight: 700;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
   }

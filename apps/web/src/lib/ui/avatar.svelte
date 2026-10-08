@@ -53,9 +53,10 @@
     inline-size: 100%;
     block-size: 100%;
     font-size: min(var(--step--1), calc(var(--avatar-size, 2.5rem) * 0.5));
-    color: var(--foreground-l3);
-    background: var(--background-l4);
-    border: 1.5px solid var(--gray-a3);
+    color: var(--tui-muted);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
     border-radius: inherit;
 
     &[hidden] {

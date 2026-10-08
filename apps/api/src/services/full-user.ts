@@ -2,6 +2,7 @@ import type { DatabaseClient, User } from '@rctf/db'
 import { challenges, scoreEvents, users } from '@rctf/db'
 import { takeUnique } from '@rctf/db/util'
 import { and, asc, eq, gt, inArray } from 'drizzle-orm'
+import { settleBongCounts } from './bongs'
 import { getDynamicScoresForUsers, getUserChallengeSolves } from './challenges'
 import { getUser } from './users'
 
@@ -26,6 +27,8 @@ export type FullUser = Omit<User, 'email' | 'ctftimeId'> & {
   email: string | null
   ctftimeId: string | null
   score: number
+  bongsTotal: number
+  bongsAvailable: number
   globalPlace: number | null
   divisionPlace: number | null
   solves: SolveData[]
@@ -41,6 +44,8 @@ export const getFullUser = async (
     db
       .select({
         score: users.score,
+        bongsTotal: users.bongsTotal,
+        bongsAvailable: users.bongsAvailable,
         globalRank: users.globalRank,
         divisionRank: users.divisionRank,
       })
@@ -98,11 +103,20 @@ export const getFullUser = async (
     }
   }
 
+  const score = freshRanks?.score ?? 0
+  const bongs = settleBongCounts(
+    score,
+    freshRanks?.bongsTotal ?? 0,
+    freshRanks?.bongsAvailable ?? 0
+  )
+
   return {
     ...user,
     email: user.email ?? null,
     ctftimeId: user.ctftimeId ?? null,
-    score: freshRanks?.score ?? 0,
+    score,
+    bongsTotal: bongs.bongsTotal,
+    bongsAvailable: bongs.bongsAvailable,
     globalPlace: freshRanks?.globalRank ?? null,
     divisionPlace: freshRanks?.divisionRank ?? null,
     dynamicScores: dynamicScoresByUser.get(user.id) ?? [],

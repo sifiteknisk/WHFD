@@ -107,6 +107,6 @@
     align-items: center;
     gap: 0 var(--space-3xs);
     font-size: var(--step--1);
-    color: var(--foreground-l2);
+    color: var(--tui-text);
   }
 </style>

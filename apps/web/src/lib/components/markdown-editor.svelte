@@ -92,24 +92,25 @@
     gap: var(--space-3xs);
 
     button {
-      padding: 0.25rem 0.75rem;
-      color: var(--foreground-l2);
+      padding: 0.125rem 0.75rem;
+      color: var(--tui-text);
       font-size: var(--step--1);
-      background: var(--background-l2);
-      border-radius: var(--radius-md);
       cursor: pointer;
+      border: var(--tui-border-width) solid transparent;
 
       &:hover {
-        color: var(--foreground-l0);
+        background: var(--tui-surface-light);
       }
 
       &[data-selected] {
-        color: var(--foreground-l0);
-        background: var(--background-l3);
+        font-weight: 700;
+        color: var(--tui-selection-text);
+        background: var(--tui-selection-bg);
+        border-color: var(--bevel-recessed);
       }
 
       &:focus-visible {
-        outline: 2px solid var(--ring);
+        outline: 2px dotted var(--tui-focus);
         outline-offset: 2px;
       }
     }
@@ -131,13 +132,14 @@
     display: block;
     min-block-size: 4.5rem;
     padding: 1rem;
-    background: var(--background-l2);
-    border-radius: var(--radius-md);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     p[data-empty] {
       margin: 0;
       font-size: var(--step--1);
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
     }
   }
 </style>

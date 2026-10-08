@@ -29,11 +29,12 @@
     gap: var(--space-3xs);
     inline-size: 100%;
     block-size: 2.25rem;
-    padding-inline: var(--space-2xs);
-    color: var(--foreground-l0);
-    background: var(--background-l4);
-    border: 2px solid transparent;
-    border-radius: var(--radius-md);
+    padding-inline: var(--space-2xs) 0.625rem;
+    color: var(--tui-text);
+    text-align: start;
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
     cursor: pointer;
 
     span {
@@ -44,25 +45,19 @@
 
     :global(svg) {
       flex-shrink: 0;
-      opacity: 0.5;
-    }
-
-    &:hover {
-      background: var(--background-l5);
-    }
-
-    &[data-state='open'] {
-      border-color: var(--border);
+      inline-size: 1em;
+      block-size: 1em;
+      color: var(--foreground-l3);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -1px;
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     &:disabled {
       pointer-events: none;
-      opacity: 0.5;
+      color: var(--tui-muted);
     }
   }
 </style>

@@ -1,21 +1,25 @@
 <script lang="ts">
   import { ChallengeScoringKind, type Challenge } from '@rctf/types'
-  import { IconAwardFilled, IconCheck } from '$lib/icons'
-  import ChallengePointDelta from '../model/point-delta.svelte'
+  import { pointsTier } from '../model/points-tier'
 
   type BloodTier = 'gold' | 'silver' | 'bronze'
 
   interface Props {
     challenge: Challenge
-    category: string
+    color: string
     solved: boolean
     bloodTier: BloodTier | null
     selected: boolean
     onSelect: () => void
   }
 
-  let { challenge, category, solved, bloodTier, selected, onSelect }: Props =
-    $props()
+  let { challenge, color, solved, bloodTier, selected, onSelect }: Props = $props()
+
+  const bloodMarks: Record<BloodTier, string> = {
+    gold: '1',
+    silver: '2',
+    bronze: '3',
+  }
 
   const isDynamic = $derived(
     challenge.scoringKind === ChallengeScoringKind.DYNAMIC
@@ -24,8 +28,10 @@
   const displayPoints = $derived(
     isDynamic ? (challenge.yourScore ?? 0) : challenge.points
   )
-  const solvesLabel = $derived(
-    `${challenge.solves.toLocaleString()} ${challenge.solves === 1 ? 'solve' : 'solves'}`
+  const mark = $derived(bloodTier ? bloodMarks[bloodTier] : solved ? '*' : ' ')
+  const delta = $derived(challenge.yourPointDelta ?? 0)
+  const markLabel = $derived(
+    bloodTier ? `${bloodTier} blood` : solved ? 'solved' : 'not solved'
   )
 </script>
 
@@ -33,40 +39,36 @@
   <button
     type="button"
     onclick={onSelect}
-    data-solved={solved && !bloodTier ? '' : undefined}
+    data-solved={solved ? '' : undefined}
     data-blood={bloodTier ?? undefined}
     data-selected={selected ? '' : undefined}
   >
-    {#if bloodTier}
-      <IconAwardFilled data-indicator />
-    {:else if solved}
-      <IconCheck data-indicator />
-    {/if}
-
-    <item-main>
-      <item-title>
-        <span data-part="category">{category} /</span>
-        <span data-part="name">{challenge.name}</span>
-      </item-title>
-      <span data-part="author">{challenge.author}</span>
-    </item-main>
-
-    {#if showsScore}
-      <item-score>
-        <span data-part="points">
-          {#if isDynamic && displayPoints === 0}
-            <strong>Dynamic</strong>
-            <span data-part="unscored">(0 pts)</span>
-          {:else}
-            <strong>{displayPoints.toLocaleString()}</strong> pts
-          {/if}
-        </span>
-        {#if isDynamic}
-          <ChallengePointDelta delta={challenge.yourPointDelta ?? 0} />
-        {:else}
-          <span data-part="solves">{solvesLabel}</span>
+    <span data-part="mark" aria-label={markLabel}>[{mark}]</span>
+    <span data-part="title">
+      <category-swatch data-category-color={color}></category-swatch>
+      <span data-part="text">
+        <span data-part="label">{challenge.name}</span>
+        {#if challenge.author}
+          <span data-part="author">by {challenge.author}</span>
         {/if}
-      </item-score>
+      </span>
+    </span>
+    {#if showsScore}
+      <span
+        data-part="points"
+        data-tier={isDynamic && displayPoints === 0
+          ? undefined
+          : pointsTier(displayPoints)}
+      >
+        {isDynamic && displayPoints === 0 ? 'dyn' : displayPoints}
+      </span>
+      {#if isDynamic}
+        <span data-part="solves" data-trend={Math.sign(delta)}>
+          {delta > 0 ? `+${delta}` : delta}
+        </span>
+      {:else}
+        <span data-part="solves">{challenge.solves}</span>
+      {/if}
     {/if}
   </button>
 </li>
@@ -77,169 +79,135 @@
   }
 
   button {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+    display: grid;
+    grid-template-columns: 3ch minmax(0, 1fr) 5ch 6ch;
+    gap: 1ch;
+    align-items: center;
     inline-size: 100%;
-    padding: 0.75rem 2.25rem;
+    padding: 0.125rem 0.5rem;
+    color: var(--tui-text);
     text-align: start;
+    white-space: nowrap;
     cursor: pointer;
-    --edge-soft: color-mix(
-      in srgb,
-      var(--edge-color, transparent) 20%,
-      transparent
-    );
+    font-variant-numeric: tabular-nums;
+
+    &[data-solved]:not([data-selected], :focus-visible)
+      > :not([data-part='mark']) {
+      opacity: 0.55;
+    }
 
     &:hover {
-      background: var(--category-background-l1-hover);
+      background: var(--background-accent);
     }
 
+    &[data-selected],
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -2px;
-      z-index: 1;
-    }
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
 
-    &[data-solved] {
-      --edge-color: var(--foreground-success);
-    }
-
-    &[data-blood='gold'] {
-      --edge-color: var(--foreground-gold-l0);
-      --edge-soft: var(--background-gold);
-    }
-
-    &[data-blood='silver'] {
-      --edge-color: var(--foreground-silver-l0);
-      --edge-soft: var(--background-silver);
-    }
-
-    &[data-blood='bronze'] {
-      --edge-color: var(--foreground-bronze-l0);
-      --edge-soft: var(--background-bronze);
-    }
-
-    &[data-solved]::before,
-    &[data-blood]::before {
-      content: '';
-      position: absolute;
-      inset-block: 0;
-      inset-inline-start: 0;
-      inline-size: 9rem;
-      pointer-events: none;
-      background: linear-gradient(to right, var(--edge-soft), transparent);
-    }
-
-    &[data-selected] {
-      box-shadow: inset 0 0 0 2px
-        color-mix(in srgb, var(--category-foreground-l1) 25%, transparent);
-
-      &::after {
-        content: '';
-        position: absolute;
-        inset-block: 0;
-        inset-inline-end: 0;
-        inline-size: 24rem;
-        pointer-events: none;
-        background: linear-gradient(
-          to left,
-          var(--category-background-l0),
-          transparent
-        );
+      [data-part] {
+        color: inherit;
       }
     }
 
-    :global(svg[data-indicator]) {
-      position: absolute;
-      inset-block-start: 50%;
-      inset-inline-start: 0.5rem;
-      translate: 0 -50%;
-      font-size: 1.25rem;
-      color: var(--edge-color);
+    &:focus-visible {
+      outline: 1px dotted var(--tui-selection-text);
+      outline-offset: -2px;
     }
   }
 
-  item-main {
-    position: relative;
-    z-index: 1;
+  [data-part='mark'] {
+    color: var(--tui-muted);
+    white-space: pre;
+
+    [data-solved] > & {
+      color: var(--tui-success);
+    }
+
+    [data-blood='gold'] > & {
+      color: var(--foreground-gold-l0);
+    }
+
+    [data-blood='silver'] > & {
+      color: var(--foreground-silver-l0);
+    }
+
+    [data-blood='bronze'] > & {
+      color: var(--foreground-bronze-l0);
+    }
+  }
+
+  [data-part='title'] {
+    grid-column: 2;
+    min-inline-size: 0;
+    display: flex;
+    gap: 1ch;
+  }
+
+  [data-part='text'] {
+    min-inline-size: 0;
     display: flex;
     flex-direction: column;
-    min-inline-size: 0;
   }
 
-  item-title {
+  [data-part='label'] {
+    min-inline-size: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 1.25rem;
-  }
-
-  [data-part='category'] {
-    display: none;
-    color: var(--category-foreground-l1);
-  }
-
-  [data-part='name'] {
-    color: var(--category-foreground-l0);
   }
 
   [data-part='author'] {
+    min-inline-size: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--category-foreground-l1);
-    opacity: 0.75;
+    color: var(--tui-muted);
+    font-size: 0.875em;
+
+    button:is([data-selected], :focus-visible) & {
+      opacity: 0.7;
+    }
   }
 
-  item-score {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: var(--space-2xs);
-    align-items: baseline;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
+  category-swatch {
+    flex-shrink: 0;
+    inline-size: 0.5em;
+    margin-block: 0.2em;
+    background: var(--category-foreground-l1);
+    border: 1px solid var(--tui-border-dark);
+
+    button:is([data-selected], :focus-visible) & {
+      border-color: var(--tui-selection-text);
+    }
+  }
+
+  [data-part='points'],
+  [data-part='solves'] {
+    text-align: end;
   }
 
   [data-part='points'] {
-    font-size: 1.25rem;
-    color: var(--category-foreground-l1);
-
-    strong {
-      color: var(--category-foreground-l0);
-      font-weight: var(--font-weight-normal);
+    &[data-tier='low'] {
+      color: var(--foreground-green-l1);
     }
-  }
 
-  [data-part='unscored'] {
-    color: var(--category-foreground-l1);
-    font-size: var(--step-0);
-    opacity: 0.6;
+    &[data-tier='mid'] {
+      color: var(--foreground-yellow-l1);
+    }
+
+    &[data-tier='high'] {
+      color: var(--foreground-red-l1);
+    }
   }
 
   [data-part='solves'] {
-    color: var(--category-foreground-l1);
-    opacity: 0.75;
-  }
+    color: var(--tui-muted);
 
-  @container challenges-list (min-inline-size: 24rem) {
-    button {
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
+    &[data-trend='1'] {
+      color: var(--tui-success);
     }
 
-    [data-part='category'] {
-      display: inline;
-    }
-
-    item-score {
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 0;
+    &[data-trend='-1'] {
+      color: var(--tui-danger);
     }
   }
 </style>

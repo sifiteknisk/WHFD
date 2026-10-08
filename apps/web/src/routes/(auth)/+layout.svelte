@@ -32,28 +32,34 @@
 
         > p {
           font-size: var(--step--1);
-          color: var(--foreground-l3);
+          color: var(--tui-muted);
 
           strong {
-            color: var(--foreground-l1);
-            font-weight: var(--font-weight-medium);
+            color: var(--tui-text);
+            font-weight: 700;
           }
 
           button {
             --underline: currentColor;
 
             display: inline;
-            color: var(--foreground-prose-link);
+            color: var(--tui-link);
             text-decoration: underline;
             text-decoration-color: var(--underline);
             cursor: pointer;
+
+            &:focus-visible {
+              outline: 2px dotted var(--tui-focus);
+              outline-offset: 2px;
+            }
           }
 
           &[role='alert'] {
             padding: var(--space-2xs);
-            color: var(--foreground-destructive);
-            background: var(--background-destructive);
-            border-radius: var(--radius-md);
+            color: var(--tui-danger);
+            background: var(--tui-surface-light);
+            border: var(--tui-border-width) solid;
+            border-color: var(--bevel-recessed);
           }
         }
 
@@ -72,7 +78,7 @@
             a {
               --underline: currentColor;
 
-              color: var(--foreground-prose-link);
+              color: var(--tui-link);
             }
           }
 
@@ -87,28 +93,33 @@
         align-items: center;
         gap: var(--space-2xs);
         font-size: var(--step--1);
-        color: var(--foreground-l3);
+        color: var(--tui-muted);
 
         &::before,
         &::after {
           flex: 1;
           content: '';
-          border-block-start: 2px solid var(--border);
+          border-block-start: 1px dashed var(--tui-border-mid);
         }
       }
 
       footer-note {
         display: block;
         font-size: var(--step--1);
-        color: var(--foreground-l3);
+        color: var(--tui-muted);
         text-align: center;
 
         a,
         button {
           --underline: currentColor;
 
-          color: var(--foreground-prose-link);
+          color: var(--tui-link);
           cursor: pointer;
+
+          &:focus-visible {
+            outline: 2px dotted var(--tui-focus);
+            outline-offset: 2px;
+          }
         }
 
         button {

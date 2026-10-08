@@ -82,7 +82,7 @@
     position: fixed;
     inset: 0;
     z-index: var(--layer-backdrop);
-    background: rgb(0 0 0 / 0.5);
+    background: color-mix(in oklab, var(--tui-desktop-bg) 75%, transparent);
   }
 
   [data-part='positioner'] {
@@ -96,15 +96,18 @@
     display: flex;
     flex-direction: column;
     overflow: clip;
-    background: var(--dialog-content-background, var(--background-l1));
-    border: 2px solid var(--border);
+    color: var(--tui-text);
+    background: var(--dialog-content-background, var(--tui-surface));
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
   }
 
   [data-part='title'] {
     flex-shrink: 0;
-    padding: 0.375rem 1rem;
-    color: var(--foreground-l3);
-    background: var(--background-l3);
+    padding: 0.25rem 1rem;
+    font-weight: 700;
+    color: var(--tui-selection-text);
+    background: var(--tui-selection-bg);
 
     &[data-hidden] {
       position: absolute;
@@ -138,10 +141,28 @@
     padding: var(--space-m);
 
     [data-part='content'] {
+      position: relative;
       inline-size: 100%;
       max-inline-size: var(--dialog-max-inline-size, 28rem);
       max-block-size: var(--dialog-max-block-size, 100%);
-      border-radius: var(--radius-lg);
+      padding-block-start: 0.75rem;
+      overflow: visible;
+      box-shadow: var(--tui-shadow-offset) var(--tui-shadow-offset) 0
+        var(--tui-shadow);
+    }
+
+    [data-part='title']:not([data-hidden]) {
+      position: absolute;
+      inset-block-start: 0;
+      inset-inline-start: 50%;
+      max-inline-size: calc(100% - 2rem);
+      padding: 0 0.8ch;
+      overflow: hidden;
+      color: var(--tui-title);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      background: var(--dialog-content-background, var(--tui-surface));
+      translate: -50% -55%;
     }
   }
 

@@ -89,7 +89,6 @@
               {y}
               width={w}
               height={barHeight}
-              rx="4"
             />
           {/if}
           <text data-x-label x={cx} y={innerBottom} dy={16} text-anchor="middle"
@@ -163,12 +162,12 @@
   [data-y-label] {
     font-size: 0.6875rem;
     font-variant-numeric: tabular-nums;
-    fill: var(--foreground-l3);
+    fill: var(--tui-muted);
   }
 
   [data-x-label] {
     font-size: 0.6875rem;
-    fill: var(--foreground-l3);
+    fill: var(--tui-muted);
   }
 
   [data-axis-rule] {
@@ -193,10 +192,10 @@
 
   [data-count] {
     font-variant-numeric: tabular-nums;
-    color: var(--foreground-l1);
+    color: var(--tui-text);
   }
 
   [data-range] {
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
   }
 </style>

@@ -16,6 +16,7 @@
   import type { Component } from 'svelte'
   import type { ScoresData } from '../model/data.svelte'
   import type { ScoresUrlState } from '../model/url-state.svelte'
+  import PollCountdown from './poll-countdown.svelte'
   import ScoresSearch from './toolbar-search.svelte'
 
   interface Props {
@@ -101,117 +102,142 @@
 {/snippet}
 
 <scores-toolbar>
-  <score-controls
-    role="toolbar"
-    aria-label="Scoreboard display controls"
-    {@attach rovingFocus}
-  >
-    <control-group>
-      <span>View</span>
-      <button-row>
-        {#each viewOptions as option (option.value)}
-          {@render iconToggle(
-            option.label,
-            option.icon,
-            urlState.viewMode === option.value,
-            () => urlState.setViewMode(option.value)
-          )}
-        {/each}
-      </button-row>
-    </control-group>
+  <PollCountdown updatedAt={data.pollUpdatedAt} />
 
-    {#if urlState.viewMode === 'challenges'}
+  <toolbar-row>
+    <score-controls
+      role="toolbar"
+      aria-label="Scoreboard display controls"
+      {@attach rovingFocus}
+    >
       <control-group>
-        <span>Sort</span>
+        <span>View</span>
         <button-row>
-          {#each sortOptions as option (option.value)}
+          {#each viewOptions as option (option.value)}
             {@render iconToggle(
               option.label,
               option.icon,
-              urlState.sortMode === option.value,
-              () => urlState.setSortMode(option.value)
+              urlState.viewMode === option.value,
+              () => urlState.setViewMode(option.value)
             )}
           {/each}
         </button-row>
       </control-group>
-    {/if}
-  </score-controls>
 
-  <score-actions>
-    {#if focusedChallenge}
-      <filter-chip data-category-color={focusedChallenge.color}>
-        <span data-label>Filtering by</span>
-        <a href="/challenges?challenge={focusedChallenge.id}">
-          <focusedChallenge.icon aria-hidden="true" />
-          <span>{focusedChallenge.name}</span>
-        </a>
-        <button
-          type="button"
-          data-clear
-          aria-label="Clear challenge filter"
-          onclick={() => urlState.setFocusedChallenge(null)}
-        >
-          <IconX aria-hidden="true" />
-        </button>
-      </filter-chip>
-    {/if}
+      {#if urlState.viewMode === 'challenges'}
+        <control-group>
+          <span>Sort</span>
+          <button-row>
+            {#each sortOptions as option (option.value)}
+              {@render iconToggle(
+                option.label,
+                option.icon,
+                urlState.sortMode === option.value,
+                () => urlState.setSortMode(option.value)
+              )}
+            {/each}
+          </button-row>
+        </control-group>
+      {/if}
+    </score-controls>
 
-    <team-count>
-      <IconUsersThree aria-hidden="true" />
-      {data.entries.length.toLocaleString()} / {data.total.toLocaleString()}
-    </team-count>
+    <score-actions>
+      {#if focusedChallenge}
+        <filter-chip data-category-color={focusedChallenge.color}>
+          <span data-label>Filtering by</span>
+          <a href="/challenges?challenge={focusedChallenge.id}">
+            <focusedChallenge.icon aria-hidden="true" />
+            <span>{focusedChallenge.name}</span>
+          </a>
+          <button
+            type="button"
+            data-clear
+            aria-label="Clear challenge filter"
+            onclick={() => urlState.setFocusedChallenge(null)}
+          >
+            <IconX aria-hidden="true" />
+          </button>
+        </filter-chip>
+      {/if}
 
-    <search-slot>
-      <ScoresSearch
-        value={urlState.searchInput}
-        pending={searchPending}
-        oninput={value => urlState.setSearchInput(value)}
-        onclear={() => urlState.setSearchInput('')}
-      />
-    </search-slot>
+      <team-count>
+        <IconUsersThree aria-hidden="true" />
+        {data.entries.length.toLocaleString()} / {data.total.toLocaleString()}
+      </team-count>
 
-    <Tooltip label="Export screenshot">
-      {#snippet children({ props })}
-        <button
-          {...props}
-          type="button"
-          data-screenshot
-          aria-label="Export screenshot"
-          onclick={onScreenshot}
-        >
-          <IconImage aria-hidden="true" />
-        </button>
-      {/snippet}
-    </Tooltip>
+      <search-slot>
+        <ScoresSearch
+          value={urlState.searchInput}
+          pending={searchPending}
+          oninput={value => urlState.setSearchInput(value)}
+          onclear={() => urlState.setSearchInput('')}
+        />
+      </search-slot>
 
-    {#if showDivision}
-      <Menu
-        label="Filter by division"
-        items={divisionItems}
-        placement="bottom-end"
+      <button
+        type="button"
+        role="switch"
+        data-first-blood-switch
+        aria-label="First blood animations"
+        aria-checked={urlState.showFirstBloods}
+        onclick={() => urlState.setShowFirstBloods(!urlState.showFirstBloods)}
       >
-        {#snippet trigger({ props })}
-          <button {...props} type="button" data-division-trigger>
-            <span>{divisionLabel}</span>
-            <IconCaretDown aria-hidden="true" />
+        <span>First bloods</span>
+        <switch-track aria-hidden="true"></switch-track>
+      </button>
+
+      <Tooltip label="Export screenshot">
+        {#snippet children({ props })}
+          <button
+            {...props}
+            type="button"
+            data-screenshot
+            aria-label="Export screenshot"
+            onclick={onScreenshot}
+          >
+            <IconImage aria-hidden="true" />
           </button>
         {/snippet}
-      </Menu>
-    {/if}
-  </score-actions>
+      </Tooltip>
+
+      {#if showDivision}
+        <Menu
+          label="Filter by division"
+          items={divisionItems}
+          placement="bottom-end"
+        >
+          {#snippet trigger({ props })}
+            <button {...props} type="button" data-division-trigger>
+              <span>{divisionLabel}</span>
+              <IconCaretDown aria-hidden="true" />
+            </button>
+          {/snippet}
+        </Menu>
+      {/if}
+    </score-actions>
+  </toolbar-row>
 </scores-toolbar>
 
 <style>
   scores-toolbar {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 0.375rem;
+    padding-block: 0.125rem 0.5rem;
+    padding-inline: 1rem;
+  }
+
+  toolbar-row {
+    display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    flex-shrink: 0;
+    align-self: stretch;
     row-gap: 0.5rem;
     column-gap: 1rem;
-    padding-block: 0.5rem;
-    padding-inline: 1rem;
+    min-inline-size: 0;
   }
 
   score-controls {
@@ -225,23 +251,27 @@
       justify-content: center;
       block-size: 2.25rem;
       padding-inline: 0.75rem;
-      color: var(--foreground-l3);
+      color: var(--tui-text);
       background: transparent;
-      border-radius: var(--radius-md);
+      border: var(--tui-border-width) solid transparent;
       cursor: pointer;
 
       :global(svg) {
         font-size: 1rem;
       }
 
-      &:hover,
+      &:hover {
+        background: var(--tui-surface-light);
+      }
+
       &[data-active] {
-        color: var(--foreground-l1);
-        background: var(--background-l3);
+        color: var(--tui-selection-text);
+        background: var(--tui-selection-bg);
+        border-color: var(--bevel-recessed);
       }
 
       &:focus-visible {
-        outline: 2px solid var(--ring);
+        outline: 2px dotted var(--tui-focus);
       }
     }
   }
@@ -297,8 +327,9 @@
     gap: 0.375rem;
     block-size: 2.25rem;
     padding-inline: 0.75rem;
-    background: var(--background-l2);
-    border-radius: var(--radius-md);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
     white-space: nowrap;
 
     > span[data-label] {
@@ -357,7 +388,7 @@
       }
 
       &:focus-visible {
-        outline: 2px solid var(--ring);
+        outline: 2px dotted var(--tui-focus);
       }
     }
   }
@@ -369,23 +400,91 @@
     flex-shrink: 0;
     block-size: 2.25rem;
     inline-size: 2.25rem;
-    color: var(--foreground-l3);
-    background: var(--background-l2);
-    border-radius: var(--radius-md);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     cursor: pointer;
 
     :global(svg) {
       font-size: 1rem;
     }
 
-    &:hover,
+    &:hover {
+      background: var(--tui-surface-light);
+    }
+
     &[data-state='open'] {
-      color: var(--foreground-l1);
-      background: var(--background-l3);
+      border-color: var(--bevel-recessed);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+    }
+  }
+
+  button[data-first-blood-switch] {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.5rem;
+    block-size: 2.25rem;
+    padding-inline: 0.75rem;
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
+    cursor: pointer;
+    font-size: var(--step--1);
+    white-space: nowrap;
+
+    switch-track {
+      position: relative;
+      display: block;
+      flex-shrink: 0;
+      inline-size: 2.75rem;
+      block-size: 1.375rem;
+      background: var(--tui-surface-light);
+      border: var(--tui-border-width) solid;
+      border-color: var(--bevel-recessed);
+      transition: background-color 140ms ease-out;
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset-block: 2px;
+        inset-inline-start: 2px;
+        inline-size: calc(50% - 2px);
+        background: var(--tui-surface);
+        box-shadow:
+          inset 1px 1px 0 var(--tui-border-light),
+          inset -1px -1px 0 var(--tui-border-dark);
+        transition: translate 140ms ease-out;
+      }
+    }
+
+    &[aria-checked='true'] switch-track {
+      background: var(--tui-selection-bg);
+
+      &::after {
+        translate: 100% 0;
+      }
+    }
+
+    &:hover {
+      background: var(--tui-surface-light);
+    }
+
+    &:focus-visible {
+      outline: 2px dotted var(--tui-focus);
+    }
+
+    @media (width < 48rem) {
+      padding-inline: 0.5rem;
+
+      span {
+        display: none;
+      }
     }
   }
 
@@ -395,9 +494,10 @@
     gap: 0.375rem;
     block-size: 2.25rem;
     padding-inline: 0.75rem;
-    color: var(--foreground-l3);
-    background: var(--background-l2);
-    border-radius: var(--radius-md);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     cursor: pointer;
     font-size: var(--step--1);
     white-space: nowrap;
@@ -413,19 +513,22 @@
       text-overflow: ellipsis;
     }
 
-    &:hover,
+    &:hover {
+      background: var(--tui-surface-light);
+    }
+
     &[data-state='open'] {
-      background: var(--background-l3);
+      border-color: var(--bevel-recessed);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
     }
   }
 
   @media (width >= 48rem) {
     scores-toolbar {
-      padding-inline: 2.25rem;
+      padding-inline: 1rem;
     }
 
     score-controls {

@@ -240,13 +240,16 @@
       />
     </details-empty>
   {:else}
-    <details-header>
+    <details-header data-category-color={categoryConfig?.color}>
       <header-info>
-        <h1>{heading}</h1>
+        <h1>
+          {#if categoryConfig}<category-swatch></category-swatch>{/if}
+          <span>{heading}</span>
+        </h1>
         <header-meta>
           <span>by {editor.form.author || 'Unknown'}</span>
           {#if categoryConfig}
-            <category-pill data-category-color={categoryConfig.color}>
+            <category-pill>
               <categoryConfig.icon />
               {categoryConfig.name}
             </category-pill>
@@ -328,10 +331,30 @@
   }
 
   h1 {
+    display: flex;
+    gap: 1ch;
+    align-items: center;
     margin: 0;
     font-size: var(--step-2);
-    color: var(--foreground-l0);
+    font-weight: 700;
+    color: var(--tui-text);
     overflow-wrap: anywhere;
+
+    details-header[data-category-color] & {
+      color: var(--category-foreground-l1);
+    }
+
+    > span {
+      min-inline-size: 0;
+    }
+  }
+
+  category-swatch {
+    flex-shrink: 0;
+    inline-size: 0.7em;
+    block-size: 0.7em;
+    background: var(--category-foreground-l1);
+    border: 1px solid var(--tui-border-dark);
   }
 
   header-meta {
@@ -339,7 +362,7 @@
     align-items: center;
     flex-wrap: wrap;
     gap: var(--space-2xs);
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
   }
 
   category-pill {
@@ -349,12 +372,12 @@
     padding: 0.125rem var(--space-2xs);
     font-size: var(--step--1);
     color: var(--category-foreground-l1);
-    background: var(--category-background-l0);
-    border-radius: var(--radius-md);
+    background: var(--tui-surface-light);
+    border: 1px solid currentColor;
 
     &[data-empty] {
-      color: var(--foreground-l4);
-      background: var(--background-l2);
+      color: var(--tui-muted);
+      border-color: var(--tui-border-mid);
     }
 
     :global(svg) {
@@ -375,8 +398,8 @@
     align-items: center;
     justify-content: flex-end;
     gap: var(--space-2xs);
-    padding: var(--space-s) var(--space-l);
-    background: var(--background-l2);
+    padding: var(--space-2xs);
+    background: var(--tui-surface);
   }
 
   @container challenge-details (width < 46rem) {

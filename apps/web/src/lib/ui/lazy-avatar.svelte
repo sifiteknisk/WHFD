@@ -39,6 +39,7 @@
     block-size: var(--avatar-size, 2.5rem);
     overflow: hidden;
     border-radius: var(--avatar-radius, var(--radius-lg));
+    box-shadow: var(--avatar-ring, none);
   }
 
   [data-part='fallback'] {
@@ -47,11 +48,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--foreground-l3);
-    background: var(--background-l4);
-    border: 1.5px solid var(--gray-a3);
+    color: var(--avatar-fallback-color, var(--tui-muted));
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
     border-radius: inherit;
-    font-size: var(--step--1);
+    font-size: var(--avatar-fallback-size, var(--step--1));
   }
 
   img {

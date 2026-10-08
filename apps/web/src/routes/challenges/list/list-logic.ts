@@ -1,4 +1,4 @@
-import type { Challenge } from '@rctf/types'
+import { ChallengeScoringKind, type Challenge } from '@rctf/types'
 import { compareCategories, getCategoryKeyOrAlias } from '$lib/utils/categories'
 
 export interface CategoryGroup {
@@ -107,8 +107,18 @@ export function computeStats(
   }
 }
 
+function sortPoints(challenge: Challenge): number {
+  return challenge.scoringKind === ChallengeScoringKind.DYNAMIC
+    ? Number.MAX_SAFE_INTEGER
+    : challenge.points
+}
+
 function sortWithinCategory(challenges: Challenge[]): Challenge[] {
   return [...challenges].sort((a, b) => {
+    const byPoints = sortPoints(a) - sortPoints(b)
+    if (byPoints !== 0) {
+      return byPoints
+    }
     const bySolves = b.solves - a.solves
     if (bySolves !== 0) {
       return bySolves

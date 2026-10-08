@@ -30,6 +30,18 @@ const preparedLeaderboardChallenges = preparedPerDb(db =>
           ) AS first_blood
         ), ARRAY[]::text[])
       `.as('first_blood_ids'),
+      firstBloodAt: sql<number | null>`
+        (
+          SELECT (EXTRACT(EPOCH FROM solves.createdat) * 1000)::float8
+          FROM solves
+          INNER JOIN "users" ON "users".id = solves.userid
+          WHERE solves.challengeid = challenges.id
+            AND solves.source = 'flag'
+            AND "users".banned = false
+          ORDER BY solves.createdat ASC, solves.id ASC
+          LIMIT 1
+        )
+      `.as('first_blood_at'),
     })
     .from(challenges)
     .where(challengeIsPublicSql)
@@ -54,6 +66,10 @@ leaderboardGroup.route(
               solves: row.solveCount ?? 0,
               sortWeight: row.data.sortWeight ?? null,
               scoringKind,
+              firstBloodAt:
+                row.firstBloodAt == null
+                  ? null
+                  : Math.round(Number(row.firstBloodAt)),
               firstSolvers: (row.firstBloodIds ?? []).map(id => ({ id })),
             },
           ]

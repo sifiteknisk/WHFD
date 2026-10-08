@@ -4,7 +4,6 @@
   import EdgeFades from '$lib/components/edge-fades.svelte'
   import {
     IconArrowsInLineVertical,
-    IconCaretDown,
     IconPlus,
     IconQuestion,
     IconSearch,
@@ -156,11 +155,11 @@
             {@const config = getCategoryConfig(category)}
             {@const entries = groupByCategory.get(category)?.challenges ?? []}
             <group-header data-category-color={config.color}>
-              <button {...props} data-expanded={expanded || undefined}>
-                <config.icon data-slot="icon" />
+              <button {...props}>
+                <span data-slot="toggle">[{expanded ? '-' : '+'}]</span>
                 <span data-slot="name">{config.name}</span>
+                <span data-slot="rule"></span>
                 <span data-slot="count">{entries.length}</span>
-                <IconCaretDown data-slot="chevron" />
               </button>
             </group-header>
           {/snippet}
@@ -173,7 +172,6 @@
                 {#each entries as challenge (challenge.id)}
                   <AdminChallengesListItem
                     {challenge}
-                    {category}
                     selected={selectedId === challenge.id}
                     onSelect={() => onSelect(challenge)}
                   />
@@ -209,13 +207,13 @@
   list-stats {
     display: flex;
     justify-content: space-between;
-    padding-inline: 2.25rem;
-    color: var(--foreground-l5);
+    padding-inline: 1.25rem;
+    color: var(--tui-muted);
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
 
     strong {
-      color: var(--foreground-l3);
+      color: var(--tui-text);
       font-weight: var(--font-weight-normal);
     }
   }
@@ -224,7 +222,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem;
-    padding-inline: 1.25rem;
+    padding-inline: var(--space-2xs);
   }
 
   search-box {
@@ -235,21 +233,18 @@
     min-inline-size: 0;
     block-size: 2.5rem;
     padding-inline: 0.75rem;
-    color: var(--foreground-l3);
-    background: var(--background-l4);
-    border-radius: 20px;
-
-    @container admin-challenges-list (width >= 24rem) {
-      border-radius: 20px var(--radius-sm) var(--radius-sm) 20px;
-    }
+    color: var(--tui-muted);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     &:focus-within {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     :global(svg) {
       flex-shrink: 0;
-      color: var(--foreground-l3);
     }
   }
 
@@ -258,11 +253,11 @@
     min-inline-size: 0;
     background: transparent;
     border: none;
-    color: var(--foreground-l0);
+    color: var(--tui-text);
     outline: none;
 
     &::placeholder {
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
     }
   }
 
@@ -276,15 +271,17 @@
     }
   }
 
-  button {
+  toggle-group button {
     display: inline-flex;
     flex: 1;
     align-items: center;
     justify-content: center;
     block-size: 2.5rem;
     padding-inline: 1rem;
-    color: var(--foreground-l1);
-    background: var(--background-l4);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     cursor: pointer;
 
     @container admin-challenges-list (width >= 24rem) {
@@ -292,20 +289,23 @@
     }
 
     &:hover {
-      background: var(--background-l5);
+      background: var(--tui-surface-light);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
     }
 
     &[data-active] {
-      color: var(--foreground-accent);
-      background: var(--background-accent);
-
-      &:hover {
-        background: var(--background-accent-hover);
-      }
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+      border-color: var(--bevel-recessed);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     :global(svg) {
@@ -313,40 +313,18 @@
     }
   }
 
-  [data-slot='collapse'] {
-    border-radius: 20px;
-  }
-
-  toggle-group[data-can-write] [data-slot='collapse'] {
-    border-radius: 20px var(--radius-sm) var(--radius-sm) 20px;
-  }
-
-  [data-slot='new'] {
-    border-radius: var(--radius-sm) 20px 20px var(--radius-sm);
-  }
-
-  @container admin-challenges-list (width >= 24rem) {
-    [data-slot='collapse'] {
-      border-radius: var(--radius-sm) 20px 20px var(--radius-sm);
-    }
-
-    toggle-group[data-can-write] [data-slot='collapse'] {
-      border-radius: var(--radius-sm);
-    }
-
-    [data-slot='new'] {
-      border-radius: var(--radius-sm) 20px 20px var(--radius-sm);
-    }
-  }
-
   list-viewport {
-    --fade-color: var(--background-l1);
+    --fade-color: var(--tui-surface-light);
 
     position: relative;
     display: flex;
     flex: 1;
     flex-direction: column;
     min-block-size: 0;
+    margin: 0 var(--space-2xs) var(--space-2xs);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
   }
 
   list-scroll {
@@ -355,6 +333,7 @@
     overflow-y: auto;
     overscroll-behavior: none;
     padding-block-end: var(--space-s);
+    scrollbar-color: var(--tui-border-mid) var(--tui-surface);
   }
 
   group-header {
@@ -362,62 +341,59 @@
     inset-block-start: 0;
     z-index: 2;
     display: block;
-    background: var(--background-l1);
+    background: var(--tui-surface-light);
 
     button {
       display: flex;
-      flex: initial;
       align-items: center;
-      gap: 0.625rem;
+      gap: 1ch;
       inline-size: 100%;
-      block-size: auto;
-      padding: 0.5rem 0.5rem 0.5rem 0.625rem;
-      text-align: start;
-      color: var(--category-foreground-l1);
-      background: var(--category-background-l0);
+      padding: 0.25rem 0.5rem 0.125rem;
+      color: var(--tui-text);
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
 
-      &:hover {
-        background: var(--category-background-l0);
+      &:hover,
+      &:focus-visible {
+        color: var(--tui-selection-text);
+        background: var(--tui-selection-bg);
+
+        [data-slot] {
+          color: inherit;
+          border-color: currentColor;
+        }
       }
 
       &:focus-visible {
-        outline: 2px solid var(--ring);
+        outline: 1px dotted var(--tui-selection-text);
         outline-offset: -2px;
-      }
-
-      &[data-expanded] :global([data-slot='chevron']) {
-        rotate: 0deg;
       }
     }
 
-    :global([data-slot='icon']) {
-      flex-shrink: 0;
-      font-size: 1rem;
+    [data-slot='toggle'] {
+      flex: 0 0 3ch;
+      color: var(--tui-muted);
     }
 
     [data-slot='name'] {
-      font-size: var(--step-0);
+      color: var(--category-foreground-l1);
+    }
+
+    [data-slot='rule'] {
+      flex: 1;
+      border-block-end: 1px dashed var(--tui-border-mid);
     }
 
     [data-slot='count'] {
-      margin-inline-start: auto;
-      color: var(--category-foreground-l0);
-      white-space: nowrap;
+      color: var(--tui-muted);
+      font-weight: var(--font-weight-normal);
       font-variant-numeric: tabular-nums;
-    }
-
-    :global([data-slot='chevron']) {
-      flex-shrink: 0;
-      font-size: 1rem;
-      color: var(--category-foreground-l1);
-      rotate: -90deg;
-      transition: rotate 150ms ease;
     }
   }
 
   group-body {
     display: block;
-    background: var(--category-background-l1);
 
     ul {
       display: flex;

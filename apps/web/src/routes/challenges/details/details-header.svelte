@@ -3,6 +3,7 @@
   import Chip from '$lib/ui/chip.svelte'
   import { getCategoryConfig } from '$lib/utils/categories'
   import ChallengePointDelta from '../model/point-delta.svelte'
+  import { pointsTier } from '../model/points-tier'
 
   interface Props {
     challenge: Challenge
@@ -22,9 +23,12 @@
   )
 </script>
 
-<details-header>
+<details-header data-category-color={config.color}>
   <header-main>
-    <h2>{challenge.name}</h2>
+    <h2>
+      <category-swatch></category-swatch>
+      <span>{challenge.name}</span>
+    </h2>
     <header-meta>
       <span data-slot="author">by {challenge.author}</span>
       <meta-separator aria-hidden="true">·</meta-separator>
@@ -42,7 +46,9 @@
 
   {#if showsScore}
     <header-score>
-      <span data-slot="points">{displayPoints.toLocaleString()} pts</span>
+      <span data-slot="points" data-tier={pointsTier(displayPoints)}>
+        {displayPoints.toLocaleString()} pts
+      </span>
       {#if isDynamic}
         <ChallengePointDelta delta={challenge.yourPointDelta ?? 0} />
       {:else}
@@ -60,10 +66,10 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1rem 2.25rem;
+    padding: 0.75rem 1rem;
 
     @media (width >= 40rem) {
-      padding-block: 1.5rem;
+      padding-block: 1rem;
     }
   }
 
@@ -77,6 +83,11 @@
 
   h2 {
     margin: 0;
+    display: flex;
+    gap: 1ch;
+    align-items: center;
+    color: var(--category-foreground-l1);
+    font-weight: 700;
     overflow: hidden;
     font-size: 1.25rem;
     text-overflow: ellipsis;
@@ -87,12 +98,26 @@
     }
   }
 
+  h2 > span {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  category-swatch {
+    flex-shrink: 0;
+    inline-size: 0.7em;
+    block-size: 0.7em;
+    background: var(--category-foreground-l1);
+    border: 1px solid var(--tui-border-dark);
+  }
+
   header-meta {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.25rem 0.5rem;
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
     font-size: 0.875rem;
 
     @media (width >= 40rem) {
@@ -131,8 +156,8 @@
     font-size: 0.75rem;
     color: var(--category-foreground-l1);
     white-space: nowrap;
-    background: var(--category-background-l0);
-    border-radius: var(--radius-lg);
+    background: var(--tui-surface-light);
+    border: 1px solid currentColor;
 
     @media (width >= 40rem) {
       padding-inline: 0.75rem;
@@ -159,6 +184,20 @@
   }
 
   [data-slot='points'] {
+    font-weight: 700;
+
+    &[data-tier='low'] {
+      color: var(--foreground-green-l1);
+    }
+
+    &[data-tier='mid'] {
+      color: var(--foreground-yellow-l1);
+    }
+
+    &[data-tier='high'] {
+      color: var(--foreground-red-l1);
+    }
+
     font-size: 1.25rem;
 
     @media (width >= 40rem) {

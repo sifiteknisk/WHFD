@@ -48,13 +48,15 @@
     gap: var(--space-2xs);
     padding-inline: var(--space-2xs) var(--space-2xs);
     padding-inline-start: 3.25rem;
-    background: var(--background-l3);
+    background: var(--tui-surface);
+    border-block-end: 1px solid var(--tui-border-mid);
   }
 
   detail-label {
     flex-shrink: 0;
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
     font-size: var(--step--1);
+    font-weight: 700;
     white-space: nowrap;
   }
 
@@ -76,9 +78,9 @@
     flex-shrink: 0;
     align-items: center;
     gap: var(--space-3xs);
-    padding: var(--space-3xs) var(--space-2xs);
-    background: var(--background-l4);
-    border-radius: var(--radius-md);
+    padding: 0 var(--space-2xs);
+    background: var(--tui-surface-light);
+    border: 1px solid var(--tui-border-mid);
     white-space: nowrap;
 
     &[data-wide] {
@@ -88,14 +90,14 @@
 
   pill-label {
     flex-shrink: 0;
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
     font-size: var(--step--2);
   }
 
   code {
     min-inline-size: 0;
     overflow: hidden;
-    color: var(--foreground-l1);
+    color: var(--tui-text);
     font-size: var(--step--2);
     text-overflow: ellipsis;
   }
@@ -104,15 +106,18 @@
     display: contents;
     text-decoration: none;
 
+    code {
+      color: var(--tui-link);
+    }
+
     &:hover code,
     &:focus-visible code {
-      color: var(--foreground-accent);
       text-decoration: underline;
     }
   }
 
   detail-empty {
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
     font-size: var(--step--1);
   }
 
@@ -123,20 +128,24 @@
     justify-content: center;
     inline-size: 1.75rem;
     block-size: 1.75rem;
-    color: var(--foreground-l3);
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-md);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     cursor: pointer;
 
     &:hover {
-      color: var(--foreground-l1);
-      background: var(--background-l4);
+      background: var(--tui-surface-light);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -2px;
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     :global(svg) {

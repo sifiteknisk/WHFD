@@ -29,6 +29,8 @@ export const users = pgTable(
     statusText: text('status_text'),
     banned: boolean().notNull().default(false),
     score: integer().notNull().default(0),
+    bongsTotal: integer('bongs_total').notNull().default(0),
+    bongsAvailable: integer('bongs_available').notNull().default(0),
     globalRank: integer('global_rank'),
     divisionRank: integer('division_rank'),
     lastSolveAt: timestamp('last_solve_at', {
@@ -62,6 +64,10 @@ export const users = pgTable(
     check(
       'require_email_or_ctftime_id',
       sql`(email IS NOT NULL) OR (ctftime_id IS NOT NULL)`
+    ),
+    check(
+      'bongs_available_in_range',
+      sql`bongs_available >= 0 AND bongs_available <= bongs_total`
     ),
     index('users_global_leaderboard_idx')
       .using('btree', sql`global_rank ASC`)

@@ -9,6 +9,7 @@ import {
   GetAdminUserVerificationsRouteV2,
   GetFlagProvidersRouteV2,
   GetInstancerSchemaRouteV2,
+  GoodAdminBongs,
   GoodAdminBotStatus,
   GoodAdminChallengesV2,
   GoodAdminChallengeV2,
@@ -20,6 +21,7 @@ import {
   GoodAdminUserVerificationsV2,
   GoodFlagProviders,
   GoodInstancerSchema,
+  ListAdminBongsRouteV2,
   ListExternalAuthClientsRouteV2,
 } from '@rctf/types'
 import {
@@ -207,6 +209,22 @@ export function useAdminExternalAuthClients() {
   return createQuery(() => adminExternalAuthClientsQueryOptions)
 }
 
+export const adminBongsQueryOptions = queryOptions({
+  queryKey: queryKeys.adminBongs,
+  queryFn: async () => {
+    const response = await apiRequest(ListAdminBongsRouteV2)
+    return unwrapData(response, GoodAdminBongs)
+  },
+  refetchInterval: 30 * 1000,
+})
+
+export function useAdminBongs(enabled: () => boolean = () => true) {
+  return createQuery(() => ({
+    ...adminBongsQueryOptions,
+    enabled: enabled(),
+  }))
+}
+
 export const instancerSchemaQueryOptions = queryOptions({
   queryKey: queryKeys.instancerSchema,
   queryFn: async () => {
@@ -249,6 +267,7 @@ export function useAdminBotStatus() {
 export function invalidateAdminTeamQueries(queryClient: QueryClient): void {
   queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
   queryClient.invalidateQueries({ queryKey: queryKeys.fullLeaderboard })
+  queryClient.invalidateQueries({ queryKey: queryKeys.adminBongs })
   queryClient.invalidateQueries({
     queryKey: queryKeys.adminUserVerifications,
   })

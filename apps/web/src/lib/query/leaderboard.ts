@@ -25,6 +25,8 @@ const INFINITE_PAGE_SIZE = 100
 const RATE_LIMIT_RETRY_DELAY_MS = 3000
 const RATE_LIMIT_RETRY_COUNT = 3
 
+export const LEADERBOARD_POLL_INTERVAL_MS = 30_000
+
 export function shouldRetryLeaderboard(
   failureCount: number,
   error: Error
@@ -104,7 +106,7 @@ export function useLeaderboardWithGraph(filters: () => LeaderboardFilters) {
           lastPage.total
         ),
       placeholderData: keepPreviousData,
-      refetchInterval: 30 * 1000,
+      refetchInterval: LEADERBOARD_POLL_INTERVAL_MS,
       retry: shouldRetryLeaderboard,
       retryDelay: RATE_LIMIT_RETRY_DELAY_MS,
     }
@@ -119,7 +121,7 @@ export const leaderboardChallengesQueryOptions = queryOptions({
       unwrapData(response, GoodLeaderboardChallengesV2).challenges
     )
   },
-  refetchInterval: 30 * 1000,
+  refetchInterval: LEADERBOARD_POLL_INTERVAL_MS,
 })
 
 export function useLeaderboardChallenges() {
@@ -145,7 +147,9 @@ export type GraphCachingPolicy = {
   staleTime?: number
 }
 
-const SELF_GRAPH_CACHING: GraphCachingPolicy = { refetchInterval: 30 * 1000 }
+const SELF_GRAPH_CACHING: GraphCachingPolicy = {
+  refetchInterval: LEADERBOARD_POLL_INTERVAL_MS,
+}
 
 export const PUBLIC_GRAPH_CACHING: GraphCachingPolicy = {
   refetchInterval: false,

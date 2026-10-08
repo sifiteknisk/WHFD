@@ -192,10 +192,10 @@
     justify-content: center;
     inline-size: 2rem;
     block-size: 2rem;
-    color: var(--foreground-l2);
-    background: var(--background-l4);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     cursor: pointer;
 
     :global(svg) {
@@ -204,16 +204,23 @@
     }
 
     &:hover {
-      color: var(--foreground-l1);
-      background: var(--background-l5);
+      background: var(--tui-surface-light);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
     }
 
     &[data-active] {
-      color: var(--foreground-accent);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+      border-color: var(--bevel-recessed);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
   }
 
@@ -224,10 +231,10 @@
     gap: var(--space-3xs);
     block-size: 2rem;
     padding-inline: 0.5rem;
-    color: var(--foreground-l3);
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-md);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     font-size: var(--step--1);
     cursor: pointer;
 
@@ -237,20 +244,24 @@
     }
 
     &:hover {
-      color: var(--foreground-l1);
-      background: var(--background-l3);
+      background: var(--tui-surface-light);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -2px;
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
   }
 
   bar-error {
     flex-shrink: 0;
     padding-inline: var(--space-3xs);
-    color: var(--foreground-destructive);
+    color: var(--tui-danger);
     font-size: var(--step--1);
   }
 
@@ -259,7 +270,7 @@
     flex-shrink: 0;
     align-items: center;
     margin-inline-start: auto;
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
   }
 
   filter-chip {
@@ -269,13 +280,13 @@
     max-inline-size: 32rem;
     align-items: stretch;
     overflow: hidden;
-    background: var(--background-l2);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
     font-size: var(--step--1);
 
     &[data-invalid] {
-      border-color: var(--foreground-destructive);
+      border-color: var(--tui-danger);
     }
   }
 
@@ -284,8 +295,8 @@
     align-items: center;
     gap: var(--space-3xs);
     padding-inline: 0.5rem;
-    color: var(--foreground-l3);
-    border-inline-end: 2px solid var(--border);
+    color: var(--tui-muted);
+    border-inline-end: 1px solid var(--tui-border-mid);
     white-space: nowrap;
 
     :global(svg) {
@@ -300,18 +311,18 @@
     align-items: center;
     gap: var(--space-3xs);
     padding-inline: 0.5rem;
-    color: var(--foreground-l1);
+    color: var(--tui-text);
     background: transparent;
     border: none;
     cursor: pointer;
 
     &:hover,
     &[data-state='open'] {
-      background: var(--background-l3);
+      background: var(--background-accent);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
       outline-offset: -2px;
     }
 
@@ -319,7 +330,7 @@
       flex-shrink: 0;
       inline-size: 0.75rem;
       block-size: 0.75rem;
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
     }
   }
 
@@ -336,18 +347,19 @@
     align-items: center;
     justify-content: center;
     inline-size: 1.75rem;
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
     background: transparent;
     border: none;
-    border-inline-start: 2px solid var(--border);
+    border-inline-start: 1px solid var(--tui-border-mid);
     cursor: pointer;
 
     &:hover {
-      color: var(--foreground-l1);
+      color: var(--tui-danger);
+      background: var(--background-accent);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
       outline-offset: -2px;
     }
 

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Challenge } from '@rctf/types'
-  import { IconCaretDown, IconQuestion } from '$lib/icons'
+  import { tuiList } from '$lib/attachments/tui-list'
+  import { IconQuestion } from '$lib/icons'
   import Accordion from '$lib/ui/accordion.svelte'
   import EmptyState from '$lib/ui/empty-state.svelte'
   import { getCategoryConfig } from '$lib/utils/categories'
@@ -92,6 +93,12 @@
     return null
   }
 
+  function selectFocused(target: HTMLElement) {
+    const id = target.closest('li')?.id.replace(/^chall-/, '')
+    const challenge = visibleChallenges.find(c => c.id === id)
+    if (challenge) onSelect(challenge)
+  }
+
   function toggleHideSolved() {
     hideSolved = !hideSolved
     savePreferences({ hideSolved, collapsedCategories })
@@ -147,7 +154,13 @@
     onToggleCollapse={toggleCollapseAll}
   />
 
-  <list-scroll tabindex="-1">
+  <list-scroll tabindex="-1" {@attach tuiList(selectFocused)}>
+    <list-columns aria-hidden="true">
+      <span></span>
+      <span>Challenge</span>
+      <span>Pts</span>
+      <span>Solves</span>
+    </list-columns>
     {#if groups.length === 0}
       <EmptyState
         icon={IconQuestion}
@@ -167,13 +180,11 @@
             solvedIds.has(c.id)
           ).length}
           <challenges-list-group-header data-category-color={config.color}>
-            <button {...props} data-expanded={expanded || undefined}>
-              <config.icon data-slot="icon" />
+            <button {...props}>
+              <span data-slot="toggle">[{expanded ? '-' : '+'}]</span>
               <span data-slot="name">{config.name}</span>
-              <span data-slot="count">
-                <strong>{solvedInCategory}</strong> / {entries.length}
-              </span>
-              <IconCaretDown data-slot="chevron" />
+              <span data-slot="rule"></span>
+              <span data-slot="count">{solvedInCategory}/{entries.length}</span>
             </button>
           </challenges-list-group-header>
         {/snippet}
@@ -181,15 +192,12 @@
         {#snippet content({ value, props })}
           {@const config = getCategoryConfig(value)}
           {@const entries = groupByCategory.get(value)?.challenges ?? []}
-          <challenges-list-group-body
-            data-category-color={config.color}
-            {...props}
-          >
+          <challenges-list-group-body {...props}>
             <ul>
               {#each entries as challenge (challenge.id)}
                 <ChallengesListItem
                   {challenge}
-                  category={value}
+                  color={config.color}
                   solved={solvedIds.has(challenge.id)}
                   bloodTier={bloodTierOf(challenge.id)}
                   selected={selectedId === challenge.id}
@@ -215,74 +223,100 @@
   }
 
   list-scroll {
+    --columns-height: 1.5rem;
+    scroll-padding-block-start: calc(var(--columns-height) + 1.75rem);
+
     flex: 1;
     min-block-size: 0;
     overflow-y: auto;
     overscroll-behavior: none;
+    margin: 0 var(--space-2xs) var(--space-2xs);
     padding-block-end: var(--space-s);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
+    scrollbar-color: var(--tui-border-mid) var(--tui-surface);
+  }
+
+  list-columns {
+    display: grid;
+    grid-template-columns: 3ch minmax(0, 1fr) 5ch 6ch;
+    gap: 1ch;
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 3;
+    align-items: center;
+    block-size: var(--columns-height);
+    padding-inline: 0.5rem;
+    background: var(--tui-surface-light);
+    border-block-end: 1px solid var(--tui-border-mid);
+    color: var(--tui-muted);
+    font-size: var(--step--1);
+    white-space: nowrap;
+
+    > :nth-child(n + 3) {
+      text-align: end;
+    }
   }
 
   challenges-list-group-header {
     position: sticky;
-    inset-block-start: 0;
+    inset-block-start: var(--columns-height);
     z-index: 2;
     display: block;
-    background: var(--background-l1);
+    background: var(--tui-surface-light);
 
     button {
       display: flex;
       align-items: center;
-      gap: 0.625rem;
+      gap: 1ch;
       inline-size: 100%;
-      padding: 0.5rem 0.5rem 0.5rem 0.625rem;
-      text-align: start;
-      color: var(--category-foreground-l1);
-      background: var(--category-background-l0);
+      padding: 0.25rem 0.5rem 0.125rem;
+      color: var(--tui-text);
+      font-weight: 700;
+      white-space: nowrap;
       cursor: pointer;
 
+      &:hover,
       &:focus-visible {
-        outline: 2px solid var(--ring);
-        outline-offset: -2px;
+        color: var(--tui-selection-text);
+        background: var(--tui-selection-bg);
+
+        [data-slot] {
+          color: inherit;
+          border-color: currentColor;
+        }
       }
 
-      &[data-expanded] :global([data-slot='chevron']) {
-        rotate: 0deg;
+      &:focus-visible {
+        outline: 1px dotted var(--tui-selection-text);
+        outline-offset: -2px;
       }
     }
 
-    :global([data-slot='icon']) {
-      flex-shrink: 0;
-      font-size: 1rem;
+    [data-slot='toggle'] {
+      flex: 0 0 3ch;
+      color: var(--tui-muted);
     }
 
     [data-slot='name'] {
-      font-size: var(--step-0);
+      color: var(--category-foreground-l1);
+    }
+
+    [data-slot='rule'] {
+      flex: 1;
+      border-block-end: 1px dashed var(--tui-border-mid);
     }
 
     [data-slot='count'] {
-      margin-inline-start: auto;
-      color: var(--category-foreground-l1);
-      white-space: nowrap;
+      color: var(--tui-muted);
+      font-weight: var(--font-weight-normal);
       font-variant-numeric: tabular-nums;
-
-      strong {
-        color: var(--category-foreground-l0);
-        font-weight: var(--font-weight-normal);
-      }
-    }
-
-    :global([data-slot='chevron']) {
-      flex-shrink: 0;
-      font-size: 1rem;
-      color: var(--category-foreground-l1);
-      rotate: -90deg;
-      transition: rotate 150ms ease;
     }
   }
 
   challenges-list-group-body {
     display: block;
-    background: var(--category-background-l1);
 
     ul {
       display: flex;

@@ -33,30 +33,26 @@
     inline-size: 100%;
     block-size: 2.25rem;
     padding-inline: var(--space-2xs);
-    color: var(--foreground-l0);
+    color: var(--tui-text);
     text-align: start;
     cursor: pointer;
-    background: var(--background-l4);
-    border: 2px solid transparent;
-    border-radius: var(--radius-md);
-
-    &:hover:not([data-disabled]) {
-      background: var(--background-l5);
-    }
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -1px;
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     &[data-disabled] {
       cursor: default;
-      opacity: 0.5;
+      color: var(--tui-muted);
     }
 
     :global(svg) {
       flex-shrink: 0;
-      color: var(--foreground-l3);
+      color: var(--tui-muted);
     }
   }
 </style>

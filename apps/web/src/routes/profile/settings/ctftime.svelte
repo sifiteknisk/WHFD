@@ -129,28 +129,29 @@
     flex-direction: column;
     gap: var(--space-3xs);
     padding: var(--space-2xs) var(--space-xs);
-    background: var(--background-l4);
-    border-radius: var(--radius-md);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     > span {
-      color: var(--foreground-l1);
+      color: var(--tui-text);
       font-size: var(--step--1);
-      font-weight: var(--font-weight-medium);
+      font-weight: 700;
     }
 
     a {
-      color: var(--foreground-l4);
+      color: var(--tui-link);
       font-size: var(--step--2);
 
       &:hover {
-        color: var(--foreground-l1);
+        text-decoration: underline;
       }
     }
   }
 
   ctftime-hint {
     display: block;
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
     font-size: var(--step--1);
   }
 </style>

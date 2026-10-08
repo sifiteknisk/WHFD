@@ -166,10 +166,10 @@
     justify-content: center;
     inline-size: 2rem;
     block-size: 2rem;
-    color: var(--foreground-l2);
-    background: var(--background-l4);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     cursor: pointer;
 
     :global(svg) {
@@ -178,16 +178,27 @@
     }
 
     &:hover {
-      color: var(--foreground-l1);
-      background: var(--background-l5);
+      background: var(--tui-surface-light);
+    }
+
+    &:active,
+    &[data-state='open'] {
+      border-color: var(--bevel-recessed);
+    }
+
+    &:active {
+      transform: translate(1px, 1px);
     }
 
     &[data-active] {
-      color: var(--foreground-accent);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+      border-color: var(--bevel-recessed);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
   }
 
@@ -210,32 +221,38 @@
   drill-header {
     display: flex;
     flex-shrink: 0;
-    border-block-end: 2px solid var(--border);
+    border-block-end: 1px solid var(--tui-border-mid);
 
     button {
       display: flex;
       inline-size: 100%;
       align-items: center;
       gap: var(--space-2xs);
-      block-size: 2.75rem;
+      block-size: 2.5rem;
       padding-inline: 0.5rem;
-      color: var(--foreground-l2);
+      color: var(--tui-text);
       background: transparent;
       border: none;
       font-size: var(--step--1);
+      font-weight: 700;
       cursor: pointer;
-
-      &:hover,
-      &:focus-visible {
-        background: var(--background-l3);
-        outline: none;
-      }
 
       :global(svg[data-back]) {
         inline-size: 1em;
         block-size: 1em;
         rotate: 180deg;
-        color: var(--foreground-l4);
+        color: var(--tui-muted);
+      }
+
+      &:hover,
+      &:focus-visible {
+        color: var(--tui-selection-text);
+        background: var(--tui-selection-bg);
+        outline: none;
+
+        :global(svg[data-back]) {
+          color: inherit;
+        }
       }
     }
   }
@@ -245,19 +262,12 @@
     inline-size: 100%;
     align-items: center;
     gap: var(--space-2xs);
-    padding: 0.375rem 0.5rem;
-    color: var(--foreground-l2);
+    padding: 0.25rem 0.5rem;
+    color: var(--tui-text);
     background: transparent;
     border: none;
-    border-radius: var(--radius-sm);
     font-size: var(--step--1);
     cursor: pointer;
-
-    &:hover,
-    &:focus-visible {
-      background: var(--background-l3);
-      outline: none;
-    }
 
     span {
       flex: 1;
@@ -270,7 +280,18 @@
     }
 
     :global(svg[data-chevron]) {
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
+    }
+
+    &:hover,
+    &:focus-visible {
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+      outline: none;
+
+      :global(svg[data-chevron]) {
+        color: inherit;
+      }
     }
   }
 
@@ -279,7 +300,7 @@
     align-items: center;
     gap: var(--space-2xs);
     padding: 0.375rem 0.5rem;
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
     font-size: var(--step--1);
 
     &[data-empty] {

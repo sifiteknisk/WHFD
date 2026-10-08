@@ -341,21 +341,20 @@
     align-items: center;
     gap: var(--space-2xs);
     padding: var(--space-2xs);
-    border-block-end: 2px solid var(--border);
   }
 
   search-field {
     display: flex;
     align-items: center;
-    gap: var(--space-3xs);
+    gap: var(--space-2xs);
     flex-shrink: 0;
     inline-size: min(18rem, 42vw);
     block-size: 2rem;
     padding-inline: 0.5rem;
-    color: var(--foreground-l3);
-    background: var(--background-l4);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
+    color: var(--tui-muted);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     :global(svg) {
       flex-shrink: 0;
@@ -364,20 +363,21 @@
     }
 
     &:focus-within {
-      border-color: var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     input {
       min-inline-size: 0;
       flex: 1;
-      color: var(--foreground-l1);
+      color: var(--tui-text);
       background: transparent;
       border: none;
       outline: none;
       font-size: var(--step--1);
 
       &::placeholder {
-        color: var(--foreground-l4);
+        color: var(--tui-muted);
       }
     }
   }
@@ -394,8 +394,8 @@
 
   teams-head {
     block-size: 100%;
-    border-block-end: 2px solid var(--border);
-    background: var(--background-l2);
+    background: var(--tui-surface);
+    border-block-end: 1px solid var(--tui-border-mid);
   }
 
   th-cell {
@@ -403,9 +403,14 @@
     min-inline-size: 0;
     align-items: center;
     padding-inline: var(--space-2xs);
-    block-size: 2.5rem;
-    color: var(--foreground-l3);
+    block-size: 100%;
+    color: var(--tui-muted);
     font-size: var(--step--1);
+    border-inline-end: 1px solid var(--tui-border-mid);
+
+    &:last-child {
+      border-inline-end: none;
+    }
 
     &[data-static] {
       padding-inline: 0.75rem;
@@ -436,16 +441,18 @@
       }
 
       &:hover {
-        color: var(--foreground-l1);
+        color: var(--tui-text);
       }
 
       &:focus-visible {
-        outline: 2px solid var(--ring);
+        outline: 2px dotted var(--tui-focus);
+        outline-offset: 2px;
       }
     }
 
     &[data-active] {
-      color: var(--foreground-l1);
+      color: var(--tui-text);
+      font-weight: 700;
 
       :global(svg[data-arrow]) {
         opacity: 1;
@@ -460,18 +467,10 @@
   teams-row {
     align-items: stretch;
     min-block-size: 3rem;
-    background: var(--background-l1);
-
-    &[data-even] {
-      background: color-mix(
-        in srgb,
-        var(--background-l2) 55%,
-        var(--background-l1)
-      );
-    }
+    border-block-end: 1px solid var(--tui-border-mid);
 
     &:hover {
-      background: var(--background-l3);
+      background: var(--background-accent);
     }
 
     &[data-banned] {
@@ -479,7 +478,7 @@
     }
 
     &:has(a:focus-visible) {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
       outline-offset: -2px;
     }
   }
@@ -490,6 +489,11 @@
     align-items: center;
     padding-inline: var(--space-2xs);
     overflow: hidden;
+    border-inline-end: 1px solid var(--tui-border-mid);
+
+    &:last-child {
+      border-inline-end: none;
+    }
   }
 
   team-cell {
@@ -539,7 +543,6 @@
       flex-shrink: 0;
       inline-size: 0.5rem;
       block-size: 0.5rem;
-      border-radius: 50%;
       background: var(--tone-color);
     }
 
@@ -586,6 +589,11 @@
       &:hover {
         color: var(--foreground-l1);
         text-decoration: underline;
+      }
+
+      &:focus-visible {
+        outline: 2px dotted var(--tui-focus);
+        outline-offset: 2px;
       }
     }
   }
@@ -646,10 +654,10 @@
     display: block;
     max-inline-size: 22rem;
     padding: var(--space-3xs) var(--space-2xs);
-    color: var(--foreground-l1);
-    background: var(--background-l2);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-sm);
+    color: var(--tui-text);
+    background: var(--tui-surface-light);
+    border: 1px solid var(--tui-border-dark);
+    box-shadow: var(--space-3xs) var(--space-3xs) 0 var(--tui-shadow);
     font-size: var(--step--1);
     white-space: nowrap;
     pointer-events: none;

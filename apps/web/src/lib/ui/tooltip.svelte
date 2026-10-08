@@ -44,15 +44,16 @@
     z-index: var(--layer-popover);
     padding: var(--space-3xs) var(--space-2xs);
     font-size: var(--step--1);
-    color: var(--foreground-l1);
-    background: var(--background-l2);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-sm);
+    color: var(--tui-text);
+    background: var(--tui-surface-light);
+    border: 1px solid var(--tui-border-dark);
+    box-shadow: var(--space-3xs) var(--space-3xs) 0 var(--tui-shadow);
   }
 
   [data-part='arrow'] {
     --arrow-size: 0.625rem;
-    --arrow-background: var(--background-l2);
+    --arrow-background: var(--tui-surface-light);
+    display: none;
     z-index: calc(var(--layer-popover) + 1);
 
     &:has(+ [data-part='content'][data-side='top']) [data-part='arrow-tip'] {

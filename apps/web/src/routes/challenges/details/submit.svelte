@@ -33,7 +33,7 @@
   const clientConfig = $derived(configQuery.data)
   const isArchived = $derived(clientConfig?.isArchived ?? false)
   const flagPlaceholder = $derived(
-    clientConfig?.flagFormatPlaceholder ?? 'flag{...}'
+    clientConfig?.flagFormatPlaceholder ?? 'WHFD{example}'
   )
 
   const endTime = $derived(clientConfig?.endTime ?? Number.POSITIVE_INFINITY)
@@ -165,7 +165,6 @@
       block-size: var(--submit-block-size);
       font-family: var(--font-mono);
       font-size: 1.25rem;
-      border-radius: var(--radius-lg);
 
       &:disabled {
         cursor: not-allowed;
@@ -183,9 +182,10 @@
     block-size: var(--submit-block-size);
     padding-inline: 0.75rem;
     font-size: 1.25rem;
-    color: var(--foreground-l3);
-    background: var(--background-l4);
-    border-radius: var(--radius-lg);
+    color: var(--tui-muted);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     &[data-tone='success'] {
       color: var(--foreground-success);
@@ -212,17 +212,24 @@
     justify-content: center;
     padding-inline: 1rem;
     block-size: var(--submit-block-size);
-    color: var(--foreground-l4);
-    background: var(--background-l4);
+    color: var(--tui-text);
+    background: var(--tui-surface);
     cursor: pointer;
-    border-radius: var(--radius-lg);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
 
     &:hover:enabled {
-      background: var(--background-l5);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+    }
+
+    &:active:enabled {
+      border-color: var(--bevel-recessed);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 1px dotted var(--tui-focus);
+      outline-offset: -5px;
     }
 
     &:disabled {

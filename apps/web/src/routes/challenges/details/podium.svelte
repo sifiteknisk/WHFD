@@ -5,18 +5,13 @@
   import { useCurrentUser } from '$lib/query/user'
   import { solveTimeLabels } from '../model/solve-times'
   import ChallengeDetailsPodiumGrid from './podium-grid.svelte'
-  import {
-    resolvePodiumSlots,
-    type PodiumEntry,
-    type PodiumSelf,
-  } from './podium-slots'
+  import { resolvePodiumSlots, type PodiumEntry } from './podium-slots'
 
   interface Props {
     challenge: Challenge
-    isSolved: boolean
   }
 
-  let { challenge, isSolved }: Props = $props()
+  let { challenge }: Props = $props()
 
   const solvesQuery = useChallengeSolvesSelf(() => challenge.id)
   const userQuery = useCurrentUser()
@@ -28,11 +23,6 @@
   const ctfStartTime = $derived(clientConfigQuery.data?.startTime ?? 0)
   const topSolves = $derived(solvesQuery.data?.solves.slice(0, 4) ?? [])
   const firstBloodTime = $derived(topSolves[0]?.createdAt ?? 0)
-  const mySolvePosition = $derived(solvesQuery.data?.mySolvePosition ?? null)
-  const currentUserSolve = $derived(
-    currentUser?.solves.find(solve => solve.id === challenge.id)
-  )
-
   const slots = $derived.by(() => {
     const top: PodiumEntry[] = topSolves.map((solve, index) => ({
       userId: solve.userId,
@@ -47,33 +37,8 @@
       isSelf: currentUser?.id === solve.userId,
     }))
 
-    const selfEntry: PodiumSelf | null =
-      isSolved && currentUser && currentUserSolve && mySolvePosition
-        ? {
-            name: currentUser.name,
-            avatarUrl: currentUser.avatarUrl,
-            position: mySolvePosition,
-            detail: solveTimeLabels({
-              createdAt: currentUserSolve.createdAt,
-              rank: mySolvePosition,
-              ctfStartTime,
-              firstBloodTime,
-            }).primary,
-          }
-        : null
-
-    const placeholder = currentUser
-      ? {
-          name: currentUser.name,
-          avatarUrl: currentUser.avatarUrl,
-          detail: 'Unsolved',
-        }
-      : null
-
     return resolvePodiumSlots({
       top,
-      selfEntry,
-      placeholder,
       isAuthenticated: !!currentUser,
     })
   })

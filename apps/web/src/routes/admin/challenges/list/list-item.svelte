@@ -10,12 +10,11 @@
 
   interface Props {
     challenge: AdminChallenge
-    category: string
     selected: boolean
     onSelect: () => void
   }
 
-  let { challenge, category, selected, onSelect }: Props = $props()
+  let { challenge, selected, onSelect }: Props = $props()
 
   const isDynamic = $derived(
     challenge.scoring?.kind === ChallengeScoringKind.DYNAMIC
@@ -34,9 +33,10 @@
     type="button"
     onclick={onSelect}
     data-selected={selected ? '' : undefined}
+    data-hidden={challenge.hidden || undefined}
   >
     <item-title>
-      <span data-part="category">{category} /</span>
+      <category-swatch></category-swatch>
       <span data-part="name">{challenge.name}</span>
     </item-title>
 
@@ -72,70 +72,72 @@
   }
 
   button {
-    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.125rem;
     inline-size: 100%;
-    padding: 0.5rem 2.25rem;
+    padding: 0.125rem 0.5rem 0.125rem calc(0.5rem + 4ch);
+    color: var(--tui-text);
     text-align: start;
+    white-space: nowrap;
     cursor: pointer;
 
     &:hover {
-      background: var(--category-background-l1-hover);
+      background: var(--background-accent);
+    }
+
+    &[data-selected],
+    &:focus-visible {
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+
+      item-status,
+      [data-part] {
+        color: inherit;
+      }
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 1px dotted var(--tui-selection-text);
       outline-offset: -2px;
-      z-index: 1;
     }
 
-    &[data-selected] {
-      box-shadow: inset 0 0 0 2px
-        color-mix(in srgb, var(--category-foreground-l1) 25%, transparent);
-
-      &::after {
-        content: '';
-        position: absolute;
-        inset-block: 0;
-        inset-inline-end: 0;
-        inline-size: 24rem;
-        pointer-events: none;
-        background: linear-gradient(
-          to left,
-          var(--category-background-l0),
-          transparent
-        );
-      }
+    &[data-hidden]:not([data-selected], :focus-visible) [data-part='name'] {
+      color: var(--tui-muted);
     }
   }
 
   item-title {
-    position: relative;
-    z-index: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: var(--step-0);
+    display: flex;
+    gap: 1ch;
+    align-items: center;
+    min-inline-size: 0;
   }
 
-  [data-part='category'] {
-    color: var(--category-foreground-l1);
+  category-swatch {
+    flex-shrink: 0;
+    align-self: stretch;
+    inline-size: 0.5em;
+    margin-block: 0.2em;
+    background: var(--category-foreground-l1);
+    border: 1px solid var(--tui-border-dark);
+
+    button:is([data-selected], :focus-visible) & {
+      border-color: var(--tui-selection-text);
+    }
   }
 
   [data-part='name'] {
-    color: var(--category-foreground-l0);
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   item-meta {
-    position: relative;
-    z-index: 1;
     display: flex;
     gap: var(--space-s);
     align-items: center;
     justify-content: flex-end;
-    white-space: nowrap;
     font-variant-numeric: tabular-nums;
   }
 
@@ -144,7 +146,7 @@
     flex-shrink: 0;
     gap: 0.375rem;
     align-items: center;
-    color: var(--category-foreground-l1);
+    color: var(--tui-muted);
 
     :global(svg[data-status-icon]) {
       flex-shrink: 0;
@@ -153,11 +155,15 @@
   }
 
   [data-part='points'] {
-    color: var(--category-foreground-l1);
+    color: var(--tui-muted);
 
     strong {
-      color: var(--category-foreground-l0);
+      color: var(--tui-text);
       font-weight: var(--font-weight-normal);
+    }
+
+    button:is([data-selected], :focus-visible) & strong {
+      color: inherit;
     }
   }
 
@@ -167,10 +173,6 @@
       align-items: center;
       justify-content: space-between;
       gap: var(--space-m);
-    }
-
-    item-title {
-      min-inline-size: 0;
     }
   }
 </style>

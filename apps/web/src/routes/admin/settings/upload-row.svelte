@@ -107,7 +107,7 @@
 
   row-title {
     display: block;
-    color: var(--foreground-l3);
+    color: var(--tui-text);
   }
 
   upload-controls {
@@ -123,8 +123,8 @@
     justify-content: center;
     block-size: 4.5rem;
     padding-inline: var(--space-m);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     &[data-mode='light'] {
       background: oklch(98% 0 0);

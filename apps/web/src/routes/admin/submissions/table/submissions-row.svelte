@@ -134,30 +134,22 @@
     block-size: 3rem;
     cursor: pointer;
     user-select: none;
-    background: var(--background-l1);
+    color: var(--tui-text);
     font-size: var(--step--1);
-
-    &[data-even] {
-      background: var(--background-l2);
-    }
+    border-block-end: 1px solid var(--tui-border-mid);
 
     &:hover {
-      background: var(--background-l3);
+      background: var(--background-accent);
     }
 
-    &[data-expanded] {
-      background: var(--background-l3);
+    &:hover expander-button {
+      color: var(--tui-text);
     }
 
     &:focus-visible,
     &:has(a:focus-visible) {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
       outline-offset: -2px;
-    }
-
-    &:hover expander-button {
-      color: var(--foreground-l1);
-      background: var(--background-l4);
     }
   }
 
@@ -169,6 +161,11 @@
     padding-inline: var(--space-2xs);
     overflow: hidden;
     white-space: nowrap;
+    border-inline-end: 1px solid var(--tui-border-mid);
+
+    &:last-child {
+      border-inline-end: none;
+    }
 
     &[data-col='expander'] {
       justify-content: center;
@@ -225,8 +222,7 @@
     justify-content: center;
     inline-size: 1.75rem;
     block-size: 1.75rem;
-    color: var(--foreground-l3);
-    border-radius: var(--radius-md);
+    color: var(--tui-muted);
 
     :global(svg) {
       inline-size: 1rem;
@@ -270,20 +266,16 @@
   [data-ip] {
     max-inline-size: 100%;
     overflow: hidden;
-    padding: var(--space-3xs) var(--space-2xs);
-    color: var(--foreground-l2);
-    background: var(--background-l4);
-    border-radius: var(--radius-md);
-    font-size: var(--step--2);
+    color: var(--tui-link);
+    font-size: var(--step--1);
     text-overflow: ellipsis;
     white-space: nowrap;
 
     &[data-inert] {
-      color: var(--foreground-l3);
+      color: var(--tui-muted);
     }
 
     &:not([data-inert]):hover {
-      color: var(--foreground-l1);
       text-decoration: underline;
     }
   }
@@ -293,10 +285,10 @@
     max-inline-size: 100%;
     align-items: center;
     gap: var(--space-3xs);
-    padding: var(--space-3xs) var(--space-2xs);
-    color: var(--foreground-l2);
-    background: var(--background-l4);
-    border-radius: var(--radius-md);
+    padding: 0 var(--space-3xs);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: 1px solid var(--tui-border-mid);
     font-size: var(--step--2);
 
     :global(svg) {
@@ -309,6 +301,32 @@
       min-inline-size: 0;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+  }
+
+  submission-row[data-expanded] {
+    color: var(--tui-selection-text);
+    background: var(--tui-selection-bg);
+
+    row-cell :global(*),
+    expander-button {
+      color: inherit;
+    }
+
+    a[data-category-color] {
+      --category-foreground-l0: currentColor;
+      --category-foreground-l1: currentColor;
+    }
+
+    kind-badge {
+      background: transparent;
+      border-color: currentColor;
+    }
+
+    &:focus-visible,
+    &:has(a:focus-visible) {
+      outline: 1px dotted var(--tui-selection-text);
+      outline-offset: -2px;
     }
   }
 </style>

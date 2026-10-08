@@ -152,12 +152,13 @@
   admin-table {
     position: relative;
     display: flex;
+    flex: 1;
     flex-direction: column;
-    block-size: 100%;
+    min-block-size: 0;
     inline-size: 100%;
-    background: var(--background-l1);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-lg);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     overflow: hidden;
 
     &[data-scrolling] admin-row {
@@ -174,8 +175,12 @@
     display: block;
     flex: 1;
     min-block-size: 0;
-    inline-size: 100%;
+    margin: 0 var(--space-2xs) var(--space-2xs);
     overflow: auto;
+    color: var(--tui-text);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
     outline: none;
     overscroll-behavior: none;
     overflow-anchor: none;
@@ -195,7 +200,7 @@
     z-index: 20;
     display: block;
     flex-shrink: 0;
-    background: var(--background-l1);
+    background: var(--tui-surface);
   }
 
   admin-empty {
@@ -228,7 +233,7 @@
     inline-size: 100%;
     align-items: center;
     justify-content: center;
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
     font-size: 1.25rem;
   }
 </style>

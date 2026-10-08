@@ -92,12 +92,12 @@
     gap: var(--space-3xs);
     margin-block-start: var(--space-3xs);
     padding-block-start: var(--space-2xs);
-    border-block-start: 2px solid var(--background-l5);
+    border-block-start: 1px dashed var(--tui-border-mid);
     font-variant-numeric: tabular-nums;
   }
 
   [data-num] {
-    color: var(--foreground-l1);
+    color: var(--tui-text);
   }
 
   [data-delta] {
@@ -106,6 +106,6 @@
   }
 
   [data-eq] {
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
   }
 </style>

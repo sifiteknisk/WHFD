@@ -86,9 +86,11 @@
     flex-direction: column;
     inline-size: var(--popover-width, max-content);
     max-inline-size: min(90vw, 24rem);
-    background: var(--background-l1);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
+    box-shadow: var(--space-3xs) var(--space-3xs) 0 var(--tui-shadow);
     overflow: hidden;
   }
 </style>
