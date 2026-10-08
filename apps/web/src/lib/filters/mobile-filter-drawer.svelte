@@ -206,15 +206,16 @@
     align-items: center;
     gap: var(--space-2xs);
     padding: var(--space-2xs) var(--space-xs);
-    border-block-end: 2px solid var(--border);
+    color: var(--tui-selection-text);
+    background: var(--tui-selection-bg);
   }
 
   drawer-title {
     min-inline-size: 0;
     flex: 1;
     overflow: hidden;
-    color: var(--foreground-l1);
     font-size: var(--step-0);
+    font-weight: 700;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
@@ -226,20 +227,24 @@
     justify-content: center;
     inline-size: 2rem;
     block-size: 2rem;
-    color: var(--foreground-l3);
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-md);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     cursor: pointer;
 
     &:hover {
-      color: var(--foreground-l1);
-      background: var(--background-l3);
+      background: var(--tui-surface-light);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -2px;
+      outline: 1px dotted var(--tui-selection-text);
+      outline-offset: 2px;
     }
 
     :global(svg) {
@@ -255,7 +260,7 @@
   drawer-search {
     flex-shrink: 0;
     padding: var(--space-2xs) var(--space-xs);
-    border-block-end: 2px solid var(--border);
+    border-block-end: 1px solid var(--tui-border-mid);
   }
 
   mode-controls {
@@ -264,38 +269,44 @@
     align-items: center;
     gap: var(--space-3xs);
     padding: var(--space-2xs) var(--space-xs);
-    border-block-end: 2px solid var(--border);
+    border-block-end: 1px solid var(--tui-border-mid);
 
     button {
       display: flex;
       block-size: 2rem;
       align-items: center;
       padding-inline: 0.5rem;
-      color: var(--foreground-l3);
+      color: var(--tui-text);
       background: transparent;
-      border: none;
-      border-radius: var(--radius-md);
+      border: var(--tui-border-width) solid transparent;
       font-size: var(--step--1);
       cursor: pointer;
 
       &:hover {
-        color: var(--foreground-l1);
-        background: var(--background-l3);
+        background: var(--tui-surface-light);
       }
 
       &[data-active] {
-        color: var(--foreground-l1);
-        background: var(--background-l3);
+        font-weight: 700;
+        color: var(--tui-selection-text);
+        background: var(--tui-selection-bg);
+        border-color: var(--bevel-recessed);
       }
 
       &:focus-visible {
-        outline: 2px solid var(--ring);
-        outline-offset: -2px;
+        outline: 2px dotted var(--tui-focus);
+        outline-offset: 2px;
       }
     }
 
     button[data-clear] {
       margin-inline-start: auto;
+      background: var(--tui-surface);
+      border-color: var(--bevel-raised);
+
+      &:hover {
+        background: var(--tui-surface-light);
+      }
     }
   }
 
@@ -322,20 +333,22 @@
     align-items: center;
     gap: var(--space-2xs);
     padding-inline: 0.5rem;
-    color: var(--foreground-l2);
+    color: var(--tui-text);
     background: transparent;
     border: none;
-    border-radius: var(--radius-md);
     text-align: start;
     cursor: pointer;
 
-    &:hover {
-      background: var(--background-l3);
-    }
-
+    &:hover,
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -2px;
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+      outline: none;
+
+      span[data-summary],
+      :global(svg[data-chevron]) {
+        color: inherit;
+      }
     }
 
     :global(svg) {
@@ -370,21 +383,25 @@
   button[data-clear-all] {
     margin: var(--space-2xs) var(--space-xs);
     block-size: 2.5rem;
-    color: var(--foreground-l3);
-    background: transparent;
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     font-size: var(--step--1);
     cursor: pointer;
 
     &:hover {
-      color: var(--foreground-l1);
-      background: var(--background-l3);
+      background: var(--tui-surface-light);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -2px;
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
   }
 </style>

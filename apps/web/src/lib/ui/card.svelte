@@ -26,23 +26,40 @@
 
 <style>
   ui-card {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--space-s);
     padding: var(--space-s-m);
-    background: var(--background-l1);
-    border-radius: var(--radius-lg);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
+
+    &:has(card-title) {
+      padding-block-start: var(--space-m);
+    }
   }
 
   card-header {
     display: flex;
     flex-direction: column;
     gap: var(--space-3xs);
+    text-align: center;
   }
 
   card-title {
-    display: block;
-    font-size: var(--step-1);
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 50%;
+    max-inline-size: calc(100% - 2rem);
+    padding-inline: 0.8ch;
+    overflow: hidden;
+    font-weight: 700;
+    color: var(--tui-title);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: var(--tui-surface);
+    translate: -50% -55%;
   }
 
   card-description {

@@ -129,7 +129,6 @@
   .preview {
     position: relative;
     --avatar-size: 4.5rem;
-    --avatar-radius: var(--radius-lg);
   }
 
   .loading {
@@ -139,9 +138,8 @@
     align-items: center;
     justify-content: center;
     font-size: 1.25rem;
-    color: var(--foreground-l0);
+    color: var(--tui-selection-text);
     background: rgb(0 0 0 / 0.5);
-    border-radius: var(--radius-lg);
   }
 
   .actions {

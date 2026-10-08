@@ -81,7 +81,8 @@
     display: flex;
     block-size: var(--score-row-height-full);
     padding-block-end: var(--score-row-gap);
-    background: var(--background-l0);
+    background: var(--score-rule);
+    box-shadow: 0 -1px 0 var(--score-rule);
     contain: layout style;
     pointer-events: auto;
 
@@ -90,8 +91,7 @@
       position: absolute;
       inset: 0 0 var(--score-row-gap) 0;
       z-index: 11;
-      border: 2px solid var(--ring);
-      border-radius: var(--radius-lg);
+      border: 1px dotted var(--tui-focus);
       pointer-events: none;
     }
 
@@ -103,63 +103,38 @@
   row-team {
     --rank-fg-l0: var(--foreground-self-l0);
     --rank-fg-l1: var(--foreground-self-l1);
-    --rank-glow: var(--jade-a3);
-    position: relative;
-    z-index: 0;
+    --row-fg: var(--tui-text);
+    --row-muted: var(--tui-muted);
     display: flex;
     align-items: center;
-    gap: var(--space-2xs);
+    gap: 1ch;
     flex-shrink: 0;
     inline-size: var(--score-team-column-width);
     block-size: var(--score-row-height);
-    padding-inline: 1rem;
-    background: var(--background-l0);
-
-    &::before,
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      border-radius: var(--radius-lg);
-    }
-
-    &::before {
-      background: var(--background-self-l0);
-    }
-
-    &::after {
-      inline-size: min(24rem, 100%);
-      background: linear-gradient(to right, var(--rank-glow), transparent);
-    }
+    padding-inline: 0.75rem;
+    color: var(--row-fg);
+    background: var(--background-self-l0);
 
     &[data-rank='first'] {
       --rank-fg-l0: var(--foreground-gold-l0);
       --rank-fg-l1: var(--foreground-gold-l1);
-      --rank-glow: var(--background-gold);
     }
 
     &[data-rank='second'] {
       --rank-fg-l0: var(--foreground-silver-l0);
       --rank-fg-l1: var(--foreground-silver-l1);
-      --rank-glow: var(--background-silver);
     }
 
     &[data-rank='third'] {
       --rank-fg-l0: var(--foreground-bronze-l0);
       --rank-fg-l1: var(--foreground-bronze-l1);
-      --rank-glow: var(--background-bronze);
     }
 
     @media (width >= 48rem) {
       position: sticky;
       inset-inline-start: 0;
       z-index: 10;
-
-      &::before {
-        border-start-end-radius: 0;
-        border-end-end-radius: 0;
-      }
+      border-inline-end: 1px solid var(--score-rule);
     }
   }
 
@@ -172,8 +147,6 @@
       inline-size: var(--score-content-width);
       block-size: var(--score-row-height);
       background: var(--background-self-l0);
-      border-start-end-radius: var(--radius-lg);
-      border-end-end-radius: var(--radius-lg);
     }
   }
 </style>

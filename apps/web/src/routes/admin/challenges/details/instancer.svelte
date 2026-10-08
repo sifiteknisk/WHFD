@@ -218,10 +218,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-s);
-
-    &[data-disabled] {
-      opacity: 0.6;
-    }
   }
 
   pane-loading {
@@ -261,11 +257,11 @@
     align-items: center;
     gap: 0 var(--space-3xs);
     font-size: var(--step--1);
-    color: var(--foreground-l2);
+    color: var(--tui-text);
   }
 
   field-hint {
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
   }
 
   :global(input[data-mono]) {

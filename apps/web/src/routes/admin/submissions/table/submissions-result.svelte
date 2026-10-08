@@ -46,6 +46,5 @@
     inline-size: 0.375rem;
     block-size: 0.375rem;
     background: var(--result-color, var(--foreground-l3));
-    border-radius: 50%;
   }
 </style>

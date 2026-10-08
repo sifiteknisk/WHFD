@@ -3,7 +3,7 @@
   import { useQueryClient } from '@tanstack/svelte-query'
   import { mergeProps } from '@zag-js/svelte'
   import wordmarkDark from '$lib/assets/wordmark-dark.svg'
-  import wordmarkLight from '$lib/assets/wordmark-light.svg'
+  import NavigationBongs from '$lib/components/navigation-bongs.svelte'
   import NavigationButton from '$lib/components/navigation-button.svelte'
   import NavigationCountdown from '$lib/components/navigation-countdown.svelte'
   import NavigationMobile from '$lib/components/navigation-mobile.svelte'
@@ -15,9 +15,11 @@
     IconGear,
     IconGlobeHemisphereWest,
     IconHouse,
+    IconInfo,
     IconSignIn,
     IconSignOut,
     IconTableFilled,
+    IconTicket,
     IconUserGear,
   } from '$lib/icons'
   import { useClientConfig } from '$lib/query/config'
@@ -52,8 +54,7 @@
   )
   const isAdmin = $derived(hasAnyPermission(user, ADMIN_PANEL_PERMISSIONS))
 
-  const lightLogo = $derived(clientConfig?.logoLightUrl || wordmarkLight)
-  const darkLogo = $derived(clientConfig?.logoDarkUrl || wordmarkDark)
+  const logo = $derived(clientConfig?.logoDarkUrl || wordmarkDark)
 
   const divisionLabel = $derived(
     user?.division
@@ -83,6 +84,13 @@
         icon: IconTableFilled,
         href: '/admin/submissions',
         show: canReadChallenges && canManageUsers,
+      },
+      {
+        value: 'admin-bongs',
+        label: 'Bongs',
+        icon: IconTicket,
+        href: '/admin/bongs',
+        show: canManageUsers,
       },
       {
         value: 'admin-settings',
@@ -121,12 +129,7 @@
 <header>
   <nav-start>
     <a href="/" aria-label="Home">
-      <logo-light data-theme-visible="light"
-        ><img src={lightLogo} alt={clientConfig?.ctfName} /></logo-light
-      >
-      <logo-dark data-theme-visible="dark"
-        ><img src={darkLogo} alt={clientConfig?.ctfName} /></logo-dark
-      >
+      <img src={logo} alt={clientConfig?.ctfName} />
     </a>
     <nav aria-label="Main" {@attach rovingFocus}>
       <Tooltip label="Home">
@@ -165,6 +168,18 @@
           />
         {/snippet}
       </Tooltip>
+      <Tooltip label="Info">
+        {#snippet children({ props })}
+          <NavigationButton
+            {...props}
+            data-roving
+            href="/info"
+            activePath="/info"
+            label="Info"
+            icon={IconInfo}
+          />
+        {/snippet}
+      </Tooltip>
       {#if isAdmin}
         <Tooltip label="Admin">
           {#snippet children({ props: tooltipProps })}
@@ -185,61 +200,66 @@
     </nav>
   </nav-start>
 
-  <nav-end>
-    <NavigationCountdown />
-    {#if user && !isArchived}
-      {@const currentUser = user}
-      {#await import('$lib/components/navigation-team-stats.svelte') then { default: NavigationTeamStats }}
-        <NavigationTeamStats />
-      {/await}
-      <Menu label="Account" items={userMenuItems} placement="bottom-end">
-        {#snippet trigger({ props })}
-          <button {...props}>
-            <user-details>
-              <user-name>{currentUser.name}</user-name>
-              <user-meta>
-                {#if currentUser.countryCode}
-                  <img
-                    src="/flags/{countryCodeToFlagFilename(
-                      currentUser.countryCode
-                    )}"
-                    alt="{currentUser.countryCode} flag"
-                  />
-                {/if}
-                {#if currentUser.countryCode && currentUser.statusText}
-                  <meta-separator>·</meta-separator>
-                {/if}
-                {#if currentUser.statusText}
-                  <user-status>{currentUser.statusText}</user-status>
-                {:else if !currentUser.countryCode}
-                  <user-status>{divisionLabel}</user-status>
-                {/if}
-              </user-meta>
-            </user-details>
-            <Avatar src={currentUser.avatarUrl} name={currentUser.name} />
-          </button>
-        {/snippet}
-      </Menu>
-    {:else if !isArchived}
-      <Tooltip label="Login">
-        {#snippet children({ props })}
-          <NavigationButton
-            {...props}
-            href="/login"
-            label="Login"
-            icon={IconSignIn}
-          />
-        {/snippet}
-      </Tooltip>
-    {/if}
-    <ThemeToggle />
-  </nav-end>
+  <header-end>
+    <NavigationBongs />
+    <nav-end>
+      <NavigationCountdown />
+      {#if user && !isArchived}
+        {@const currentUser = user}
+        {#await import('$lib/components/navigation-team-stats.svelte') then { default: NavigationTeamStats }}
+          <NavigationTeamStats />
+        {/await}
+        <Menu label="Account" items={userMenuItems} placement="bottom-end">
+          {#snippet trigger({ props })}
+            <button {...props}>
+              <user-details>
+                <user-name>{currentUser.name}</user-name>
+                <user-meta>
+                  {#if currentUser.countryCode}
+                    <img
+                      src="/flags/{countryCodeToFlagFilename(
+                        currentUser.countryCode
+                      )}"
+                      alt="{currentUser.countryCode} flag"
+                    />
+                  {/if}
+                  {#if currentUser.countryCode && currentUser.statusText}
+                    <meta-separator>·</meta-separator>
+                  {/if}
+                  {#if currentUser.statusText}
+                    <user-status>{currentUser.statusText}</user-status>
+                  {:else if !currentUser.countryCode}
+                    <user-status>{divisionLabel}</user-status>
+                  {/if}
+                </user-meta>
+              </user-details>
+              <Avatar src={currentUser.avatarUrl} name={currentUser.name} />
+            </button>
+          {/snippet}
+        </Menu>
+      {:else if !isArchived}
+        <Tooltip label="Login">
+          {#snippet children({ props })}
+            <NavigationButton
+              {...props}
+              href="/login"
+              label="Login"
+              icon={IconSignIn}
+            />
+          {/snippet}
+        </Tooltip>
+      {/if}
+      <ThemeToggle />
+    </nav-end>
 
-  <NavigationMobile />
+    <NavigationMobile />
+  </header-end>
 </header>
 
 <style>
   header {
+    --nav-control-height: 3rem;
+
     position: fixed;
     inset-block-start: 0;
     inset-inline: 0;
@@ -248,12 +268,9 @@
     align-items: center;
     justify-content: space-between;
     block-size: var(--header-height);
-    padding: 0.75rem 1rem;
-    background: var(--background-l0);
-
-    @media (width >= 48rem) {
-      padding-inline: 2.25rem;
-    }
+    padding: 0.75rem var(--shell-gap);
+    color: var(--tui-selection-text);
+    background: transparent;
   }
 
   nav-start {
@@ -265,6 +282,13 @@
       display: block;
       block-size: 2rem;
     }
+  }
+
+  header-end {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    min-inline-size: 0;
   }
 
   nav,
@@ -279,17 +303,27 @@
   }
 
   [data-scope='menu'][data-part='trigger'] {
-    --avatar-size: 3rem;
+    --avatar-size: calc(
+      var(--nav-control-height) - 2 * var(--tui-border-width)
+    );
 
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    block-size: var(--nav-control-height);
     padding-inline-start: 0.5rem;
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     cursor: pointer;
-    border-radius: var(--radius-lg);
 
     &:hover {
-      background: var(--background-l2);
+      background: var(--tui-surface-light);
+    }
+
+    &[data-state='open'] {
+      border-color: var(--bevel-recessed);
     }
   }
 
@@ -303,9 +337,10 @@
     display: block;
     max-inline-size: 16rem;
     overflow: hidden;
-    font-size: 1.125rem;
+    font-size: 1rem;
+    font-weight: 700;
     line-height: 1.25;
-    color: var(--foreground-l0);
+    color: var(--tui-text);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -331,9 +366,9 @@
 
   user-status {
     display: block;
-    max-inline-size: 8rem;
+    max-inline-size: 10rem;
     overflow: hidden;
-    font-size: 1rem;
+    font-size: 0.875rem;
     color: var(--foreground-l3);
     text-overflow: ellipsis;
     white-space: nowrap;

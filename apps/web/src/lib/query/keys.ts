@@ -64,6 +64,7 @@ export const queryKeys = {
   adminBotStatus: ['admin', 'admin-bot', 'status'] as const,
   adminExternalAuthClients: ['admin', 'external-auth', 'clients'] as const,
   adminSettings: ['admin', 'settings'] as const,
+  adminBongs: ['admin', 'bongs'] as const,
   adminSubmissions: (params: AdminSubmissionsQueryParams) =>
     ['admin', 'submissions', 'list', params] as const,
 }

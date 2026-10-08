@@ -3,6 +3,7 @@ import type { DatabaseClient } from '@rctf/db'
 import { challenges, scoreEvents, users } from '@rctf/db'
 import { and, asc, eq, gte, inArray, sql } from 'drizzle-orm'
 import { inJsonbArray } from '../lib/db-bulk'
+import { BONG_POINTS, maxBongs } from '../services/bongs'
 import { challengeIsPublicSql } from '../services/challenge-queries'
 import { getCompetitionTiming } from '../services/settings'
 import type { TypedRedis } from './scripts'
@@ -72,16 +73,18 @@ const cacheLeaderboard = async (
   data: CalculatedLeaderboard
 ): Promise<void> => {
   const divisionCounters = new Map<string, number>()
+  let globalRank = 0
   const userUpdates = data.users
     .filter(u => u.hadAnySolve)
-    .map((user, idx) => {
+    .map(user => {
       const division = user.division ?? ''
       const divRank = (divisionCounters.get(division) ?? 0) + 1
       divisionCounters.set(division, divRank)
+      const globallyRanked = division.toLowerCase() !== 'relaxed'
       return {
         id: user.id,
         score: user.score,
-        global_rank: idx + 1,
+        global_rank: globallyRanked ? ++globalRank : null,
         division_rank: divRank,
         last_solve_at: user.lastSolve
           ? new Date(user.lastSolve).toISOString()
@@ -96,10 +99,17 @@ const cacheLeaderboard = async (
     ([id, info]) => ({ id, score: info.score, solve_count: info.solves })
   )
 
+  const earnedFromScore = sql`(COALESCE(resolved.score, 0) / ${sql.raw(String(BONG_POINTS))})`
+  const cap = maxBongs()
+  const earnedBongs =
+    cap === undefined ? earnedFromScore : sql`LEAST(${cap}, ${earnedFromScore})`
+
   await db.transaction(async tx => {
     await tx.execute(sql`
       UPDATE users SET
         score = COALESCE(resolved.score, 0),
+        bongs_total = GREATEST(users.bongs_total - users.bongs_available, ${earnedBongs}),
+        bongs_available = GREATEST(0, ${earnedBongs} - (users.bongs_total - users.bongs_available)),
         global_rank = resolved.global_rank,
         division_rank = resolved.division_rank,
         last_solve_at = resolved.last_solve_at,
@@ -116,7 +126,7 @@ const cacheLeaderboard = async (
         LEFT JOIN jsonb_to_recordset(${JSON.stringify(userUpdates)}::jsonb)
           AS vals(id text, score int, global_rank int, division_rank int, last_solve_at timestamptz, last_tiebreak_solve_at timestamptz)
           ON u.id = vals.id
-        WHERE u.global_rank IS NOT NULL OR vals.id IS NOT NULL
+        WHERE u.global_rank IS NOT NULL OR vals.id IS NOT NULL OR u.bongs_total > 0
       ) resolved
       WHERE users.id = resolved.id
     `)

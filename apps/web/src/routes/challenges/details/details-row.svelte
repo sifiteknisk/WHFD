@@ -99,7 +99,7 @@
         {/if}
       {/if}
 
-      {#if globalPlace}
+      {#if globalPlace && division?.toLowerCase() !== 'relaxed'}
         {#if flagFilename}<meta-dot>·</meta-dot>{/if}
         <span data-part="global">#{globalPlace} global</span>
       {/if}
@@ -129,7 +129,7 @@
     --avatar-size: 2.5rem;
     --row-fg-l0: var(--foreground-nth-l0);
     --row-fg-l1: var(--foreground-nth-l1);
-    --row-base: var(--background-l3);
+    --row-base: var(--tui-surface-light);
     --row-gradient: transparent;
 
     position: relative;
@@ -139,7 +139,7 @@
     align-items: center;
     block-size: 4rem;
     padding: 0.5rem 1rem;
-    border-radius: var(--radius-lg);
+    border-block-end: 1px solid var(--tui-border-mid);
 
     @media (width >= 40rem) {
       --avatar-size: 3rem;
@@ -150,7 +150,6 @@
       position: absolute;
       inset: 0;
       z-index: -2;
-      border-radius: inherit;
       background: var(--row-base);
     }
 
@@ -160,10 +159,8 @@
       inset-block: 0;
       inset-inline-start: 0;
       z-index: -1;
-      inline-size: 24rem;
-      max-inline-size: 100%;
-      border-radius: inherit;
-      background: linear-gradient(to right, var(--row-gradient), transparent);
+      inline-size: 0.375rem;
+      background: var(--row-gradient);
     }
 
     &[data-self] {
@@ -173,30 +170,30 @@
     &[data-variant='gold'] {
       --row-fg-l0: var(--foreground-gold-l0);
       --row-fg-l1: var(--foreground-gold-l1);
-      --row-gradient: var(--background-gold);
+      --row-gradient: var(--foreground-gold-l0);
     }
 
     &[data-variant='silver'] {
       --row-fg-l0: var(--foreground-silver-l0);
       --row-fg-l1: var(--foreground-silver-l1);
-      --row-gradient: var(--background-silver);
+      --row-gradient: var(--foreground-silver-l0);
     }
 
     &[data-variant='bronze'] {
       --row-fg-l0: var(--foreground-bronze-l0);
       --row-fg-l1: var(--foreground-bronze-l1);
-      --row-gradient: var(--background-bronze);
+      --row-gradient: var(--foreground-bronze-l0);
     }
 
     &[data-variant='self'] {
       --row-fg-l0: var(--foreground-self-l0);
       --row-fg-l1: var(--foreground-self-l1);
-      --row-gradient: var(--jade-a3);
+      --row-gradient: var(--foreground-self-l0);
     }
 
     &:has(a[data-part='name']:focus-visible) {
-      outline: 2px solid var(--ring);
-      outline-offset: -2px;
+      outline: 1px dotted var(--tui-focus);
+      outline-offset: -3px;
     }
   }
 

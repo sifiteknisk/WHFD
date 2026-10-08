@@ -71,14 +71,20 @@
     align-items: center;
     gap: 0.375rem;
     padding: 0.25rem 1rem;
-    color: var(--foreground-l2);
+    color: var(--tui-text);
     white-space: nowrap;
     cursor: pointer;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border: var(--tui-border-width) solid transparent;
+
+    &:hover {
+      background: var(--tui-surface-light);
+    }
 
     &[data-selected] {
-      color: var(--foreground-l0);
-      background: var(--background-l2);
+      font-weight: 700;
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+      border-color: var(--bevel-recessed);
     }
 
     :global([data-slot='tab-icon']) {

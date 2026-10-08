@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { IconTriangleFilled, IconTriangleInvertedFilled } from '$lib/icons'
-
   interface Props {
     delta: number | undefined | null
   }
@@ -9,37 +7,27 @@
 </script>
 
 {#if delta && delta > 0}
-  <score-delta data-trend="positive">
-    <IconTriangleFilled class="delta-icon" />
-    <span>{delta}</span>
-  </score-delta>
+  <score-delta data-trend="positive">+{delta}</score-delta>
 {:else if delta && delta < 0}
-  <score-delta data-trend="negative">
-    <IconTriangleInvertedFilled class="delta-icon" />
-    <span>{Math.abs(delta)}</span>
-  </score-delta>
+  <score-delta data-trend="negative">-{Math.abs(delta)}</score-delta>
 {/if}
 
 <style>
   score-delta {
-    display: flex;
-    align-items: center;
-    gap: 0.125rem;
     font-size: var(--step--1);
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
 
     &[data-trend='positive'] {
-      color: var(--foreground-success);
+      color: var(--tui-success);
     }
 
     &[data-trend='negative'] {
-      color: var(--foreground-destructive);
+      color: var(--tui-danger);
     }
 
-    :global(.delta-icon) {
-      inline-size: 0.625rem;
-      block-size: 0.625rem;
-      flex-shrink: 0;
+    :global(row-team[data-hovered]) & {
+      color: inherit;
     }
   }
 </style>

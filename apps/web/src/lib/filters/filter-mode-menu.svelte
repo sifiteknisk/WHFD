@@ -47,10 +47,10 @@
     align-items: center;
     gap: var(--space-3xs);
     padding-inline: 0.5rem;
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
     background: transparent;
     border: none;
-    border-inline-end: 2px solid var(--border);
+    border-inline-end: 1px solid var(--tui-border-mid);
     font-size: var(--step--1);
     cursor: pointer;
 
@@ -59,14 +59,18 @@
       block-size: 0.75rem;
     }
 
-    &:hover,
+    &:hover {
+      color: var(--tui-text);
+      background: var(--background-accent);
+    }
+
     &[data-state='open'] {
-      color: var(--foreground-l2);
-      background: var(--background-l3);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
       outline-offset: -2px;
     }
   }

@@ -50,17 +50,22 @@
   </page-status>
 {:else}
   <challenges-empty>
-    <EmptyState
-      icon={IconFlagBannerFold}
-      title="No challenges yet"
-      subtitle="Check back soon for challenges!"
-    />
+    <Card title="Challenges">
+      <EmptyState
+        icon={IconFlagBannerFold}
+        title="No challenges yet"
+        subtitle="Check back soon for challenges!"
+      />
+    </Card>
   </challenges-empty>
 {/if}
 
 <style>
   challenges-reveal {
-    display: block;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-block-size: 0;
   }
 
   page-status,
@@ -69,6 +74,12 @@
     flex: 1;
     align-items: center;
     justify-content: center;
+    padding: var(--shell-title-space) var(--space-s) var(--tui-shadow-offset);
+
+    :global(ui-card) {
+      box-shadow: var(--tui-shadow-offset) var(--tui-shadow-offset) 0
+        var(--tui-shadow);
+    }
   }
 
   page-status {

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { IconX } from '$lib/icons'
+  import { pointsTier } from '../../challenges/model/points-tier'
   import {
     getChallengeCellsInnerWidth,
     getChallengeCellWidth,
@@ -123,20 +124,22 @@
   </header-name-slot>
 {/snippet}
 
-{#snippet pointsBadge(points: number, dynamic: boolean)}
+{#snippet pointsBadge(points: number, dynamic: boolean, tiered = true)}
   <points-cell>
     {#if dynamic}
-      <span data-points-badge data-dynamic>n/a</span>
+      <span data-points-badge data-dynamic>dyn</span>
     {:else}
-      <span data-points-badge>{points}</span>
+      <span
+        data-points-badge
+        data-tier={tiered ? pointsTier(points) : undefined}>{points}</span
+      >
     {/if}
   </points-cell>
 {/snippet}
 
-{#snippet categoryFooter(config: CategoryGroup['config'], label: string | null)}
-  {@const Icon = config.icon}
+{#snippet categoryFooter(label: string | null)}
   <category-footer data-labeled={label ? true : undefined}>
-    <Icon class="category-icon" />
+    <category-swatch></category-swatch>
     {#if label}
       <span>{label}</span>
     {/if}
@@ -171,9 +174,9 @@
               <col-highlight></col-highlight>
             {/if}
             <category-points>
-              {@render pointsBadge(points, dynamicOnly)}
+              {@render pointsBadge(points, dynamicOnly, false)}
             </category-points>
-            {@render categoryFooter(group.config, null)}
+            {@render categoryFooter(null)}
           </category-block>
         {/each}
       </category-row>
@@ -213,7 +216,6 @@
             {/each}
           </category-points>
           {@render categoryFooter(
-            group.config,
             group.challenges.length > 1 ? group.config.name : null
           )}
         </category-block>
@@ -237,7 +239,7 @@
               isDynamicChallenge(challenge)
             )}
           </category-points>
-          {@render categoryFooter(challenge.config, null)}
+          {@render categoryFooter(null)}
         </category-block>
       {/each}
     {/if}
@@ -290,6 +292,7 @@
 
   span[data-name] {
     overflow: hidden;
+    font-weight: 700;
     white-space: nowrap;
     text-overflow: ellipsis;
     text-transform: none;
@@ -303,11 +306,10 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
-    padding: 0;
+    padding: 0 0.25rem;
     background: transparent;
     border: 0;
     cursor: pointer;
-    transition: translate 150ms ease;
 
     span[data-label] {
       overflow: hidden;
@@ -315,9 +317,10 @@
       text-overflow: ellipsis;
     }
 
-    &:hover {
-      translate: 1.5px -1.5px;
-      text-decoration: underline;
+    &:hover,
+    &[data-focused] {
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
 
       :global(svg[data-focus-icon]) {
         opacity: 1;
@@ -325,8 +328,8 @@
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      border-radius: var(--radius-xs);
+      outline: 1px dotted var(--tui-focus);
+      outline-offset: 1px;
     }
 
     :global(svg[data-focus-icon]) {
@@ -334,7 +337,6 @@
       inline-size: 1rem;
       block-size: 1rem;
       opacity: 0.5;
-      transition: opacity 150ms ease;
     }
   }
 
@@ -366,7 +368,6 @@
     inset: 0;
     display: flex;
     gap: 0.25rem;
-    border-radius: inherit;
   }
 
   column-hit {
@@ -383,23 +384,14 @@
     }
 
     &[data-hovered] {
-      background: color-mix(in oklab, var(--foreground-l0) 8%, transparent);
-    }
-
-    &:first-child {
-      border-start-start-radius: inherit;
-    }
-
-    &:last-child {
-      border-start-end-radius: inherit;
+      background: color-mix(in oklab, var(--tui-selection-bg) 16%, transparent);
     }
   }
 
   col-highlight {
     position: absolute;
     inset: 0;
-    background: color-mix(in oklab, var(--foreground-l0) 8%, transparent);
-    border-radius: inherit;
+    background: color-mix(in oklab, var(--tui-selection-bg) 16%, transparent);
     pointer-events: none;
   }
 
@@ -413,17 +405,19 @@
     display: flex;
     flex-direction: column;
     inline-size: var(--block-width);
-    background: var(--category-background-l0);
-    border-start-start-radius: var(--radius-md);
-    border-start-end-radius: var(--radius-md);
+    background: color-mix(
+      in oklab,
+      var(--category-foreground-l1) 8%,
+      var(--score-bg)
+    );
+    border-block-start: 2px solid var(--category-foreground-l1);
 
     &::before {
       content: '';
       position: absolute;
       inset: 0;
       z-index: -1;
-      background: var(--background-l0);
-      border-radius: inherit;
+      background: var(--score-bg);
     }
 
     &[data-dimmed] {
@@ -436,7 +430,7 @@
   }
 
   category-points {
-    padding-block: 0.375rem;
+    padding-block: 0.25rem;
   }
 
   challenge-point {
@@ -457,22 +451,34 @@
     justify-content: center;
     min-inline-size: 1.25rem;
     block-size: 1.25rem;
-    color: var(--category-foreground-l1);
+    color: var(--tui-text);
     font-size: var(--step--1);
+    font-variant-numeric: tabular-nums;
     line-height: 1;
     white-space: nowrap;
-    opacity: 0.75;
+
+    &[data-tier='low'] {
+      color: var(--foreground-green-l1);
+    }
+
+    &[data-tier='mid'] {
+      color: var(--foreground-yellow-l1);
+    }
+
+    &[data-tier='high'] {
+      color: var(--foreground-red-l1);
+    }
 
     &[data-dynamic] {
-      font-size: var(--step--2);
+      color: var(--tui-muted);
     }
   }
 
   category-footer {
     align-items: center;
     justify-content: center;
-    gap: 0.35rem;
-    padding-block: 0 0.5rem;
+    gap: 1ch;
+    padding-block: 0 0.375rem;
     padding-inline: 0.5rem;
     overflow: hidden;
 
@@ -480,16 +486,18 @@
       overflow: hidden;
       color: var(--category-foreground-l1);
       font-size: var(--step--1);
+      font-weight: 700;
       white-space: nowrap;
       text-overflow: ellipsis;
       text-transform: capitalize;
     }
   }
 
-  :global(.category-icon) {
+  category-swatch {
     flex-shrink: 0;
-    inline-size: 1.25rem;
-    block-size: 1.25rem;
-    color: var(--category-foreground-l1);
+    inline-size: 0.75em;
+    block-size: 0.75em;
+    background: var(--category-foreground-l1);
+    border: 1px solid var(--tui-border-dark);
   }
 </style>

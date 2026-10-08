@@ -2,6 +2,7 @@ import { config } from '@rctf/config'
 import { GetClientConfigRouteV2, ProtectedAction } from '@rctf/types'
 import { captchaProvider } from '../../../../providers/instances/captcha'
 import { instancerEnabled } from '../../../../providers/instances/instancer'
+import { maxBongs } from '../../../../services/bongs'
 import { getResolvedSettings } from '../../../../services/settings'
 import integrationsGroup from '../group'
 
@@ -34,6 +35,7 @@ integrationsGroup.route(GetClientConfigRouteV2, async ({ res, ctx }) => {
     ctftime: config.ctftime ?? null,
     instancerEnabled,
     isArchived: false,
+    maxBongs: maxBongs() ?? null,
     captcha: captchaProvider
       ? {
           provider: config.captcha!.provider!.name,

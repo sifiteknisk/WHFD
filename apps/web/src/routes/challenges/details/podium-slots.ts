@@ -11,19 +11,6 @@ export interface PodiumEntry {
   isSelf: boolean
 }
 
-export interface PodiumSelf {
-  name: string
-  avatarUrl: string | null
-  position: number
-  detail: string
-}
-
-export interface PodiumPlaceholder {
-  name: string
-  avatarUrl: string | null
-  detail: string
-}
-
 export type PodiumSlotKind = 'entry' | 'self' | 'placeholder' | 'empty'
 
 export interface PodiumSlot {
@@ -38,8 +25,6 @@ export interface PodiumSlot {
 
 export interface ResolvePodiumInput {
   top: PodiumEntry[]
-  selfEntry: PodiumSelf | null
-  placeholder: PodiumPlaceholder | null
   isAuthenticated: boolean
 }
 
@@ -67,32 +52,8 @@ function emptySlot(index: number): PodiumSlot {
   }
 }
 
-function selfSlot(self: PodiumSelf): PodiumSlot {
-  return {
-    kind: 'self',
-    variant: 'self',
-    ordinal: getTimeOrdinal(self.position),
-    name: self.name,
-    avatarUrl: self.avatarUrl,
-    detail: self.detail,
-    isSelf: true,
-  }
-}
-
-function placeholderSlot(fallback: PodiumPlaceholder): PodiumSlot {
-  return {
-    kind: 'placeholder',
-    variant: 'nth',
-    ordinal: 'You',
-    name: fallback.name,
-    avatarUrl: fallback.avatarUrl,
-    detail: fallback.detail,
-    isSelf: true,
-  }
-}
-
 export function resolvePodiumSlots(input: ResolvePodiumInput): PodiumSlot[] {
-  const { top, selfEntry, placeholder, isAuthenticated } = input
+  const { top, isAuthenticated } = input
 
   const slots: PodiumSlot[] = []
   for (let index = 0; index < 3; index++) {
@@ -101,29 +62,13 @@ export function resolvePodiumSlots(input: ResolvePodiumInput): PodiumSlot[] {
   }
 
   const userInTopThree = top.slice(0, 3).some(entry => entry.isSelf)
+  if (!userInTopThree && isAuthenticated) return slots
+
   const fourthEntry = top[3]
-
-  if (userInTopThree || !isAuthenticated) {
-    slots.push(fourthEntry ? entrySlot(3, fourthEntry) : emptySlot(3))
-  } else if (selfEntry) {
-    slots.push(selfSlot(selfEntry))
-  } else if (placeholder) {
-    slots.push(placeholderSlot(placeholder))
-  } else {
-    slots.push(emptySlot(3))
-  }
-
+  slots.push(fourthEntry ? entrySlot(3, fourthEntry) : emptySlot(3))
   return slots
 }
 
 export function podiumMinColumns(slots: PodiumSlot[]): number[] {
-  const selfIndex = slots.findIndex(slot => slot.isSelf)
-  const hideOrder = slots
-    .map((_, index) => index)
-    .filter(index => index !== selfIndex)
-    .reverse()
-  return slots.map((_, index) => {
-    if (index === selfIndex) return 1
-    return 4 - hideOrder.indexOf(index)
-  })
+  return slots.map((_, index) => index + 1)
 }

@@ -89,6 +89,11 @@ export const GoodClientConfigV2 = response('goodClientConfigV2', {
     isArchived: example(z.boolean(), false).check(
       z.describe('Whether the CTF is archived (read-only).')
     ),
+    maxBongs: example(z.nullable(z.int()), 8).check(
+      z.describe(
+        'Maximum bongs a team can earn, or `null` when there is no cap.'
+      )
+    ),
     captcha: z
       .nullable(
         z.object({

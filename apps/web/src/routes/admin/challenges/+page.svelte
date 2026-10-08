@@ -40,7 +40,10 @@
 
 <style>
   admin-challenges-reveal {
-    display: block;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-block-size: 0;
   }
 
   page-status {
@@ -56,7 +59,7 @@
     }
 
     p {
-      color: var(--foreground-l3);
+      color: var(--tui-muted);
     }
   }
 </style>

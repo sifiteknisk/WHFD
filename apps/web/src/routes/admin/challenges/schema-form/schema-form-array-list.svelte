@@ -88,7 +88,7 @@
   sf-list-empty {
     display: block;
     padding-block: 0.25rem;
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
     font-size: var(--step--1);
   }
 

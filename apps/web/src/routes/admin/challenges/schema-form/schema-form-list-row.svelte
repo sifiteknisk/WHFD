@@ -69,11 +69,16 @@
     display: flex;
     align-items: center;
     gap: var(--space-3xs);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
 
     &:hover {
-      background: var(--background-l3);
+      background: var(--tui-surface-light);
+    }
+
+    &:has(.open:active) {
+      border-color: var(--bevel-recessed);
     }
   }
 
@@ -83,8 +88,8 @@
     align-items: center;
     gap: var(--space-2xs);
     min-inline-size: 0;
-    padding: 0.5rem 0.75rem;
-    color: var(--foreground-l1);
+    padding: 0.375rem 0.75rem;
+    color: var(--tui-text);
     font-size: var(--step--1);
     text-align: start;
     cursor: pointer;
@@ -94,14 +99,13 @@
     }
 
     &[data-empty] {
-      color: var(--foreground-l5);
+      color: var(--tui-muted);
       font-style: italic;
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -2px;
-      border-radius: var(--radius-sm);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: -3px;
     }
   }
 
@@ -121,7 +125,7 @@
 
   list-row[data-invalid] row-status,
   list-row[data-incomplete] row-status {
-    color: var(--foreground-destructive);
+    color: var(--tui-danger);
   }
 
   .remove {
@@ -131,17 +135,22 @@
     justify-content: center;
     padding: 0.25rem;
     margin-inline-end: 0.375rem;
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
     cursor: pointer;
-    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
 
-    &:hover {
-      color: var(--foreground-destructive);
-      background: var(--background-destructive);
+    &:hover:not(:disabled) {
+      color: var(--tui-danger);
+      border-color: var(--tui-border-mid);
+    }
+
+    &:disabled {
+      cursor: default;
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 1px;
     }
 
     :global(svg) {

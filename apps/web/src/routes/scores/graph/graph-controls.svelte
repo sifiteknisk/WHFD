@@ -65,24 +65,25 @@
     block-size: 1.75rem;
     padding: 0;
     font-size: 0.875rem;
-    color: var(--foreground-l3);
-    background: var(--background-l2);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     cursor: pointer;
-    transition:
-      color 120ms ease,
-      background 120ms ease;
 
     &:hover {
-      color: var(--foreground-l1);
-      background: var(--background-l3);
+      background: var(--tui-surface-light);
     }
 
     &[data-active] {
-      color: var(--foreground-l0);
-      background: var(--background-l4);
-      border-color: var(--foreground-l4);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+      border-color: var(--bevel-recessed);
+    }
+
+    &:focus-visible {
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
   }
 </style>

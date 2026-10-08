@@ -206,7 +206,7 @@
       inline-size: 13rem;
       flex-shrink: 0;
       padding: 0.5rem;
-      border-inline-end: 2px solid var(--border);
+      border-inline-end: 1px solid var(--tui-border-mid);
     }
   }
 
@@ -218,11 +218,17 @@
 
     @container challenge-details (width >= 40rem) {
       flex-direction: column;
+      gap: 0;
+      padding: 0.125rem;
+      background: var(--tui-surface-light);
+      border: var(--tui-border-width) solid;
+      border-color: var(--bevel-recessed);
     }
   }
 
   expose-empty {
-    color: var(--foreground-l4);
+    padding: 0.125rem var(--space-2xs);
+    color: var(--tui-muted);
     font-size: var(--step--1);
   }
 
@@ -231,42 +237,56 @@
     align-items: center;
     gap: var(--space-2xs);
     max-inline-size: 100%;
-    padding: var(--space-3xs) var(--space-2xs);
-    color: var(--foreground-l3);
+    padding: 0.125rem var(--space-2xs);
+    color: var(--tui-text);
     font-size: var(--step--1);
     cursor: pointer;
-    background: var(--background-l2);
-    border-radius: var(--radius-sm);
+    background: var(--tui-surface-light);
+    border: 1px solid var(--tui-border-mid);
 
     @container challenge-details (width >= 40rem) {
       inline-size: 100%;
-      background: none;
+      border: none;
     }
 
     &:hover {
-      background: var(--background-l3);
-      color: var(--foreground-l1);
+      background: var(--background-accent);
     }
 
     &[data-active] {
-      background: var(--background-l4);
-      color: var(--foreground-l0);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+      border-color: var(--tui-selection-bg);
+
+      expose-kind,
+      button {
+        color: inherit;
+      }
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -1px;
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
+    }
+
+    &[data-active]:focus-visible {
+      outline: 1px dotted var(--tui-selection-text);
+      outline-offset: -2px;
     }
 
     button {
       display: inline-flex;
       flex-shrink: 0;
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
       cursor: pointer;
-      border-radius: var(--radius-sm);
 
       &:hover {
-        color: var(--foreground-destructive);
+        color: var(--tui-danger);
+      }
+
+      &:focus-visible {
+        outline: 1px dotted currentColor;
+        outline-offset: 1px;
       }
 
       :global(svg) {
@@ -287,7 +307,7 @@
 
   expose-kind {
     flex-shrink: 0;
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
     font-size: var(--step--2);
   }
 
@@ -314,7 +334,7 @@
   expose-placeholder {
     display: block;
     padding-block: var(--space-3xs);
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
     font-size: var(--step--1);
   }
 
@@ -341,11 +361,11 @@
     align-items: center;
     gap: 0 var(--space-3xs);
     font-size: var(--step--1);
-    color: var(--foreground-l2);
+    color: var(--tui-text);
   }
 
   field-hint {
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
   }
 
   :global(input[data-mono]) {

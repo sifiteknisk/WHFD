@@ -19,12 +19,12 @@
 
     &[data-edge='top'] {
       inset-block-start: var(--header-height);
-      background: linear-gradient(to bottom, var(--background-l0), transparent);
+      background: linear-gradient(to bottom, var(--tui-desktop-bg), transparent);
     }
 
     &[data-edge='bottom'] {
       inset-block-end: 0;
-      background: linear-gradient(to top, var(--background-l0), transparent);
+      background: linear-gradient(to top, var(--tui-desktop-bg), transparent);
     }
 
     @supports (animation-timeline: scroll()) {

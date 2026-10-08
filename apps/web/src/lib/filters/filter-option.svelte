@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IconCaretRight, IconCheck } from '$lib/icons'
+  import { IconCaretRight } from '$lib/icons'
   import Avatar from '$lib/ui/avatar.svelte'
   import type { ValueFilterFamily, ValueFilterOption } from './ui'
 
@@ -27,9 +27,7 @@
   data-result-tone={view.resultTone}
   onclick={() => family.toggleOption(option)}
 >
-  <check-box data-checked={selected || undefined}>
-    {#if selected}<IconCheck />{/if}
-  </check-box>
+  <check-box aria-hidden="true">{selected ? '[x]' : '[ ]'}</check-box>
 
   {#if showPath}
     <option-path>
@@ -67,12 +65,11 @@
     min-inline-size: 0;
     align-items: center;
     gap: var(--space-2xs);
-    padding: 0.375rem 0.5rem;
+    padding: 0.25rem 0.5rem;
     text-align: start;
-    color: var(--foreground-l2);
+    color: var(--tui-text);
     background: transparent;
     border: none;
-    border-radius: var(--radius-sm);
     cursor: pointer;
 
     &[data-result-tone='success'] {
@@ -88,21 +85,10 @@
       --result-color: var(--foreground-accent);
     }
 
-    &:hover,
-    &:focus-visible {
-      background: var(--background-l3);
-      outline: none;
-    }
-
     &[data-mobile] {
       block-size: 2.75rem;
       gap: var(--space-xs);
       padding-inline: 0.5rem;
-
-      check-box {
-        inline-size: 1.25rem;
-        block-size: 1.25rem;
-      }
     }
 
     :global(svg) {
@@ -114,29 +100,27 @@
     :global(svg[data-tone='category']) {
       color: var(--category-foreground-l1);
     }
+
+    &:hover,
+    &:focus-visible {
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+      outline: none;
+
+      check-box,
+      option-path,
+      option-label span,
+      :global(svg[data-tone]),
+      :global(svg:last-child) {
+        color: inherit;
+      }
+    }
   }
 
   check-box {
-    display: flex;
     flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    inline-size: 1rem;
-    block-size: 1rem;
-    color: var(--background-l1);
-    border: 2px solid color-mix(in srgb, var(--foreground-l4) 70%, transparent);
-    border-radius: var(--radius-xs, 0.25rem);
-
-    &[data-checked] {
-      color: var(--background-l1);
-      background: var(--foreground-l1);
-      border-color: var(--foreground-l1);
-    }
-
-    :global(svg) {
-      inline-size: 0.75rem;
-      block-size: 0.75rem;
-    }
+    font-weight: 700;
+    white-space: pre;
   }
 
   option-path {
@@ -144,11 +128,11 @@
     flex-shrink: 0;
     align-items: center;
     gap: var(--space-3xs);
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
     font-size: var(--step--1);
 
     :global(svg:last-child) {
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
     }
   }
 
@@ -164,7 +148,6 @@
     inline-size: 0.375rem;
     block-size: 0.375rem;
     background: var(--result-color, var(--foreground-l3));
-    border-radius: 50%;
   }
 
   option-label {

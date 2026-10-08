@@ -34,6 +34,8 @@ export function createScoresRouteState() {
   let searchTimer: number | undefined
   let showTop3Context = $state(savedPrefs.showTop3Context ?? true)
   let showSelfContext = $state(savedPrefs.showSelfContext ?? true)
+  // Session-only. First bloods start off on every visit.
+  let showFirstBloods = $state(false)
 
   onDestroy(() => {
     if (searchTimer) window.clearTimeout(searchTimer)
@@ -131,6 +133,10 @@ export function createScoresRouteState() {
     showSelfContext = value
   }
 
+  function setShowFirstBloods(value: boolean) {
+    showFirstBloods = value
+  }
+
   return {
     get viewMode() {
       return viewMode
@@ -156,12 +162,16 @@ export function createScoresRouteState() {
     get showSelfContext() {
       return showSelfContext
     },
+    get showFirstBloods() {
+      return showFirstBloods
+    },
     setSearchInput,
     setDivision,
     setViewMode,
     setSortMode,
     setShowTop3Context,
     setShowSelfContext,
+    setShowFirstBloods,
     setFocusedChallenge,
   }
 }

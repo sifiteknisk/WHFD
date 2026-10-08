@@ -2,21 +2,30 @@
   import { useClientConfig } from '$lib/query/config'
   import { intervalToDuration } from '$lib/utils/time'
 
+  type Props = {
+    now: number
+    covered: boolean
+  }
+
+  let { now, covered }: Props = $props()
+
   const configQuery = useClientConfig()
   const startTime = $derived(configQuery.data?.startTime ?? 0)
 
-  let now = $state(Date.now())
-
-  $effect(() => {
-    const interval = setInterval(() => (now = Date.now()), 1000)
-    return () => clearInterval(interval)
-  })
-
+  const secondsLeft = $derived(
+    Math.max(0, Math.ceil((startTime - now) / 1000))
+  )
+  const popping = $derived(!covered && secondsLeft <= 60)
   const duration = $derived(intervalToDuration(Math.max(0, startTime - now)))
   const pad = (value: number) => String(value).padStart(2, '0')
 </script>
 
-<countdown-hero>
+<countdown-hero
+  data-pop={popping ? '' : undefined}
+  data-covered={covered ? '' : undefined}
+  aria-hidden={covered ? 'true' : undefined}
+  inert={covered}
+>
   <video
     src="/video/whfd.mp4"
     autoplay
@@ -27,53 +36,83 @@
   ></video>
   <countdown-scrim></countdown-scrim>
 
-  <countdown-copy>
-    <h1>WHFD: VG</h1>
-
-    <countdown>
-      {#if duration.days > 0}
-        <countdown-unit>
-          <countdown-value>{duration.days}</countdown-value>
-          <countdown-caption>days</countdown-caption>
-        </countdown-unit>
-        <countdown-separator>:</countdown-separator>
+  {#if !covered}
+    {#if popping}
+      {#if secondsLeft > 0}
+        {#key secondsLeft}
+          <pop-digit role="timer" aria-label="{secondsLeft} seconds"
+            >{secondsLeft}</pop-digit
+          >
+        {/key}
       {/if}
-      <countdown-unit>
-        <countdown-value>{pad(duration.hours)}</countdown-value>
-        <countdown-caption>hours</countdown-caption>
-      </countdown-unit>
-      <countdown-separator>:</countdown-separator>
-      <countdown-unit>
-        <countdown-value>{pad(duration.minutes)}</countdown-value>
-        <countdown-caption>mins</countdown-caption>
-      </countdown-unit>
-      <countdown-separator>:</countdown-separator>
-      <countdown-unit>
-        <countdown-value>{pad(duration.seconds)}</countdown-value>
-        <countdown-caption>secs</countdown-caption>
-      </countdown-unit>
-    </countdown>
+    {:else}
+      <countdown-copy>
+        <h1>WHFD: VG</h1>
 
-    <p>
-      sign up at
-      <a
-        href="https://peoply.app/events/TMIPRAKD"
-        target="_blank"
-        rel="noopener noreferrer">peoply</a
-      >
-    </p>
-  </countdown-copy>
+        <countdown>
+          {#if duration.days > 0}
+            <countdown-unit>
+              <countdown-value>{duration.days}</countdown-value>
+              <countdown-caption>days</countdown-caption>
+            </countdown-unit>
+            <countdown-separator>:</countdown-separator>
+          {/if}
+          <countdown-unit>
+            <countdown-value>{pad(duration.hours)}</countdown-value>
+            <countdown-caption>hours</countdown-caption>
+          </countdown-unit>
+          <countdown-separator>:</countdown-separator>
+          <countdown-unit>
+            <countdown-value>{pad(duration.minutes)}</countdown-value>
+            <countdown-caption>mins</countdown-caption>
+          </countdown-unit>
+          <countdown-separator>:</countdown-separator>
+          <countdown-unit>
+            <countdown-value>{pad(duration.seconds)}</countdown-value>
+            <countdown-caption>secs</countdown-caption>
+          </countdown-unit>
+        </countdown>
+
+        <p>
+          sign up at
+          <a
+            href="https://peoply.app/events/TMIPRAKD"
+            target="_blank"
+            rel="noopener noreferrer">peoply</a
+          >
+        </p>
+      </countdown-copy>
+    {/if}
+  {/if}
 </countdown-hero>
 
 <style>
   countdown-hero {
-    position: relative;
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--layer-nav) - 1);
     display: grid;
     place-items: center;
-    min-block-size: calc(100dvh - var(--header-height));
+    padding-block-start: var(--header-height);
     overflow: hidden;
     color: white;
+    background: black;
     font-family: 'Roboto Mono', ui-monospace, monospace;
+
+    &[data-covered] {
+      z-index: calc(var(--layer-nav) - 2);
+      pointer-events: none;
+    }
+
+    &[data-pop] {
+      z-index: calc(var(--layer-wipe) - 2);
+      padding-block-start: 0;
+    }
+  }
+
+  :global(app-shell:has(countdown-hero[data-pop]) header),
+  :global(app-shell:has(countdown-hero[data-pop]) .skip-link) {
+    visibility: hidden;
   }
 
   video,
@@ -90,8 +129,24 @@
 
   countdown-scrim {
     background:
+      linear-gradient(to bottom, rgb(0 0 0 / 0.55), transparent 22%),
       linear-gradient(to top, rgb(0 0 0 / 0.62), rgb(0 0 0 / 0.18) 42%),
       rgb(0 0 0 / 0.28);
+
+    [data-pop] & {
+      background: rgb(0 0 0 / 0.55);
+    }
+  }
+
+  pop-digit {
+    position: relative;
+    font-size: min(42vw, 58vh);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    line-height: 0.8;
+    letter-spacing: -0.06em;
+    text-shadow: 0 0.08em 0.22em rgb(0 0 0 / 0.55);
+    animation: digit-pop 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
   countdown-copy {
@@ -147,5 +202,28 @@
   countdown-copy a {
     --underline: white;
     color: inherit;
+  }
+
+  @keyframes digit-pop {
+    0% {
+      opacity: 0;
+      scale: 1.75;
+    }
+
+    45% {
+      opacity: 1;
+      scale: 0.94;
+    }
+
+    100% {
+      opacity: 1;
+      scale: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    pop-digit {
+      animation: none;
+    }
   }
 </style>

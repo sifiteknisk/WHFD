@@ -1,6 +1,7 @@
 import type { DatabaseClient, DatabaseTx, User } from '@rctf/db'
 import { challenges, solves, users } from '@rctf/db'
 import { getErrorConstraint, takeUnique } from '@rctf/db/util'
+import { randomProfilePicUrl } from '@rctf/util'
 import type {
   BadEmailNoExists,
   BadUnknownUser,
@@ -141,6 +142,7 @@ export const createUserInternal = async (
           id: crypto.randomUUID(),
           perms: 0,
           ...user,
+          avatarUrl: randomProfilePicUrl(),
         })
         .returning({
           id: users.id,

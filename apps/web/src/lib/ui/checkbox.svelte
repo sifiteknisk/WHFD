@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { IconCheck } from '$lib/icons'
   import type { Snippet } from 'svelte'
   import type { HTMLInputAttributes } from 'svelte/elements'
 
@@ -14,7 +13,7 @@
 {#snippet control()}
   <check-control>
     <input type="checkbox" bind:checked {...rest} />
-    <check-box aria-hidden="true"><IconCheck /></check-box>
+    <check-box aria-hidden="true"></check-box>
   </check-control>
 {/snippet}
 
@@ -50,34 +49,24 @@
   }
 
   check-box {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    inline-size: 1rem;
-    block-size: 1rem;
-    color: var(--background-l1);
-    border: 2px solid color-mix(in srgb, var(--foreground-l4) 70%, transparent);
-    border-radius: var(--radius-sm);
+    display: block;
+    inline-size: 3ch;
+    font-weight: 700;
+    white-space: pre;
     pointer-events: none;
 
-    :global(svg) {
-      inline-size: 0.75rem;
-      block-size: 0.75rem;
-      opacity: 0;
+    &::before {
+      content: '[ ]';
     }
   }
 
-  input:checked + check-box {
-    background: var(--foreground-l1);
-    border-color: var(--foreground-l1);
-
-    :global(svg) {
-      opacity: 1;
-    }
+  input:checked + check-box::before {
+    content: '[x]';
   }
 
   input:focus-visible + check-box {
-    outline: 2px solid var(--ring);
+    outline: 2px dotted var(--tui-focus);
+    outline-offset: 2px;
   }
 
   input:disabled {

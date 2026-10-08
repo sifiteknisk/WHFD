@@ -36,12 +36,13 @@
     flex-direction: column;
     gap: var(--space-s);
     min-block-size: 0;
-    padding: var(--space-s) 1.25rem var(--space-l);
+    padding: var(--space-s) var(--space-s) var(--space-l);
     overflow-y: auto;
     overscroll-behavior: none;
+    scrollbar-color: var(--tui-border-mid) var(--tui-surface);
 
-    &[data-mode='view'] {
-      opacity: 0.6;
+    :global(:is(input, textarea):disabled) {
+      color: var(--tui-muted);
     }
   }
 </style>

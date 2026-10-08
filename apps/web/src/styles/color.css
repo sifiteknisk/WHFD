@@ -474,29 +474,29 @@
   --purple-a11: light-dark(#52009aba, #d19dff);
   --purple-a12: light-dark(#250049df, #f1ddfffa);
 
-  --background-l0: var(--gray-1);
-  --background-l1: light-dark(var(--gray-3), var(--gray-2));
-  --background-l2: light-dark(var(--gray-4), var(--gray-3));
-  --background-l3: light-dark(var(--gray-5), var(--gray-4));
-  --background-l4: light-dark(var(--gray-6), var(--gray-5));
-  --background-l5: light-dark(var(--gray-7), var(--gray-6));
-  --border:        var(--gray-6);
-  --ring:          var(--gray-8);
-  --foreground-l0: var(--gray-12);
-  --foreground-l1: var(--gray-11);
-  --foreground-l2: var(--gray-10);
-  --foreground-l3: var(--gray-9);
-  --foreground-l4: var(--gray-8);
-  --foreground-l5: light-dark(var(--gray-8), var(--gray-7));
+  --background-l0: var(--tui-surface);
+  --background-l1: var(--tui-surface-light);
+  --background-l2: color-mix(in oklab, var(--tui-surface-light) 50%, var(--tui-surface));
+  --background-l3: color-mix(in oklab, var(--tui-surface) 75%, var(--tui-border-mid));
+  --background-l4: color-mix(in oklab, var(--tui-surface) 55%, var(--tui-border-mid));
+  --background-l5: color-mix(in oklab, var(--tui-surface) 35%, var(--tui-border-mid));
+  --border:        var(--tui-border-mid);
+  --ring:          var(--tui-focus);
+  --foreground-l0: var(--tui-text);
+  --foreground-l1: color-mix(in oklab, var(--tui-text) 75%, var(--tui-muted));
+  --foreground-l2: color-mix(in oklab, var(--tui-text) 40%, var(--tui-muted));
+  --foreground-l3: var(--tui-muted);
+  --foreground-l4: color-mix(in oklab, var(--tui-muted) 80%, var(--tui-surface));
+  --foreground-l5: color-mix(in oklab, var(--tui-muted) 65%, var(--tui-surface));
 
-  --background-accent:            var(--sky-4);
-  --background-accent-hover:      var(--sky-5);
-  --foreground-accent:            var(--sky-11);
-  --background-destructive:       var(--red-4);
-  --background-destructive-hover: var(--red-5);
-  --foreground-destructive:       var(--red-11);
-  --background-success:           var(--jade-3);
-  --foreground-success:           var(--jade-11);
+  --background-accent:            color-mix(in oklab, var(--tui-selection-bg) 22%, var(--tui-surface-light));
+  --background-accent-hover:      color-mix(in oklab, var(--tui-selection-bg) 32%, var(--tui-surface-light));
+  --foreground-accent:            var(--tui-link);
+  --background-destructive:       color-mix(in oklab, var(--tui-danger) 18%, var(--tui-surface-light));
+  --background-destructive-hover: color-mix(in oklab, var(--tui-danger) 28%, var(--tui-surface-light));
+  --foreground-destructive:       var(--tui-danger);
+  --background-success:           color-mix(in oklab, var(--tui-success) 18%, var(--tui-surface-light));
+  --foreground-success:           var(--tui-success);
 
   --background-gold:      light-dark(var(--amber-a3), color-mix(in oklab, var(--amber-9) 15%, transparent));
   --foreground-gold-l0:   var(--amber-11);
@@ -526,9 +526,9 @@
   --foreground-ninth:   var(--plum-9);
   --foreground-tenth:   var(--pink-9);
 
-  --foreground-prose:             var(--gray-11);
-  --foreground-prose-link:        var(--sky-11);
-  --foreground-prose-inline-code: var(--red-11);
+  --foreground-prose:             var(--foreground-l1);
+  --foreground-prose-link:        var(--tui-link);
+  --foreground-prose-inline-code: var(--tui-title);
 
   --background-red-l0:       var(--red-a3);
   --background-red-l1:       var(--red-a2);
@@ -710,8 +710,7 @@
   border-color: var(--border);
 
   &:focus-visible {
-    outline: 2px solid var(--ring);
-    border-radius: var(--radius-sm);
+    outline: 2px dotted var(--ring);
   }
 }
 
@@ -719,7 +718,13 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+::selection {
+  background: var(--tui-selection-bg);
+  color: var(--tui-selection-text);
+}
+
+html,
 body {
-  background-color: var(--background-l0);
+  background-color: var(--tui-desktop-bg);
   color: var(--foreground-l0);
 }

@@ -126,33 +126,30 @@
   mode-toggle {
     display: flex;
     gap: var(--space-3xs);
-    padding: var(--space-3xs);
-    background: var(--background-l2);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
 
     button {
       flex: 1;
       block-size: 1.75rem;
-      color: var(--foreground-l3);
+      color: var(--tui-text);
       background: transparent;
-      border: none;
-      border-radius: var(--radius-sm);
+      border: var(--tui-border-width) solid transparent;
       font-size: var(--step--1);
       cursor: pointer;
 
       &:hover {
-        color: var(--foreground-l1);
+        background: var(--tui-surface-light);
       }
 
       &[data-active] {
-        color: var(--foreground-l1);
-        background: var(--background-l4);
+        font-weight: 700;
+        color: var(--tui-selection-text);
+        background: var(--tui-selection-bg);
+        border-color: var(--bevel-recessed);
       }
 
       &:focus-visible {
-        outline: 2px solid var(--ring);
-        outline-offset: -2px;
+        outline: 2px dotted var(--tui-focus);
+        outline-offset: 2px;
       }
     }
   }
@@ -163,34 +160,38 @@
     gap: var(--space-3xs);
 
     span {
-      color: var(--foreground-l3);
+      color: var(--tui-muted);
       font-size: var(--step--1);
     }
   }
 
   field-error {
     display: block;
-    color: var(--foreground-destructive);
+    color: var(--tui-danger);
     font-size: var(--step--1);
   }
 
   button[data-clear] {
     block-size: 2rem;
-    color: var(--foreground-l3);
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-md);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     font-size: var(--step--1);
     cursor: pointer;
 
     &:hover {
-      color: var(--foreground-l1);
-      background: var(--background-l3);
+      background: var(--tui-surface-light);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -2px;
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
   }
 </style>

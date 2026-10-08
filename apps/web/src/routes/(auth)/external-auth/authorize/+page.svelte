@@ -161,8 +161,12 @@
     font-size: 0.75rem;
 
     code {
+      padding: 0 0.5ch;
       font-family: var(--font-mono);
+      color: var(--tui-text);
       word-break: break-all;
+      background: var(--tui-surface-light);
+      border: 1px solid var(--tui-border-mid);
     }
   }
 
@@ -171,6 +175,6 @@
     justify-content: center;
     padding-block: var(--space-s);
     font-size: var(--step-2);
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
   }
 </style>

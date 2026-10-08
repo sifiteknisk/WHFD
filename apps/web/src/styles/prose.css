@@ -140,8 +140,9 @@ prose-content {
 
   pre {
     font-family: var(--font-mono);
-    background-color: var(--background-l4);
-    border-radius: var(--radius-md);
+    background-color: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
     padding: var(--space-s);
     overflow-x: auto;
     overscroll-behavior: none;
@@ -161,9 +162,9 @@ prose-content {
     font-size: 0.75em;
     font-weight: var(--font-weight-medium);
     color: var(--foreground-l0);
-    background-color: var(--background-l2);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
+    background-color: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     padding: 0.125em 0.5em;
   }
 

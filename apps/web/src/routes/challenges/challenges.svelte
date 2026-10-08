@@ -10,9 +10,13 @@
     useChallenges,
   } from '$lib/query/challenges'
   import { useCurrentUser } from '$lib/query/user'
+  import { announceSolvePoints } from '$lib/bongs/session.svelte'
   import Dialog from '$lib/ui/dialog.svelte'
   import Splitter from '$lib/ui/splitter.svelte'
-  import { handlePaneArrowKey } from '$lib/utils/pane-keynav'
+  import {
+    handlePaneArrowKey,
+    handlePaneShortcutKey,
+  } from '$lib/utils/pane-keynav'
   import { tick } from 'svelte'
   import { SvelteSet } from 'svelte/reactivity'
   import ChallengeDetails from './details/details.svelte'
@@ -35,8 +39,6 @@
     challenge: Challenge | null
     isSolved: boolean
     onSolve: (challengeId: string) => void
-    tab: string
-    onTabChange: (tab: string) => void
   }
 
   const DESKTOP_MIN_WIDTH = 768
@@ -55,11 +57,11 @@
   const bloodIds = $derived(deriveBloodIds(selfSolves))
 
   let selectedId = $state<string | null>(null)
-  let detailsTab = $state('details')
   let deepLinkTarget = $state<string | null>(null)
   let innerWidth = $state(0)
   let routerReady = $state(false)
   let pendingDrawerId = $state<string | null>(null)
+  let pageElement = $state<HTMLElement | null>(null)
 
   const isMobile = $derived(innerWidth > 0 && innerWidth < DESKTOP_MIN_WIDTH)
   const listMinSize = $derived(innerWidth < WIDE_MIN_WIDTH ? 40 : 20)
@@ -110,6 +112,11 @@
   }
 
   function handleSolve(challengeId: string) {
+    const challenge = challenges.find(item => item.id === challengeId)
+    const score = userQuery.data?.score
+    if (challenge && score !== undefined) {
+      announceSolvePoints(score, challenge.points)
+    }
     invalidateAfterSolve(queryClient, challengeId, id => localSolvedIds.add(id))
   }
 
@@ -173,12 +180,13 @@
     challenge: selectedChallenge,
     isSolved: selectedIsSolved,
     onSolve: handleSolve,
-    tab: detailsTab,
-    onTabChange: tab => (detailsTab = tab),
   })
 </script>
 
-<svelte:window bind:innerWidth />
+<svelte:window
+  bind:innerWidth
+  onkeydown={event => handlePaneShortcutKey(event, pageElement)}
+/>
 
 {#snippet listPane(props: ChallengeListProps)}
   <challenges-list-slot>
@@ -195,8 +203,13 @@
 {/snippet}
 
 {#if isMobile}
-  <challenges-page data-form="mobile">
-    <pane-surface data-side="list">{@render listPane(listProps)}</pane-surface>
+  <challenges-page data-form="mobile" bind:this={pageElement}>
+    <pane-frame>
+      <pane-surface data-side="list">
+        <span class="tui-dialog-title">Challenges</span>
+        {@render listPane(listProps)}
+      </pane-surface>
+    </pane-frame>
     <Dialog
       open={drawerOpen}
       onOpenChange={handleDrawerOpenChange}
@@ -210,61 +223,103 @@
   </challenges-page>
 {:else}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <challenges-page data-form="desktop" onkeydown={handlePaneArrowKey}>
-    <Splitter
-      panels={[
-        { id: 'list', minSize: listMinSize, maxSize: 50 },
-        { id: 'detail', minSize: 40 },
-      ]}
-      defaultSize={[40, 60]}
-    >
-      {#snippet a()}
-        <pane-surface data-side="list"
-          >{@render listPane(listProps)}</pane-surface
-        >
-      {/snippet}
-      {#snippet b()}
-        <pane-surface data-side="detail"
-          >{@render detailPane(detailProps)}</pane-surface
-        >
-      {/snippet}
-    </Splitter>
+  <challenges-page
+    data-form="desktop"
+    onkeydown={handlePaneArrowKey}
+    bind:this={pageElement}
+  >
+    <splitter-slot>
+      <Splitter
+        panels={[
+          { id: 'list', minSize: listMinSize, maxSize: 50 },
+          { id: 'detail', minSize: 40 },
+        ]}
+        defaultSize={[40, 60]}
+      >
+        {#snippet a()}
+          <pane-frame>
+            <pane-surface data-side="list">
+              <span class="tui-dialog-title">Challenges</span>
+              {@render listPane(listProps)}
+            </pane-surface>
+          </pane-frame>
+        {/snippet}
+        {#snippet b()}
+          <pane-frame>
+            <pane-surface data-side="detail">
+              <span class="tui-dialog-title">
+                {selectedChallenge?.name ?? 'Details'}
+              </span>
+              {@render detailPane(detailProps)}
+            </pane-surface>
+          </pane-frame>
+        {/snippet}
+      </Splitter>
+    </splitter-slot>
   </challenges-page>
 {/if}
 
 <style>
   challenges-page {
     display: flex;
-    block-size: calc(100dvh - var(--header-height));
+    flex-direction: column;
+    flex: 1;
     min-block-size: 0;
-    --splitter-handle-size: 0.5rem;
+    padding-block: var(--space-2xs)
+      calc(var(--space-2xs) + var(--tui-shadow-offset));
+    padding-inline: var(--space-2xs)
+      calc(var(--space-2xs) + var(--tui-shadow-offset));
+    --splitter-handle-size: calc(var(--space-m) + var(--tui-shadow-offset));
 
-    &[data-form='mobile'] {
-      flex-direction: column;
+    &[data-form='mobile'] pane-frame {
+      flex: 1;
+      block-size: auto;
+    }
+  }
 
-      pane-surface[data-side='list'] {
-        flex: 1;
-        min-block-size: 0;
-        border-start-end-radius: 0;
-      }
+  pane-frame {
+    display: flex;
+    flex-direction: column;
+    block-size: 100%;
+    min-block-size: 0;
+    min-inline-size: 0;
+    padding-block-start: 0.85rem;
+  }
+
+  splitter-slot {
+    display: flex;
+    flex: 1;
+    min-block-size: 0;
+
+    :global([data-part='root']),
+    :global([data-part='panel']) {
+      overflow: visible !important;
+    }
+
+    :global([data-part='root']) {
+      flex: 1;
+      min-inline-size: 0;
+      min-block-size: 0;
     }
   }
 
   pane-surface {
+    position: relative;
     display: flex;
     flex-direction: column;
-    block-size: 100%;
-    overflow: hidden;
-    background: var(--background-l1);
+    flex: 1;
+    block-size: auto;
+    min-block-size: 0;
+    min-inline-size: 0;
+    padding-block-start: 0.35rem;
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
+    box-shadow: var(--tui-shadow-offset) var(--tui-shadow-offset) 0
+      var(--tui-shadow);
 
-    &[data-side='list'] {
-      border-start-end-radius: var(--radius-3xl);
-      border-end-end-radius: var(--radius-3xl);
-    }
-
-    &[data-side='detail'] {
-      border-start-start-radius: var(--radius-3xl);
-      border-end-start-radius: var(--radius-3xl);
+    :global(.tui-dialog-title) {
+      z-index: 2;
     }
   }
 
@@ -274,6 +329,7 @@
     flex: 1;
     flex-direction: column;
     min-block-size: 0;
+    overflow: hidden;
   }
 
   challenges-detail-slot {

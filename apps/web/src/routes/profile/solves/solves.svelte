@@ -2,10 +2,7 @@
   import { mergeProps } from '@zag-js/svelte'
   import {
     IconArrowsInLineVertical,
-    IconAwardFilled,
     IconCaretDown,
-    IconCaretRight,
-    IconCheck,
     IconClock,
     IconEye,
     IconEyeClosed,
@@ -17,7 +14,6 @@
     IconTrash,
   } from '$lib/icons'
   import Accordion from '$lib/ui/accordion.svelte'
-  import Button from '$lib/ui/button.svelte'
   import EmptyState from '$lib/ui/empty-state.svelte'
   import Menu, { type MenuItem } from '$lib/ui/menu.svelte'
   import Spinner from '$lib/ui/spinner.svelte'
@@ -67,6 +63,12 @@
     onViewSubmissions,
     revokingId = null,
   }: Props = $props()
+
+  const bloodMarks: Record<BloodTier, string> = {
+    gold: '1',
+    silver: '2',
+    bronze: '3',
+  }
 
   let searchQuery = $state('')
   let hideSolved = $state(false)
@@ -197,7 +199,6 @@
               })}
               type="button"
               data-slot="hide-solved"
-              data-flat={sortMode !== 'category' || undefined}
               data-active={hideSolved || undefined}
               aria-pressed={hideSolved}
               aria-label={hideSolved
@@ -255,25 +256,24 @@
             entry => entry.isSolved
           ).length}
           <solves-group-header data-category-color={config.color}>
-            <button {...props} data-expanded={expanded || undefined}>
-              <config.icon data-slot="icon" />
+            <button {...props}>
+              <span data-slot="toggle">[{expanded ? '-' : '+'}]</span>
               <span data-slot="name">{config.name}</span>
+              <span data-slot="rule"></span>
               <span data-slot="count">
                 {#if staticEntries.length > 0}
-                  <strong>{solvedCount}</strong> / {staticEntries.length}
+                  {solvedCount}/{staticEntries.length}
                 {:else}
-                  <strong>{entries.length}</strong>
+                  {entries.length}
                 {/if}
               </span>
-              <IconCaretRight data-slot="chevron" />
             </button>
           </solves-group-header>
         {/snippet}
 
         {#snippet content({ value, props })}
-          {@const config = getCategoryConfig(value)}
           {@const entries = rowsByCategory.get(value) ?? []}
-          <solves-group-body data-category-color={config.color} {...props}>
+          <solves-group-body {...props}>
             <ul>
               {#each entries as entry (entry.id)}
                 {@render row(entry)}
@@ -295,18 +295,22 @@
 {#snippet row(entry: DisplayRow)}
   {@const tier = bloodTierOf(entry.bloodIndex)}
   {@const config = getCategoryConfig(entry.category)}
+  {@const mark = tier ? bloodMarks[tier] : entry.isSolved ? '*' : ' '}
   <li
     data-category-color={config.color}
-    data-solved={entry.isSolved && !tier ? '' : undefined}
+    data-solved={entry.isSolved ? '' : undefined}
     data-blood={tier ?? undefined}
   >
-    {#if tier}
-      <IconAwardFilled data-indicator />
-    {:else if entry.isSolved}
-      <IconCheck data-indicator />
-    {/if}
-
     <row-main>
+      <span
+        data-part="mark"
+        aria-label={tier
+          ? `${tier} blood`
+          : entry.isSolved
+            ? 'solved'
+            : 'not solved'}>[{mark}]</span
+      >
+      <category-swatch></category-swatch>
       <span data-part="category">{getCategoryKeyOrAlias(entry.category)} /</span
       >
       <span data-part="name">{entry.name}</span>
@@ -316,29 +320,41 @@
       {#if entry.isSolved && (onRevoke || onViewSubmissions)}
         <row-actions>
           {#if onRevoke}
-            <Button
-              variant="destructive"
-              size="sm"
-              disabled={revokingId === entry.id}
-              onclick={() => onRevoke?.(entry.id, entry.name)}
-            >
-              {#if revokingId === entry.id}
-                <Spinner />
-              {:else}
-                <IconTrash />
-              {/if}
-              Revoke
-            </Button>
+            <Tooltip label="Revoke solve">
+              {#snippet children({ props })}
+                <button
+                  {...mergeProps(props, {
+                    onclick: () => onRevoke?.(entry.id, entry.name),
+                  })}
+                  type="button"
+                  data-action="revoke"
+                  disabled={revokingId === entry.id}
+                  aria-label="Revoke solve for {entry.name}"
+                >
+                  {#if revokingId === entry.id}
+                    <Spinner />
+                  {:else}
+                    <IconTrash />
+                  {/if}
+                </button>
+              {/snippet}
+            </Tooltip>
           {/if}
           {#if onViewSubmissions}
-            <Button
-              variant="secondary"
-              size="icon-sm"
-              aria-label="View submissions for {entry.name}"
-              onclick={() => onViewSubmissions?.(entry.id)}
-            >
-              <IconFunnel />
-            </Button>
+            <Tooltip label="View submissions">
+              {#snippet children({ props })}
+                <button
+                  {...mergeProps(props, {
+                    onclick: () => onViewSubmissions?.(entry.id),
+                  })}
+                  type="button"
+                  data-action="submissions"
+                  aria-label="View submissions for {entry.name}"
+                >
+                  <IconFunnel />
+                </button>
+              {/snippet}
+            </Tooltip>
           {/if}
         </row-actions>
       {/if}
@@ -372,19 +388,18 @@
     flex-direction: column;
     gap: 0.5rem;
     padding-block: 0.5rem;
-    background: var(--background-l1);
   }
 
   solves-stats {
     display: flex;
     justify-content: space-between;
-    padding-inline: 2.25rem;
-    color: var(--foreground-l5);
+    padding-inline: 1.25rem;
+    color: var(--tui-muted);
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
 
     strong {
-      color: var(--foreground-l3);
+      color: var(--tui-text);
       font-weight: var(--font-weight-normal);
     }
   }
@@ -393,7 +408,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem;
-    padding-inline: 1.25rem;
+    padding-inline: var(--space-2xs);
   }
 
   toggle-group {
@@ -414,21 +429,18 @@
     min-inline-size: 0;
     block-size: 2.5rem;
     padding-inline: 0.75rem;
-    color: var(--foreground-l3);
-    background: var(--background-l4);
-    border-radius: 20px;
-
-    @container solves (width >= 24rem) {
-      border-radius: 20px var(--radius-sm) var(--radius-sm) 20px;
-    }
+    color: var(--tui-muted);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     &:focus-within {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     :global(svg) {
       flex-shrink: 0;
-      color: var(--foreground-l3);
     }
   }
 
@@ -437,11 +449,11 @@
     min-inline-size: 0;
     background: transparent;
     border: none;
-    color: var(--foreground-l0);
+    color: var(--tui-text);
     outline: none;
 
     &::placeholder {
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
     }
   }
 
@@ -452,41 +464,22 @@
     justify-content: center;
     block-size: 2.5rem;
     padding-inline: 1rem;
-    color: var(--foreground-l1);
-    background: var(--background-l4);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
     cursor: pointer;
 
     @container solves (width >= 24rem) {
       flex: initial;
     }
 
-    &[data-slot='collapse'] {
-      border-radius: 20px var(--radius-sm) var(--radius-sm) 20px;
-
-      @container solves (width >= 24rem) {
-        border-radius: var(--radius-sm);
-      }
-    }
-
-    &[data-slot='hide-solved'][data-flat] {
-      border-radius: 20px var(--radius-sm) var(--radius-sm) 20px;
-
-      @container solves (width >= 24rem) {
-        border-radius: var(--radius-sm);
-      }
-    }
-
-    &[data-slot='hide-solved']:not([data-flat]) {
-      border-radius: var(--radius-sm);
-    }
-
     &[data-slot='sort'] {
       gap: 0.25rem;
-      border-radius: var(--radius-sm) 20px 20px var(--radius-sm);
 
       :global(svg[data-slot='sort-chevron']) {
         font-size: 1rem;
-        color: var(--foreground-l3);
+        color: var(--tui-muted);
       }
     }
 
@@ -495,20 +488,28 @@
     }
 
     &:hover {
-      background: var(--background-l5);
+      background: var(--tui-surface-light);
     }
 
-    &[data-active] {
-      color: var(--foreground-accent);
-      background: var(--background-accent);
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
+    }
 
-      &:hover {
-        background: var(--background-accent-hover);
+    &[data-active],
+    &[data-state='open'] {
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+      border-color: var(--bevel-recessed);
+
+      :global(svg[data-slot='sort-chevron']) {
+        color: inherit;
       }
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
   }
 
@@ -517,7 +518,12 @@
     min-block-size: 0;
     overflow-y: auto;
     overscroll-behavior: none;
+    margin: 0 var(--space-2xs) var(--space-2xs);
     padding-block-end: var(--space-s);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
+    scrollbar-color: var(--tui-border-mid) var(--tui-surface);
   }
 
   solves-group-header {
@@ -525,60 +531,59 @@
     inset-block-start: 0;
     z-index: 2;
     display: block;
-    background: var(--background-l1);
+    background: var(--tui-surface-light);
 
     button {
       display: flex;
       align-items: center;
-      gap: 0.625rem;
+      gap: 1ch;
       inline-size: 100%;
-      padding: 0.5rem 0.5rem 0.5rem 0.625rem;
-      text-align: start;
-      color: var(--category-foreground-l1);
-      background: var(--category-background-l0);
+      padding: 0.25rem 0.5rem 0.125rem;
+      color: var(--tui-text);
+      font-weight: 700;
+      white-space: nowrap;
       cursor: pointer;
 
+      &:hover,
       &:focus-visible {
-        outline: 2px solid var(--ring);
+        color: var(--tui-selection-text);
+        background: var(--tui-selection-bg);
+
+        [data-slot] {
+          color: inherit;
+          border-color: currentColor;
+        }
+      }
+
+      &:focus-visible {
+        outline: 1px dotted var(--tui-selection-text);
         outline-offset: -2px;
       }
-
-      &[data-expanded] :global([data-slot='chevron']) {
-        rotate: 90deg;
-      }
     }
 
-    :global([data-slot='icon']) {
-      flex-shrink: 0;
-      font-size: 1rem;
-    }
-
-    :global([data-slot='chevron']) {
-      flex-shrink: 0;
-      font-size: 1.25rem;
-      transition: rotate 200ms ease;
+    [data-slot='toggle'] {
+      flex: 0 0 3ch;
+      color: var(--tui-muted);
     }
 
     [data-slot='name'] {
-      font-size: var(--step-0);
+      color: var(--category-foreground-l1);
+    }
+
+    [data-slot='rule'] {
+      flex: 1;
+      border-block-end: 1px dashed var(--tui-border-mid);
     }
 
     [data-slot='count'] {
-      margin-inline-start: auto;
-      color: var(--category-foreground-l1);
-      white-space: nowrap;
+      color: var(--tui-muted);
+      font-weight: var(--font-weight-normal);
       font-variant-numeric: tabular-nums;
-
-      strong {
-        color: var(--category-foreground-l0);
-        font-weight: var(--font-weight-normal);
-      }
     }
   }
 
   solves-group-body {
     display: block;
-    background: var(--category-background-l1);
   }
 
   ul {
@@ -590,81 +595,74 @@
   }
 
   li {
-    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.125rem;
     inline-size: 100%;
-    padding: 0.5rem 2.25rem;
-    background: var(--category-background-l1);
-    --edge-soft: color-mix(
-      in srgb,
-      var(--edge-color, transparent) 20%,
-      transparent
-    );
+    min-block-size: 1.75rem;
+    padding: 0.125rem 0.5rem;
+    color: var(--tui-text);
 
-    &[data-solved] {
-      --edge-color: var(--foreground-success);
-    }
-
-    &[data-blood='gold'] {
-      --edge-color: var(--foreground-gold-l0);
-    }
-
-    &[data-blood='silver'] {
-      --edge-color: var(--foreground-silver-l0);
-    }
-
-    &[data-blood='bronze'] {
-      --edge-color: var(--foreground-bronze-l0);
-    }
-
-    &[data-solved]::before,
-    &[data-blood]::before {
-      content: '';
-      position: absolute;
-      inset-block: 0;
-      inset-inline-start: 0;
-      inline-size: 9rem;
-      pointer-events: none;
-      background: linear-gradient(to right, var(--edge-soft), transparent);
-    }
-
-    :global(svg[data-indicator]) {
-      position: absolute;
-      inset-block-start: 50%;
-      inset-inline-start: 0.5rem;
-      translate: 0 -50%;
-      font-size: 1.25rem;
-      color: var(--edge-color);
+    &:hover {
+      background: var(--background-accent);
     }
   }
 
   row-main {
-    position: relative;
-    z-index: 1;
     display: flex;
-    gap: var(--space-3xs);
+    gap: 1ch;
+    align-items: center;
     min-inline-size: 0;
     overflow: hidden;
     white-space: nowrap;
-    font-size: var(--step-0);
+  }
+
+  [data-part='mark'] {
+    flex: 0 0 3ch;
+    color: var(--tui-muted);
+    white-space: pre;
+
+    li[data-solved] & {
+      color: var(--tui-success);
+    }
+
+    li[data-blood='gold'] & {
+      color: var(--foreground-gold-l0);
+    }
+
+    li[data-blood='silver'] & {
+      color: var(--foreground-silver-l0);
+    }
+
+    li[data-blood='bronze'] & {
+      color: var(--foreground-bronze-l0);
+    }
+  }
+
+  category-swatch {
+    flex-shrink: 0;
+    align-self: stretch;
+    inline-size: 0.5em;
+    margin-block: 0.2em;
+    background: var(--category-foreground-l1);
+    border: 1px solid var(--tui-border-dark);
   }
 
   [data-part='category'] {
     flex-shrink: 0;
-    color: var(--category-foreground-l1);
+    color: var(--tui-muted);
   }
 
   [data-part='name'] {
     overflow: hidden;
     text-overflow: ellipsis;
-    color: var(--category-foreground-l0);
+
+    li:not([data-solved]) & {
+      color: var(--tui-muted);
+    }
   }
 
   row-meta {
-    position: relative;
-    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -673,10 +671,12 @@
     font-variant-numeric: tabular-nums;
 
     [data-part='points'] {
-      color: var(--category-foreground-l1);
+      min-inline-size: 9ch;
+      color: var(--tui-muted);
+      text-align: end;
 
       strong {
-        color: var(--category-foreground-l0);
+        color: var(--tui-text);
         font-weight: var(--font-weight-normal);
       }
     }
@@ -685,12 +685,55 @@
   row-actions {
     display: flex;
     align-items: center;
-    gap: var(--space-2xs);
+    gap: 0.125rem;
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      inline-size: 1.5rem;
+      block-size: 1.5rem;
+      color: var(--tui-muted);
+      background: transparent;
+      border: var(--tui-border-width) solid transparent;
+      cursor: pointer;
+
+      &[data-action='revoke'] {
+        color: var(--tui-danger);
+      }
+
+      &:hover {
+        background: var(--tui-surface);
+        border-color: var(--bevel-raised);
+      }
+
+      &:active {
+        border-color: var(--bevel-recessed);
+        transform: translate(1px, 1px);
+      }
+
+      &:focus-visible {
+        color: var(--tui-selection-text);
+        outline: 1px dotted var(--tui-selection-text);
+        outline-offset: -2px;
+      }
+
+      &:disabled {
+        pointer-events: none;
+        opacity: 0.6;
+      }
+
+      :global(svg) {
+        inline-size: 1em;
+        block-size: 1em;
+      }
+    }
   }
 
   [data-part='time'] {
-    color: var(--category-foreground-l1);
-    opacity: 0.75;
+    min-inline-size: 11ch;
+    color: var(--tui-muted);
+    text-align: end;
   }
 
   @container solves (width >= 30rem) {
@@ -703,6 +746,27 @@
 
     row-main {
       flex: 1;
+    }
+  }
+
+  @container solves (width < 30rem) {
+    row-meta {
+      padding-inline-start: 4ch;
+    }
+  }
+
+  li:has(:focus-visible) {
+    color: var(--tui-selection-text);
+    background: var(--tui-selection-bg);
+
+    [data-part],
+    [data-part] strong,
+    row-actions button {
+      color: inherit;
+    }
+
+    category-swatch {
+      border-color: var(--tui-selection-text);
     }
   }
 </style>

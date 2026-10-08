@@ -46,9 +46,9 @@
     inline-size: 100%;
     block-size: 100%;
     user-select: none;
-    background: var(--background-l3);
-    border-block-end: 2px solid var(--border);
-    color: var(--foreground-l3);
+    background: var(--tui-surface);
+    border-block-end: 1px solid var(--tui-border-mid);
+    color: var(--tui-muted);
     font-size: var(--step--1);
   }
 
@@ -56,6 +56,11 @@
     display: flex;
     min-inline-size: 0;
     align-items: center;
+    border-inline-end: 1px solid var(--tui-border-mid);
+
+    &:last-child {
+      border-inline-end: none;
+    }
   }
 
   button {
@@ -78,11 +83,11 @@
     }
 
     &:hover {
-      color: var(--foreground-l1);
+      color: var(--tui-text);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
       outline-offset: -2px;
     }
 
@@ -95,7 +100,8 @@
     }
 
     &[data-active] {
-      color: var(--foreground-l1);
+      color: var(--tui-text);
+      font-weight: 700;
     }
 
     &[data-active] :global(svg) {

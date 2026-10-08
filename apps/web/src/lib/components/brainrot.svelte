@@ -10,7 +10,7 @@
     type Drag,
     type VideoWindow,
   } from '$lib/components/brainrot-logic'
-  import { IconX } from '$lib/icons'
+  import WindowBox from '$lib/components/window-box.svelte'
 
   let buffer = $state('')
   let windows = $state<VideoWindow[]>([])
@@ -65,102 +65,30 @@
 />
 
 {#each windows as win (win.id)}
-  <brainrot-window
-    style:left="{win.x}px"
-    style:top="{win.y}px"
-    style:width="{win.w}px"
-    style:height="{win.h}px"
-    style:z-index={win.z}
+  <WindowBox
+    floating
+    title={win.title}
+    style="left: {win.x}px; top: {win.y}px; width: {win.w}px; height: {win.h}px; z-index: {win.z}"
     onmousedown={() => bringToFront(win.id)}
-    role="presentation"
+    ontitledown={event => startDrag(event, win.id)}
+    onclose={() => (windows = closeWindowOf(windows, win.id))}
   >
-    <brainrot-bar
-      onmousedown={(event: MouseEvent) => startDrag(event, win.id)}
-      role="presentation"
-    >
-      <span>{win.title}</span>
-      <button
-        type="button"
-        aria-label="Close {win.title}"
-        onmousedown={event => event.stopPropagation()}
-        onclick={() => (windows = closeWindowOf(windows, win.id))}
-      >
-        <IconX aria-hidden="true" />
-      </button>
-    </brainrot-bar>
     <iframe
       src="{win.url}?autoplay=1&mute=1&loop=1"
       title={win.title}
-      frameborder="0"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       referrerpolicy="strict-origin-when-cross-origin"
       allowfullscreen
     ></iframe>
-  </brainrot-window>
+  </WindowBox>
 {/each}
 
 <style>
-  brainrot-window {
-    position: fixed;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: var(--background-l1);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: 0 10px 30px var(--gray-a8);
-  }
-
-  brainrot-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-2xs);
-    padding-block: var(--space-3xs);
-    padding-inline: var(--space-2xs);
-    color: var(--foreground-l0);
-    background: var(--background-l3);
-    cursor: grab;
-    user-select: none;
-
-    &:active {
-      cursor: grabbing;
-    }
-
-    span {
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-  }
-
-  button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-3xs);
-    color: var(--foreground-l1);
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-
-    &:hover {
-      color: var(--foreground-l0);
-      background: var(--background-l5);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -1px;
-    }
-  }
-
   iframe {
     display: block;
-    flex: 1;
-    min-block-size: 0;
     inline-size: 100%;
+    block-size: 100%;
+    min-block-size: 0;
     border: none;
   }
 </style>

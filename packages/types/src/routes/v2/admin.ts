@@ -16,6 +16,7 @@ import {
   BadKnownName,
   BadModerationNotPassed,
   BadName,
+  BadNoAvailableBongs,
   BadPerms,
   BadRateLimit,
   BadToken,
@@ -28,6 +29,8 @@ import {
   GoodAdminBotJobPull,
   GoodAdminBotJobUpdate,
   GoodAdminBotQueueDepth,
+  GoodAdminBongGiven,
+  GoodAdminBongs,
   GoodAdminBotStatus,
   GoodAdminChallengesV2,
   GoodAdminChallengeV2,
@@ -800,6 +803,25 @@ export const ListExternalAuthClientsRouteV2 = defineRoute({
   goodResponses: [GoodAdminExternalAuthClients],
   badResponses: [BadPerms, BadToken],
   authRequired: true,
+  permissions: Permissions.usersWrite,
+})
+
+export const ListAdminBongsRouteV2 = defineRoute({
+  path: '/v2/admin/bongs',
+  method: 'GET',
+  goodResponses: [GoodAdminBongs],
+  badResponses: [BadPerms, BadToken],
+  authRequired: true,
+  permissions: Permissions.usersWrite,
+})
+
+export const GiveAdminBongRouteV2 = defineRoute({
+  path: '/v2/admin/bongs/:id/give',
+  method: 'POST',
+  goodResponses: [GoodAdminBongGiven],
+  badResponses: [BadNoAvailableBongs, BadPerms, BadToken],
+  authRequired: true,
+  params: AdminUserParams,
   permissions: Permissions.usersWrite,
 })
 

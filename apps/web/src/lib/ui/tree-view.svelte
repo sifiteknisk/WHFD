@@ -11,7 +11,6 @@
 <script lang="ts">
   import { normalizeProps, useMachine } from '@zag-js/svelte'
   import * as treeView from '@zag-js/tree-view'
-  import { IconCaretDown } from '$lib/icons'
 
   interface Props {
     nodes: TreeViewNode[]
@@ -101,9 +100,7 @@
           {...api.getBranchTriggerProps(nodeProps)}
           aria-label="Toggle {node.label}"
         >
-          <span {...api.getBranchIndicatorProps(nodeProps)}>
-            <IconCaretDown />
-          </span>
+          <span {...api.getBranchIndicatorProps(nodeProps)}></span>
         </span>
         {@render rowContent(
           node,
@@ -147,57 +144,52 @@
   [data-part='item'] {
     display: flex;
     align-items: center;
-    gap: var(--space-3xs);
-    margin-block-end: 0.125rem;
-    padding-block: 0.25rem;
+    gap: 1ch;
+    padding-block: 0.125rem;
     padding-inline-end: var(--space-2xs);
-    padding-inline-start: calc(
-      var(--space-3xs) + (var(--depth) - 1) * var(--space-s)
-    );
+    padding-inline-start: calc(0.25rem + (var(--depth) - 1) * 2ch);
+    color: var(--tui-text);
     font-size: var(--step--1);
     cursor: pointer;
-    border-radius: var(--radius-sm);
 
     &:hover {
-      background: var(--background-l3);
+      background: var(--background-accent);
     }
 
-    &:active:not(:has([data-part='branch-trigger']:active)),
     &[data-selected] {
-      background: var(--background-l4);
-    }
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
 
-    &[data-selected] [data-part='branch-text'],
-    &[data-selected] [data-part='item-text'] {
-      color: var(--foreground-l0);
+      [data-part='branch-trigger'],
+      tree-row-summary,
+      tree-row-status {
+        color: inherit;
+      }
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: -2px;
+    }
+
+    &[data-selected]:focus-visible {
+      outline: 1px dotted var(--tui-selection-text);
     }
   }
 
   [data-part='item'] {
-    padding-inline-start: calc(
-      var(--space-3xs) + (var(--depth) - 1) * var(--space-s) + 1.25rem +
-        var(--space-3xs)
-    );
+    padding-inline-start: calc(0.25rem + (var(--depth) - 1) * 2ch + 4ch);
   }
 
   [data-part='branch-trigger'] {
     display: flex;
     flex: none;
     align-items: center;
-    justify-content: center;
-    inline-size: 1.25rem;
-    block-size: 1.25rem;
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
     cursor: pointer;
-    border-radius: var(--radius-sm);
 
     &:hover {
-      color: var(--foreground-l0);
-      background: var(--background-l5);
+      color: var(--tui-text);
     }
   }
 
@@ -205,30 +197,28 @@
     display: flex;
     flex: none;
     align-items: center;
-    rotate: -90deg;
-    transition: rotate 0.15s ease;
+    inline-size: 3ch;
+    white-space: pre;
 
-    &[data-state='open'] {
-      rotate: 0deg;
+    &::before {
+      content: '[+]';
     }
 
-    :global(svg) {
-      inline-size: 1em;
-      block-size: 1em;
+    &[data-state='open']::before {
+      content: '[-]';
     }
   }
 
   [data-part='branch-text'],
   [data-part='item-text'] {
     overflow: hidden;
-    color: var(--foreground-l1);
     white-space: nowrap;
     text-overflow: ellipsis;
   }
 
   tree-row-summary {
     overflow: hidden;
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
     white-space: nowrap;
     text-overflow: ellipsis;
   }
@@ -242,6 +232,6 @@
 
   [data-invalid] tree-row-status,
   [data-incomplete] tree-row-status {
-    color: var(--foreground-destructive);
+    color: var(--tui-danger);
   }
 </style>

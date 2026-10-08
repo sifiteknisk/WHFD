@@ -4,8 +4,12 @@
   import { useClientConfig } from '$lib/query/config'
   import EmptyState from '$lib/ui/empty-state.svelte'
   import Spinner from '$lib/ui/spinner.svelte'
+  import FirstBloodOverlay from './first-blood/first-blood-overlay.svelte'
+  import LastFirstBlood from './first-blood/last-first-blood.svelte'
   import ScoresLeaderboard from './leaderboard/leaderboard.svelte'
   import { createScoresData } from './model/data.svelte'
+  import { createFirstBloodQueue } from './model/first-blood.svelte'
+  import { latestFirstBlood } from './model/last-first-blood'
   import { createScoresRouteState } from './model/url-state.svelte'
   import ScoresScreenshotContainer from './screenshot/screenshot-container.svelte'
   import ScoresToolbar from './toolbar/toolbar.svelte'
@@ -26,6 +30,12 @@
     showTop3Context: () => urlState.showTop3Context,
     showSelfContext: () => urlState.showSelfContext,
   })
+
+  const firstBloods = createFirstBloodQueue(
+    data,
+    () => urlState.showFirstBloods
+  )
+  const latestBlood = $derived(latestFirstBlood(data.challengesData))
 
   const revealAfterLoading = data.isLoading
 
@@ -56,6 +66,13 @@
       {divisions}
       onScreenshot={() => (screenshotOpen = true)}
     />
+
+    {#if latestBlood}
+      <LastFirstBlood
+        blood={latestBlood}
+        onFocus={() => urlState.setFocusedChallenge(latestBlood.challengeId)}
+      />
+    {/if}
 
     {#if data.isLoading || focusFetching}
       <scores-leaderboard-slot>
@@ -107,6 +124,16 @@
         {endTime}
       />
     {/if}
+
+    {#if firstBloods.current}
+      {@const blood = firstBloods.current}
+      {#key blood.challengeId}
+        <FirstBloodOverlay
+          {blood}
+          onDone={() => firstBloods.dismiss(blood.challengeId)}
+        />
+      {/key}
+    {/if}
   </scores-page>
 {/if}
 
@@ -116,10 +143,8 @@
     flex: 1;
     flex-direction: column;
     min-block-size: 0;
-    block-size: calc(100dvh - var(--header-height));
-    max-block-size: calc(100dvh - var(--header-height));
     overflow: hidden;
-    padding-block-end: 1rem;
+    padding-block-end: var(--space-2xs);
   }
 
   scores-frame {
@@ -128,10 +153,10 @@
     justify-content: center;
     min-block-size: 0;
     max-inline-size: 100%;
-    padding-inline: 1rem;
+    padding-inline: var(--space-2xs);
 
     @media (width >= 48rem) {
-      padding-inline: 2.25rem;
+      padding-inline: 1rem;
     }
   }
 

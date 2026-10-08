@@ -75,7 +75,6 @@
           {y}
           width={trackWidth}
           height={barHeight}
-          rx="4"
         />
         {#if fillWidth > 0}
           <rect
@@ -85,7 +84,6 @@
             {y}
             width={fillWidth}
             height={barHeight}
-            rx="4"
           />
         {/if}
         <text
@@ -161,12 +159,12 @@
   [data-x-label] {
     font-size: 0.6875rem;
     font-variant-numeric: tabular-nums;
-    fill: var(--foreground-l3);
+    fill: var(--tui-muted);
   }
 
   [data-row-label] {
     font-size: 0.6875rem;
-    fill: var(--foreground-l3);
+    fill: var(--tui-muted);
   }
 
   [data-axis-rule] {
@@ -194,11 +192,11 @@
   }
 
   [data-heading] {
-    color: var(--foreground-l1);
+    color: var(--tui-text);
   }
 
   [data-detail] {
     font-variant-numeric: tabular-nums;
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
   }
 </style>

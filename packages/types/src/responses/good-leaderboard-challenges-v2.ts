@@ -19,6 +19,7 @@ export const GoodLeaderboardChallengesV2 = response(
             points: z.int(),
             sortWeight: z.nullable(z.int()),
             scoringKind: z.enum(ChallengeScoringKind),
+            firstBloodAt: z.nullable(z.int()),
             firstSolvers: z.array(
               z.object({
                 id: z.string(),
@@ -34,6 +35,7 @@ export const GoodLeaderboardChallengesV2 = response(
             points: 443,
             sortWeight: null,
             scoringKind: 'decay',
+            firstBloodAt: 1710000000000,
             firstSolvers: [{ id: 'team-id' }],
           },
         }

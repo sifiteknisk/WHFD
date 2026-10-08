@@ -91,9 +91,11 @@
     overflow-y: auto;
     overscroll-behavior: none;
     padding: 0.25rem;
-    background: var(--background-l1);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
+    box-shadow: var(--space-3xs) var(--space-3xs) 0 var(--tui-shadow);
 
     &[data-same-width] {
       min-inline-size: 0;
@@ -108,14 +110,18 @@
     display: flex;
     align-items: center;
     gap: var(--space-2xs);
-    padding: 0.375rem 0.5rem;
-    color: var(--foreground-l1);
+    padding: 0.25rem 0.5rem;
+    color: var(--tui-text);
     text-decoration: none;
     cursor: pointer;
-    border-radius: var(--radius-sm);
 
     &[data-highlighted] {
-      background: var(--background-l3);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
+
+      option-check {
+        color: inherit;
+      }
     }
 
     :global(svg) {

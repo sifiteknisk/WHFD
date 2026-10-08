@@ -1,0 +1,44 @@
+/* web-tui-kit token overrides: the light values are the kit defaults, the dark
+   values are a night variant so the rCTF theme toggle keeps working. Kept out
+   of forced-colors mode so the kit's system-color mapping still applies. */
+@media not (forced-colors: active) {
+  :root {
+    --tui-desktop-bg:    light-dark(#3f6fa3, #1b3556);
+    --tui-surface:       light-dark(#d6d3ce, #2f3033);
+    --tui-surface-light: light-dark(#eeeeec, #202124);
+    --tui-text:          light-dark(#555555, #e8e6e3);
+    --tui-muted:         light-dark(#6a6a6a, #a3a19d);
+    --tui-title:         light-dark(#c90000, #ff6b5e);
+    --tui-selection-bg:  light-dark(#2f5f93, #3f6fa3);
+    --tui-selection-text: #ffffff;
+    --tui-help:          light-dark(#c90000, #ff6b5e);
+    --tui-border-light:  light-dark(#ffffff, #5a5c61);
+    --tui-border-mid:    light-dark(#9a9a9a, #46484c);
+    --tui-border-dark:   light-dark(#8a8a8a, #0e0f10);
+    --tui-shadow:        light-dark(#24476d, #0a1628);
+    --tui-focus:         light-dark(#555555, #ffffff);
+    --tui-danger:        light-dark(#a40000, #ff7a70);
+    --tui-success:       light-dark(#176b22, #5cc969);
+    --tui-link:          light-dark(#1f4f83, #9cc3ee);
+  }
+}
+
+@media (forced-colors: active) {
+  :root {
+    --tui-link: LinkText;
+  }
+}
+
+:root {
+  --bevel-raised:   var(--tui-border-light) var(--tui-border-dark) var(--tui-border-dark) var(--tui-border-light);
+  --bevel-recessed: var(--tui-border-dark) var(--tui-border-light) var(--tui-border-light) var(--tui-border-dark);
+  --shell-gap:         clamp(0.5rem, 1.5vw, 1.25rem);
+  --shell-title-space: 0.9rem;
+  --shell-hint-height: 1.75rem;
+}
+
+@media (width < 48rem) {
+  :root {
+    --shell-hint-height: 0px;
+  }
+}

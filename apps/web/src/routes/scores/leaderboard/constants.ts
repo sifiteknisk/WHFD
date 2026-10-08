@@ -24,8 +24,10 @@ export const RANK_COLORS = [
 export const SELF_COLOR = 'var(--foreground-self-l0)'
 
 export const SCORE_ROW_GAP_PX = 4
-export const SCORE_CELL_HEIGHT_PX = 64
-export const SCORE_ROW_HEIGHT_FULL_PX = SCORE_CELL_HEIGHT_PX + SCORE_ROW_GAP_PX
+export const SCORE_ROW_DIVIDER_PX = 1
+export const SCORE_CELL_HEIGHT_PX = 48
+export const SCORE_ROW_HEIGHT_FULL_PX =
+  SCORE_CELL_HEIGHT_PX + SCORE_ROW_DIVIDER_PX
 export const SCORE_CELL_WIDTH_PX = 48
 export const SCORE_DYNAMIC_CELL_WIDTH_PX = 76
 export const SCORE_VIRTUAL_OVERSCAN = 8

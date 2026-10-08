@@ -53,6 +53,12 @@ export const GoodUserSelfDataV2 = response('goodUserSelfDataV2', {
       z.describe('Division the team competes in.')
     ),
     score: example(z.int(), 13370).check(z.describe('Total team score.')),
+    bongsTotal: example(z.int(), 13).check(
+      z.describe('Bongs earned so far, one per 1000 points reached.')
+    ),
+    bongsAvailable: example(z.int(), 2).check(
+      z.describe('Earned bongs that have not been handed out yet.')
+    ),
     globalPlace: example(z.nullable(z.int()), 7).check(
       z.describe('Overall rank, or `null` when unranked.')
     ),

@@ -20,7 +20,6 @@
     getRankVariant,
   } from '../model/transforms'
   import type { ScoresUrlState } from '../model/url-state.svelte'
-  import { BLOOD_PATHS } from './cell-icons'
   import {
     SCORE_DIAGONAL_OVERFLOW_PX,
     SCORE_HEADER_HEIGHT_PX,
@@ -177,6 +176,7 @@
 
   const hasSelf = $derived(
     !!data.currentUser &&
+      data.currentUser.division.toLowerCase() !== 'relaxed' &&
       (data.isLoading || data.currentUser.globalPlace !== null)
   )
 
@@ -367,7 +367,7 @@
         {#if line.icon?.kind === 'category'}
           {@const category = getCategoryConfig(line.icon.category)}
           <span data-trend={line.trend} data-category-color={category.color}>
-            <category.icon data-icon="category" aria-hidden="true" />
+            <category-swatch></category-swatch>
             <span data-category-name>{line.iconLabel}</span>
             &middot;
             {line.text}
@@ -377,20 +377,11 @@
             {line.text}
             {#if line.icon}
               {#if line.icon.kind === 'blood'}
-                <svg
-                  viewBox="0 0 24 24"
-                  data-icon="blood"
-                  data-medal={line.icon.medal}
+                <span data-mark="blood" data-medal={line.icon.medal}
+                  >[{line.icon.medal}]</span
                 >
-                  <path
-                    fill="currentColor"
-                    d={BLOOD_PATHS[line.icon.medal - 1]}
-                  />
-                </svg>
               {:else}
-                <svg viewBox="0 0 24 24" data-icon="solved">
-                  <circle cx="12" cy="12" r="10.5" />
-                </svg>
+                <span data-mark="solved">[*]</span>
               {/if}
               {line.iconLabel}
             {/if}
@@ -403,8 +394,15 @@
 
 <style>
   scores-shell {
-    --score-row-gap: 4px;
-    --score-row-height-full: 68px;
+    --score-bg: var(--tui-surface-light);
+    --score-rule: var(--tui-border-mid);
+    --score-hover: color-mix(
+      in oklab,
+      var(--tui-selection-bg) 14%,
+      var(--score-bg)
+    );
+    --score-row-gap: 1px;
+    --score-row-height-full: 49px;
     --score-row-height: calc(
       var(--score-row-height-full) - var(--score-row-gap)
     );
@@ -416,9 +414,7 @@
     --score-fade-size: 1.5rem;
     --score-fade-inset-top: 0px;
     --score-fade-inset-bottom: 0px;
-    --score-fade-region-top: calc(
-      var(--score-mobile-graph-height) + var(--space-3xs)
-    );
+    --score-fade-region-top: calc(var(--score-mobile-graph-height) + 1px);
     --score-fade-rail: 0px;
     position: relative;
     display: flex;
@@ -426,6 +422,9 @@
     min-block-size: 0;
     inline-size: 100%;
     max-inline-size: 100%;
+    background: var(--score-bg);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     &[data-fade-scope] {
       timeline-scope: --edge-fade, --lb-block, --lb-inline;
@@ -485,7 +484,7 @@
       );
       inset-inline: 0;
       block-size: var(--score-fade-size);
-      background: linear-gradient(to bottom, var(--background-l0), transparent);
+      background: linear-gradient(to bottom, var(--score-bg), transparent);
     }
 
     &[data-edge='bottom'] {
@@ -494,7 +493,7 @@
       );
       inset-inline: 0;
       block-size: var(--score-fade-size);
-      background: linear-gradient(to top, var(--background-l0), transparent);
+      background: linear-gradient(to top, var(--score-bg), transparent);
     }
 
     &[data-edge='left'],
@@ -527,9 +526,8 @@
     display: block;
     flex-shrink: 0;
     block-size: var(--score-mobile-graph-height);
-    margin-block-end: var(--space-3xs);
-    background: var(--background-l1);
-    border-radius: var(--radius-lg);
+    background: var(--score-bg);
+    border-block-end: 1px solid var(--score-rule);
     overflow: hidden;
   }
 
@@ -574,8 +572,8 @@
     /* not one huge repeating-linear-gradient because firefox misrenders giant gradient primitives??? */
     background-image: linear-gradient(
       to bottom,
-      var(--background-l2) 0 var(--score-row-height),
-      transparent var(--score-row-height)
+      transparent 0 var(--score-row-height),
+      var(--score-rule) var(--score-row-height)
     );
     background-size: 100% var(--score-row-height-full);
   }
@@ -588,15 +586,14 @@
     inline-size: 100%;
     block-size: var(--score-row-height-full);
     contain: layout style paint;
-    background: var(--background-l0);
+    background: var(--score-rule);
 
     &:has(:global(a:focus-visible))::after {
       content: '';
       position: absolute;
       inset: 0 0 var(--score-row-gap) 0;
       z-index: 11;
-      border: 2px solid var(--ring);
-      border-radius: var(--radius-lg);
+      border: 1px dotted var(--tui-focus);
       pointer-events: none;
     }
   }
@@ -616,76 +613,59 @@
     display: block;
     inline-size: 100%;
     block-size: var(--score-row-height);
-    background: var(--background-l2);
+    background: repeating-linear-gradient(
+        -45deg,
+        transparent 0 6px,
+        color-mix(in oklab, var(--score-rule) 30%, transparent) 6px 7px
+      )
+      var(--score-bg);
   }
 
   row-team {
-    --rank-fg-l0: var(--foreground-l0);
-    --rank-fg-l1: var(--foreground-l3);
-    --rank-glow: transparent;
-    position: relative;
-    z-index: 0;
+    --rank-fg-l0: var(--tui-text);
+    --rank-fg-l1: var(--tui-muted);
+    --row-fg: var(--tui-text);
+    --row-muted: var(--tui-muted);
     display: flex;
     align-items: center;
-    gap: var(--space-2xs);
+    gap: 1ch;
     flex-shrink: 0;
     inline-size: var(--score-team-column-width);
     block-size: var(--score-row-height);
-    padding-inline: 1rem;
-    background: var(--background-l0);
-
-    &::before,
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      border-radius: var(--radius-lg);
-    }
-
-    &::before {
-      background: var(--background-l2);
-    }
-
-    &[data-hovered]::before {
-      background: color-mix(
-        in oklab,
-        var(--foreground-l0) 4%,
-        var(--background-l2)
-      );
-    }
-
-    &[data-ranked]::after {
-      inline-size: min(24rem, 100%);
-      background: linear-gradient(to right, var(--rank-glow), transparent);
-    }
+    padding-inline: 0.75rem;
+    color: var(--row-fg);
+    background: var(--score-bg);
 
     &[data-rank='first'] {
       --rank-fg-l0: var(--foreground-gold-l0);
       --rank-fg-l1: var(--foreground-gold-l1);
-      --rank-glow: var(--background-gold);
     }
 
     &[data-rank='second'] {
       --rank-fg-l0: var(--foreground-silver-l0);
       --rank-fg-l1: var(--foreground-silver-l1);
-      --rank-glow: var(--background-silver);
     }
 
     &[data-rank='third'] {
       --rank-fg-l0: var(--foreground-bronze-l0);
       --rank-fg-l1: var(--foreground-bronze-l1);
-      --rank-glow: var(--background-bronze);
     }
 
     &[data-rank='self'] {
       --rank-fg-l0: var(--foreground-self-l0);
       --rank-fg-l1: var(--foreground-self-l1);
-      --rank-glow: var(--jade-a3);
     }
 
-    &[data-current]::before {
+    &[data-current] {
       background: var(--background-self-l0);
+    }
+
+    &[data-hovered] {
+      --rank-fg-l0: var(--tui-selection-text);
+      --rank-fg-l1: var(--tui-selection-text);
+      --row-fg: var(--tui-selection-text);
+      --row-muted: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
     }
   }
 
@@ -697,7 +677,7 @@
     scores-shell {
       --score-team-column-width: min(60vw - 4.5rem, 26rem);
       --score-fade-region-top: var(--score-header-height);
-      --score-fade-rail: 0.5rem;
+      --score-fade-rail: 0.75rem;
       inline-size: fit-content;
       margin-inline: auto;
       padding-block-end: var(--score-fade-rail);
@@ -717,12 +697,12 @@
 
     edge-fade[data-edge='left'] {
       inset-inline-start: var(--score-team-column-width);
-      background: linear-gradient(to right, var(--background-l0), transparent);
+      background: linear-gradient(to right, var(--score-bg), transparent);
     }
 
     edge-fade[data-edge='right'] {
       inset-inline-end: 0;
-      background: linear-gradient(to left, var(--background-l0), transparent);
+      background: linear-gradient(to left, var(--score-bg), transparent);
     }
 
     mobile-graph {
@@ -740,7 +720,8 @@
       inset-block-start: 0;
       z-index: 20;
       block-size: var(--score-header-height);
-      background: var(--background-l0);
+      background: var(--score-bg);
+      box-shadow: 0 1px 0 var(--score-rule);
     }
 
     header-corner {
@@ -750,16 +731,13 @@
       flex-shrink: 0;
       inline-size: var(--score-team-column-width);
       block-size: 100%;
-      background: var(--background-l0);
+      background: var(--score-bg);
+      border-inline-end: 1px solid var(--score-rule);
     }
 
     graph-panel {
       display: block;
       block-size: 100%;
-      background: var(--background-l1);
-      border-start-start-radius: var(--radius-lg);
-      border-start-end-radius: var(--radius-lg);
-      border-end-start-radius: var(--radius-lg);
       overflow: hidden;
     }
 
@@ -786,12 +764,7 @@
       position: sticky;
       inset-inline-start: 0;
       z-index: 10;
-
-      &::before,
-      &::after {
-        border-start-end-radius: 0;
-        border-end-end-radius: 0;
-      }
+      border-inline-end: 1px solid var(--score-rule);
     }
 
     row-content {
@@ -799,16 +772,10 @@
       flex-shrink: 0;
       inline-size: var(--score-content-width);
       block-size: var(--score-row-height);
-      background: var(--background-l2);
-      border-start-end-radius: var(--radius-lg);
-      border-end-end-radius: var(--radius-lg);
+      background: var(--score-bg);
 
       &[data-hovered] {
-        background: color-mix(
-          in oklab,
-          var(--foreground-l0) 4%,
-          var(--background-l2)
-        );
+        background: var(--score-hover);
       }
 
       &[data-current] {
@@ -822,11 +789,13 @@
     z-index: var(--layer-popover);
     display: flex;
     flex-direction: column;
-    max-inline-size: 16rem;
-    padding: 0.375rem 0.625rem;
-    background: var(--background-l2);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-sm);
+    max-inline-size: 18rem;
+    padding: 0.25rem 1ch;
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
+    box-shadow: 0.25rem 0.25rem 0 var(--tui-shadow);
     pointer-events: none;
     line-height: 1.35;
     translate: -50% calc(-100% - 0.625rem);
@@ -835,33 +804,10 @@
       translate: -50% 0.625rem;
     }
 
-    &::after {
-      content: '';
-      position: absolute;
-      inset-inline-start: 50%;
-      inline-size: 0.625rem;
-      block-size: 0.625rem;
-      background: var(--background-l2);
-      translate: -50%;
-      rotate: 45deg;
-    }
-
-    &[data-place='top']::after {
-      inset-block-end: -0.4375rem;
-      border-inline-end: 2px solid var(--border);
-      border-block-end: 2px solid var(--border);
-    }
-
-    &[data-place='bottom']::after {
-      inset-block-start: -0.4375rem;
-      border-inline-start: 2px solid var(--border);
-      border-block-start: 2px solid var(--border);
-    }
-
     strong {
-      color: var(--foreground-l1);
-      font-size: var(--step--2);
-      font-weight: 400;
+      color: var(--tui-title);
+      font-size: var(--step--1);
+      font-weight: 700;
 
       &[data-capitalize] {
         text-transform: capitalize;
@@ -871,52 +817,50 @@
     span {
       display: flex;
       align-items: center;
-      gap: 0.25rem;
-      color: var(--foreground-l3);
-      font-size: var(--step--2);
+      gap: 1ch;
+      color: var(--tui-muted);
+      font-size: var(--step--1);
       white-space: nowrap;
 
       &[data-trend='positive'] {
-        color: var(--foreground-success);
+        color: var(--tui-success);
       }
 
       &[data-trend='negative'] {
-        color: var(--foreground-destructive);
+        color: var(--tui-danger);
       }
     }
 
-    svg[data-icon] {
-      inline-size: 0.875rem;
-      block-size: 0.875rem;
+    span[data-mark] {
+      font-weight: 700;
     }
 
-    :global(svg[data-icon='category']),
+    span[data-mark='solved'] {
+      color: var(--tui-success);
+    }
+
+    span[data-mark='blood'][data-medal='1'] {
+      color: var(--foreground-gold-l0);
+    }
+
+    span[data-mark='blood'][data-medal='2'] {
+      color: var(--foreground-silver-l0);
+    }
+
+    span[data-mark='blood'][data-medal='3'] {
+      color: var(--foreground-bronze-l0);
+    }
+
     span[data-category-name] {
       color: var(--category-foreground-l1);
     }
 
-    :global(svg[data-icon='category']) {
-      inline-size: 0.875rem;
-      block-size: 0.875rem;
+    category-swatch {
       flex-shrink: 0;
-    }
-
-    svg[data-icon='solved'] circle {
-      fill: none;
-      stroke: color-mix(in oklab, var(--foreground-success) 75%, transparent);
-      stroke-width: 3;
-    }
-
-    svg[data-icon='blood'][data-medal='1'] {
-      color: var(--foreground-gold-l0);
-    }
-
-    svg[data-icon='blood'][data-medal='2'] {
-      color: var(--foreground-silver-l0);
-    }
-
-    svg[data-icon='blood'][data-medal='3'] {
-      color: var(--foreground-bronze-l0);
+      inline-size: 0.75em;
+      block-size: 0.75em;
+      background: var(--category-foreground-l1);
+      border: 1px solid var(--tui-border-dark);
     }
   }
 

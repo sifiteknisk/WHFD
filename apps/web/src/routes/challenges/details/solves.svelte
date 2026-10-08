@@ -232,8 +232,7 @@
   solves-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3xs);
-    padding: 1rem 1.25rem;
+    padding: 0;
   }
 
   row-slot {
@@ -260,19 +259,17 @@
     position: absolute;
     inset-inline: 0;
     z-index: 2;
-    padding-inline: 1.25rem;
     pointer-events: none;
-    background: var(--background-l2);
+    background: var(--tui-surface-light);
 
     &[data-edge='top'] {
       inset-block-start: 0;
-      padding-block-start: 1rem;
-      padding-block-end: var(--space-3xs);
+      box-shadow: 0 1px 0 var(--tui-border-mid);
     }
 
     &[data-edge='bottom'] {
       inset-block-end: 0;
-      padding-block-start: var(--space-3xs);
+      box-shadow: 0 -1px 0 var(--tui-border-mid);
     }
 
     :global(a) {

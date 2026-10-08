@@ -310,9 +310,9 @@
   settings-group {
     display: block;
     overflow: clip;
-    background: var(--background-l1);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-lg);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
   }
 
   group-header {
@@ -320,12 +320,13 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-s);
-    padding: 0.375rem var(--space-s);
-    background: var(--background-l3);
+    padding: 0.25rem 1rem;
+    color: var(--tui-selection-text);
+    background: var(--tui-selection-bg);
   }
 
   group-title {
-    color: var(--foreground-l3);
+    font-weight: 700;
   }
 
   group-body {
@@ -335,10 +336,10 @@
 
   group-note {
     display: block;
-    padding: var(--space-2xs) var(--space-s);
+    padding: var(--space-2xs) 1rem;
     font-size: var(--step--1);
-    color: var(--foreground-l3);
-    border-block-end: 2px solid var(--border);
+    color: var(--tui-muted);
+    border-block-end: 1px solid var(--tui-border-mid);
   }
 
   clients-editor {
@@ -355,12 +356,14 @@
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    border-block-end: 2px solid var(--border);
+    margin: var(--space-2xs);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     @media (min-width: 40rem) {
       inline-size: 11rem;
-      border-block-end: none;
-      border-inline-end: 2px solid var(--border);
+      margin-inline-end: 0;
     }
   }
 
@@ -369,14 +372,12 @@
     flex: 1;
     flex-direction: row;
     flex-wrap: wrap;
-    gap: var(--space-3xs);
-    padding: var(--space-2xs);
+    padding-block: 0.125rem;
     overflow: hidden;
 
     @media (min-width: 40rem) {
       flex-direction: column;
       flex-wrap: nowrap;
-      gap: 2px;
     }
   }
 
@@ -384,7 +385,7 @@
     display: flex;
     flex-shrink: 0;
     padding: var(--space-2xs);
-    border-block-start: 2px solid var(--border);
+    border-block-start: 1px solid var(--tui-border-mid);
 
     :global(button) {
       inline-size: 100%;
@@ -396,17 +397,15 @@
     align-items: center;
     gap: var(--space-3xs);
     max-inline-size: 100%;
-    border-radius: var(--radius-md);
-    color: var(--foreground-l4);
+    color: var(--tui-text);
 
     &:hover {
-      background: var(--background-l3);
-      color: var(--foreground-l0);
+      background: var(--background-accent);
     }
 
     &[data-active] {
-      background: var(--background-l4);
-      color: var(--foreground-l0);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
     }
 
     @media (min-width: 40rem) {
@@ -416,15 +415,19 @@
     button[data-select] {
       overflow: hidden;
       flex: 1;
-      padding: 0.375rem var(--space-2xs);
+      padding: 0.125rem 0.5rem;
       color: inherit;
-      font-size: var(--step--1);
       white-space: nowrap;
       text-align: start;
       text-overflow: ellipsis;
       background: none;
       border: none;
       cursor: pointer;
+
+      &:focus-visible {
+        outline: 1px dotted currentColor;
+        outline-offset: -2px;
+      }
     }
 
     button[data-remove] {
@@ -435,7 +438,6 @@
       color: inherit;
       background: none;
       border: none;
-      border-radius: var(--radius-sm);
       cursor: pointer;
       opacity: 0;
 
@@ -445,12 +447,14 @@
       }
 
       &:hover {
-        color: var(--foreground-destructive);
-        background: var(--background-destructive);
+        color: var(--tui-selection-text);
+        background: var(--tui-danger);
       }
 
       &:focus-visible {
         opacity: 1;
+        outline: 1px dotted currentColor;
+        outline-offset: -2px;
       }
     }
 
@@ -465,7 +469,7 @@
     display: block;
     padding: 0.375rem var(--space-2xs);
     font-size: var(--step--1);
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
   }
 
   client-placeholder {
@@ -482,7 +486,7 @@
     gap: 0.75rem;
     min-inline-size: 0;
     flex: 1;
-    padding: var(--space-s);
+    padding: var(--space-s) 1rem;
   }
 
   form,
@@ -515,13 +519,23 @@
 
   client-heading {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-3xs);
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2xs);
+  }
+
+  client-name {
+    font-weight: 700;
+    color: var(--tui-text);
   }
 
   client-date {
+    padding: 0 0.5ch;
     font-size: var(--step--1);
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
+    background: var(--tui-surface-light);
+    border: 1px solid var(--tui-border-mid);
   }
 
   button[data-copy] {
@@ -531,11 +545,11 @@
     gap: var(--space-2xs);
     inline-size: 100%;
     padding: var(--space-3xs) var(--space-2xs);
-    color: var(--foreground-l1);
+    color: var(--tui-text);
     text-align: start;
-    background: var(--background-l4);
-    border: 2px solid transparent;
-    border-radius: var(--radius-md);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
     cursor: pointer;
 
     code {
@@ -546,16 +560,16 @@
 
     :global(svg) {
       flex-shrink: 0;
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
     }
 
     &:hover {
-      background: var(--background-l5);
+      background: var(--background-accent);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -1px;
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
   }
 
@@ -567,8 +581,9 @@
       display: block;
       padding: var(--space-3xs) var(--space-2xs);
       word-break: break-all;
-      background: var(--background-l4);
-      border-radius: var(--radius-md);
+      background: var(--tui-surface-light);
+      border: var(--tui-border-width) solid;
+      border-color: var(--bevel-recessed);
     }
   }
 
@@ -583,8 +598,9 @@
       padding: var(--space-2xs);
       white-space: nowrap;
       text-overflow: ellipsis;
-      background: var(--background-l4);
-      border-radius: var(--radius-md);
+      background: var(--tui-surface-light);
+      border: var(--tui-border-width) solid;
+      border-color: var(--bevel-recessed);
     }
   }
 </style>

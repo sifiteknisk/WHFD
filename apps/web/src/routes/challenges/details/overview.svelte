@@ -124,8 +124,11 @@
   file-list {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
     max-block-size: 12rem;
+    padding: 2px;
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
     overflow-y: auto;
     overscroll-behavior: none;
 
@@ -133,19 +136,23 @@
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      padding: 0.5rem 0.75rem;
+      padding: 0.375rem 0.75rem;
       color: inherit;
       text-decoration: none;
-      background: var(--background-l4);
-      border-radius: var(--radius-md);
 
-      &:hover {
-        background: var(--background-l5);
+      &:is(:hover, :focus-visible) {
+        color: var(--tui-selection-text);
+        background: var(--tui-selection-bg);
+
+        :global([data-slot='icon']),
+        [data-slot='size'] {
+          color: inherit;
+        }
       }
 
       &:focus-visible {
-        outline: 2px solid var(--ring);
-        outline-offset: 0;
+        outline: 1px dotted var(--tui-selection-text);
+        outline-offset: -3px;
       }
     }
 

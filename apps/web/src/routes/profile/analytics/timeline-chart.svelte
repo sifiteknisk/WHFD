@@ -181,7 +181,7 @@
 
   [data-lane-label] {
     font-size: 0.6875rem;
-    fill: var(--foreground-l3);
+    fill: var(--tui-muted);
   }
 
   [data-solve-dot] {

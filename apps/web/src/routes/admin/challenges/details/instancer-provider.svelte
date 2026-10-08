@@ -151,10 +151,10 @@
     flex-direction: column;
     gap: var(--space-s);
     min-block-size: 0;
-    padding: var(--space-s) 1.25rem;
+    padding: var(--space-s);
 
-    &[data-disabled] {
-      opacity: 0.6;
+    :global(:is(input, textarea):disabled) {
+      color: var(--tui-muted);
     }
   }
 
@@ -171,8 +171,9 @@
     flex-direction: column;
     min-block-size: 0;
     overflow: clip;
-    border: 2px solid var(--border);
-    border-radius: var(--radius-lg);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
   }
 
   yaml-editor {
@@ -209,22 +210,31 @@
   }
 
   [data-mode-toggle] {
-    color: var(--foreground-l3);
+    padding: 0.125rem var(--space-2xs);
+    color: var(--tui-text);
     font-size: var(--step--1);
     cursor: pointer;
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
 
     &:hover {
-      color: var(--foreground-l0);
+      background: var(--tui-surface-light);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      border-radius: var(--radius-sm);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
   }
 
   provider-empty {
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
     font-size: var(--step--1);
 
     provider-editor & {
@@ -234,7 +244,7 @@
 
   field-error {
     font-size: var(--step--1);
-    color: var(--foreground-destructive);
+    color: var(--tui-danger);
   }
 
   @container challenge-details (width < 46rem) {

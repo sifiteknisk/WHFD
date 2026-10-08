@@ -1,4 +1,4 @@
-import type { Challenge } from '@rctf/types'
+import { ChallengeScoringKind, type Challenge } from '@rctf/types'
 import {
   computeStats,
   deriveAccordionValue,
@@ -149,9 +149,35 @@ describe('groupChallenges', () => {
     ])
   })
 
-  test('does not order by points, which is 0 for dynamic challenges', () => {
+  test('sorts within a category by points asc before solves', () => {
     const challenges = [
-      makeChallenge({ id: '1', category: 'web', name: 'dynamic', points: 0 }),
+      makeChallenge({ id: '1', category: 'web', name: 'hard', points: 500 }),
+      makeChallenge({ id: '2', category: 'web', name: 'easy', points: 50 }),
+      makeChallenge({
+        id: '3',
+        category: 'web',
+        name: 'medium',
+        points: 200,
+        solves: 99,
+      }),
+    ]
+    const groups = groupChallenges(challenges)
+    expect(groups[0]?.challenges.map(challenge => challenge.name)).toEqual([
+      'easy',
+      'medium',
+      'hard',
+    ])
+  })
+
+  test('puts dynamic challenges, which report 0 points, after fixed ones', () => {
+    const challenges = [
+      makeChallenge({
+        id: '1',
+        category: 'web',
+        name: 'dynamic',
+        points: 0,
+        scoringKind: ChallengeScoringKind.DYNAMIC,
+      }),
       makeChallenge({
         id: '2',
         category: 'web',

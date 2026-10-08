@@ -81,8 +81,9 @@
     flex-wrap: wrap;
     gap: var(--space-2xs) var(--space-s);
     padding: var(--space-2xs);
-    background: var(--background-l4);
-    border-radius: var(--radius-md);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
     font-family: var(--font-mono);
     font-size: var(--step--1);
   }

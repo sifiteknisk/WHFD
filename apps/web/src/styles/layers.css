@@ -4,4 +4,6 @@
   --layer-dialog:   50;
   --layer-popover:  60;
   --layer-toast:    70;
+  --layer-wipe:     80;
+  --layer-blood:    90;
 }

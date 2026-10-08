@@ -121,7 +121,6 @@
             {y}
             width={trackWidth}
             height={barHeight}
-            rx="4"
           />
 
           {#if item.segments && item.segments.length > 0}
@@ -135,7 +134,6 @@
                     {y}
                     width={itemWidth}
                     height={barHeight}
-                    rx="4"
                   />
                 </clipPath>
                 {#if hasHatch}
@@ -220,7 +218,6 @@
                 {y}
                 width={itemWidth}
                 height={barHeight}
-                rx="4"
               />
               {#if earnedWidth > 0}
                 <rect
@@ -229,7 +226,6 @@
                   {y}
                   width={earnedWidth}
                   height={barHeight}
-                  rx="4"
                 />
               {/if}
             </g>
@@ -241,7 +237,6 @@
                 {y}
                 width={itemWidth}
                 height={barHeight}
-                rx="4"
               />
             </g>
           {/if}
@@ -264,7 +259,6 @@
               width={Math.min(GRADIENT_MAX, clearWidth)}
               height={barHeight}
               fill="url(#{gradientId})"
-              rx="4"
             />
             <g data-full-check>
               <IconCheck
@@ -386,12 +380,12 @@
   [data-x-label] {
     font-size: 0.6875rem;
     font-variant-numeric: tabular-nums;
-    fill: var(--foreground-l3);
+    fill: var(--tui-muted);
   }
 
   [data-row-label] {
     font-size: 0.6875rem;
-    fill: var(--foreground-l3);
+    fill: var(--tui-muted);
   }
 
   [data-axis-rule] {
@@ -509,6 +503,6 @@
 
   [data-detail] {
     font-variant-numeric: tabular-nums;
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
   }
 </style>

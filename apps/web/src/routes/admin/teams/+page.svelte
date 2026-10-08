@@ -406,15 +406,10 @@
   teams-page {
     display: flex;
     flex-direction: column;
+    flex: 1;
     min-block-size: 0;
-    block-size: calc(100dvh - var(--header-height));
-    max-block-size: calc(100dvh - var(--header-height));
-    padding: 0 1rem 1rem;
+    padding: var(--space-2xs);
     overflow: hidden;
-
-    @media (width >= 48rem) {
-      padding-inline: 2.25rem;
-    }
   }
 
   teams-status {
@@ -430,7 +425,7 @@
     }
 
     p {
-      color: var(--foreground-l3);
+      color: var(--tui-muted);
     }
   }
 </style>

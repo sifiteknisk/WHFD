@@ -523,6 +523,7 @@
     flex-direction: column;
     block-size: 100%;
     min-block-size: 0;
+    --fade-color: var(--tui-surface);
   }
 
   [data-part='panel'] {
@@ -534,9 +535,8 @@
 
   [data-part='resize-trigger'] {
     position: relative;
-    inline-size: 2px;
-    background: var(--border);
-    transition: background-color 80ms ease;
+    inline-size: 1px;
+    background: var(--tui-border-mid);
 
     &::before {
       content: '';
@@ -547,11 +547,12 @@
 
     &:hover,
     &[data-dragging] {
-      background: var(--foreground-l4);
+      background: var(--tui-border-dark);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
   }
 
@@ -560,6 +561,15 @@
     flex: 1;
     flex-direction: column;
     min-block-size: 0;
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  tree-viewport {
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
+    --fade-color: var(--tui-surface-light);
   }
 
   tree-viewport,
@@ -575,16 +585,15 @@
     display: block;
     flex: 1;
     min-block-size: 0;
-    padding: 0.5rem;
+    padding: 0.125rem;
     overflow-y: auto;
     overscroll-behavior: none;
+    scrollbar-color: var(--tui-border-mid) var(--tui-surface);
   }
 
   tree-footer {
     display: flex;
     flex: none;
-    padding: 0.5rem;
-    border-block-start: 2px solid var(--border);
   }
 
   schema-form-detail {
@@ -611,42 +620,42 @@
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-3xs);
-    padding: 0.5rem 1rem;
-    color: var(--foreground-l3);
+    padding: 0.25rem 1rem;
+    color: var(--tui-muted);
     font-size: var(--step--1);
-    border-block-end: 2px solid var(--border);
+    border-block-end: 1px solid var(--tui-border-mid);
 
     button {
       padding: 0;
-      color: var(--foreground-l3);
+      color: var(--tui-link);
       font: inherit;
       cursor: pointer;
       background: none;
       border: none;
-      border-radius: var(--radius-sm);
 
       &:hover {
-        color: var(--foreground-l1);
         text-decoration: underline;
       }
 
       &:focus-visible {
-        outline: 2px solid var(--ring);
+        outline: 2px dotted var(--tui-focus);
+        outline-offset: 2px;
       }
     }
   }
 
   crumb-separator {
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
     user-select: none;
   }
 
   crumb-current {
-    color: var(--foreground-l1);
-    border-radius: var(--radius-sm);
+    font-weight: 700;
+    color: var(--tui-text);
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
   }
 
@@ -671,13 +680,13 @@
   }
 
   detail-gate-empty {
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
     font-size: var(--step--1);
   }
 
   schema-form-empty {
     display: block;
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
     font-size: var(--step--1);
   }
 
@@ -704,7 +713,7 @@
     }
 
     schema-form-tree {
-      border-block-end: 2px solid var(--border);
+      border-block-end: 1px solid var(--tui-border-mid);
     }
 
     tree-scroll {

@@ -274,7 +274,6 @@
     align-items: center;
     gap: var(--space-xs);
     padding: var(--space-2xs);
-    border-block-end: 2px solid var(--border);
   }
 
   submissions-reveal {
@@ -287,15 +286,11 @@
   submissions-page {
     display: flex;
     flex-direction: column;
-    block-size: calc(100dvh - var(--header-height));
+    flex: 1;
     min-block-size: 0;
     inline-size: 100%;
-    padding: 0 1rem 1rem;
+    padding: var(--space-2xs);
     overflow: hidden;
-
-    @media (width >= 48rem) {
-      padding-inline: 2.25rem;
-    }
   }
 
   page-status {
@@ -311,7 +306,7 @@
     }
 
     p {
-      color: var(--foreground-l3);
+      color: var(--tui-muted);
     }
   }
 </style>

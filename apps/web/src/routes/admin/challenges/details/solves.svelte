@@ -252,7 +252,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3xs);
-    padding: 1rem 1.25rem;
+    padding: var(--space-s);
   }
 
   row-slot {

@@ -21,8 +21,9 @@
   ui-section {
     display: block;
     overflow: clip;
-    border: 2px solid var(--border);
-    border-radius: var(--radius-lg);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
   }
 
   section-header {
@@ -30,9 +31,10 @@
     gap: var(--space-2xs);
     align-items: center;
     justify-content: space-between;
-    padding: 0.375rem 1rem;
-    color: var(--foreground-l3);
-    background: var(--background-l3);
+    padding: 0.25rem 1rem;
+    font-weight: 700;
+    color: var(--tui-selection-text);
+    background: var(--tui-selection-bg);
   }
 
   section-content {

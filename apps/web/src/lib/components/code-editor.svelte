@@ -170,6 +170,7 @@
 <code-editor-shell
   bind:this={container}
   data-invalid={invalid || undefined}
+  data-disabled={disabled || undefined}
   style:--code-editor-block-size="calc({rows * 1.5}em + 2 * var(--space-3xs))"
 ></code-editor-shell>
 
@@ -194,9 +195,10 @@
     flex-direction: column;
     overflow: hidden;
     font-size: var(--step--1);
-    background: var(--background-l4);
-    border: 2px solid transparent;
-    border-radius: var(--radius-md);
+    color: var(--tui-text);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     :root[data-theme='dark'] & {
       --code-key: #7ee787;
@@ -221,12 +223,16 @@
     }
 
     &:focus-within {
-      outline: 2px solid var(--ring);
-      outline-offset: -1px;
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     &[data-invalid] {
-      border-color: var(--foreground-destructive);
+      border-color: var(--tui-danger);
+    }
+
+    &[data-disabled] :global(.cm-content) {
+      color: var(--tui-muted);
     }
 
     :global(.cm-editor) {
@@ -245,7 +251,7 @@
 
     :global(.cm-content) {
       padding: var(--space-3xs) 0;
-      caret-color: var(--foreground-l0);
+      caret-color: var(--tui-text);
     }
 
     :global(.cm-line) {
@@ -254,11 +260,12 @@
 
     :global(.cm-content ::selection),
     :global(.cm-line::selection) {
-      background: color-mix(in srgb, var(--foreground-accent) 35%, transparent);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
     }
 
     :global(.cm-placeholder) {
-      color: var(--foreground-l4);
+      color: var(--tui-muted);
     }
 
     :global(.tok-propertyName) {

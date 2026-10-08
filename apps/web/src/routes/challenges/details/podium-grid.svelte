@@ -12,10 +12,11 @@
   let { slots, loading = false, reveal = false }: Props = $props()
 
   const minColumns = $derived(podiumMinColumns(slots))
+  const slotCount = $derived(loading ? 4 : slots.length)
 </script>
 
 <podium-grid>
-  <podium-track>
+  <podium-track style:--slot-count={slotCount}>
     {#if loading}
       {#each { length: 4 }, index (index)}
         <podium-slot data-kind="loading" data-min-cols={index + 1}>
@@ -64,7 +65,7 @@
   podium-slot {
     --slot-fg-l0: var(--foreground-nth-l0);
     --slot-fg-l1: var(--foreground-nth-l1);
-    --slot-bg: var(--background-nth);
+    --slot-bg: var(--tui-surface-light);
     --avatar-size: 2.75rem;
     --avatar-radius: var(--radius-md);
 
@@ -75,8 +76,8 @@
     block-size: 3.5rem;
     padding: 0.25rem;
     background: var(--slot-bg);
-    border: 2px solid transparent;
-    border-radius: var(--radius-lg);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     &[data-variant='gold'] {
       --slot-fg-l0: var(--foreground-gold-l0);
@@ -106,8 +107,7 @@
     &[data-kind='placeholder'],
     &[data-kind='loading'] {
       background: transparent;
-      border-style: dashed;
-      border-color: var(--border);
+      border: 1px dotted var(--tui-border-mid);
     }
 
     &[data-kind='placeholder'] {
@@ -202,7 +202,7 @@
 
   @container (min-inline-size: 56rem) {
     podium-track {
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(var(--slot-count, 4), minmax(0, 1fr));
     }
 
     podium-slot[data-min-cols='4'] {

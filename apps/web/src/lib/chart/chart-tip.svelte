@@ -68,10 +68,11 @@
     gap: var(--space-3xs);
     padding: 0.5rem 0.75rem;
     font-size: 0.75rem;
-    background: var(--background-l4);
-    border: 2px solid var(--background-l5);
-    border-radius: var(--radius-lg);
-    box-shadow: 0 1.25rem 1.5rem -0.75rem rgb(0 0 0 / 40%);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
+    box-shadow: var(--space-3xs) var(--space-3xs) 0 var(--tui-shadow);
     pointer-events: none;
     visibility: hidden;
 
@@ -88,7 +89,7 @@
     display: flex;
     flex-direction: column;
     margin-block-end: var(--space-3xs);
-    color: var(--foreground-l3);
+    color: var(--tui-muted);
 
     small {
       font-size: 0.625rem;

@@ -23,6 +23,8 @@ import {
   SubmissionKind,
   SubmissionResult,
 } from '@rctf/types'
+import { randomProfilePicUrl } from '@rctf/util'
+
 export type SeedData = {
   admin: User
   teams: User[]
@@ -39,7 +41,25 @@ export type SeedData = {
 
 const DAY = 24 * 60 * 60 * 1000
 const SOLVE_END_OFFSET = 5 * 60_000
-export const MOCK_START_DELAY = 30_000
+const DEFAULT_MOCK_START_DELAY = 30_000
+
+const resolveMockStartDelay = (): number => {
+  const raw = Bun.env.MOCK_STARTUP_TIME
+  if (raw === undefined || raw.trim() === '') {
+    return DEFAULT_MOCK_START_DELAY
+  }
+
+  const parsed = Number(raw.trim())
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error(
+      `MOCK_STARTUP_TIME must be a non-negative integer number of milliseconds, got: ${JSON.stringify(raw)}`
+    )
+  }
+
+  return parsed
+}
+
+export const MOCK_START_DELAY = resolveMockStartDelay()
 
 const TEAM_COUNT = 1000
 const FLAG_CHALLENGE_COUNT = 38
@@ -198,7 +218,7 @@ function buildAdmin(): User {
     perms: ALL_PERMISSIONS,
     ctftimeId: null,
     createdAt: new Date(Date.now() - DAY).toISOString(),
-    avatarUrl: null,
+    avatarUrl: randomProfilePicUrl(),
     countryCode: 'EU',
     statusText: 'admin status text',
     banned: false,
@@ -233,7 +253,7 @@ function buildTeams(config: ServerConfig): User[] {
       perms: 0,
       ctftimeId: null,
       createdAt: new Date(Date.now() - DAY + index * 60_000).toISOString(),
-      avatarUrl: null,
+      avatarUrl: randomProfilePicUrl(),
       countryCode: randomItem(COUNTRY_CODES),
       statusText: randomItem(STATUSES),
       banned: (index + 1) % 20 === 0,

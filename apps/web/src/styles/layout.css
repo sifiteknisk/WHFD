@@ -22,10 +22,6 @@
   --header-height: 4.5rem;
 }
 
-html {
-  scrollbar-gutter: stable;
-}
-
 html,
 body {
   overscroll-behavior: none;

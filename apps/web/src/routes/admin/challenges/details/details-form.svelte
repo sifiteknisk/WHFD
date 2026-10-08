@@ -91,7 +91,7 @@
 
   const clientConfigQuery = useClientConfig()
   const flagPlaceholder = $derived(
-    clientConfigQuery.data?.flagFormatPlaceholder ?? 'flag{...}'
+    clientConfigQuery.data?.flagFormatPlaceholder ?? 'WHFD{example}'
   )
 
   const flagProvidersQuery = useFlagProviders()
@@ -731,7 +731,8 @@
     }
 
     :global([data-scope='tabs'][data-part='list']) {
-      padding-inline: 1.25rem;
+      gap: 0.25rem;
+      padding-inline: 0.5rem;
       overflow-x: auto;
       overscroll-behavior: none;
     }
@@ -741,8 +742,12 @@
       flex: 1;
       flex-direction: column;
       min-block-size: 0;
+      margin: 0 0.5rem 0.5rem;
       overflow: hidden;
-      background: var(--background-l2);
+      background: var(--tui-surface-light);
+      border: var(--tui-border-width) solid;
+      border-color: var(--bevel-recessed);
+      --fade-color: var(--tui-surface-light);
     }
   }
 
@@ -751,18 +756,12 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: var(--space-3xs);
-      padding: var(--space-2xs) var(--space-s) var(--space-s);
+      padding: var(--space-2xs) 0.5rem;
       overflow-x: visible;
     }
 
     form-tabs :global([data-scope='tabs'][data-part='trigger']) {
       justify-content: center;
-      border-radius: var(--radius-md);
-      background: var(--background-l2);
-    }
-
-    form-tabs :global([data-scope='tabs'][data-part='trigger'][data-selected]) {
-      background: var(--background-l3);
     }
   }
 
@@ -809,8 +808,8 @@
       grid-template-columns: 1fr 1fr;
     }
 
-    &[data-dimmed] {
-      opacity: 0.5;
+    &[data-dimmed] field-label {
+      color: var(--tui-muted);
     }
   }
 
@@ -821,7 +820,7 @@
     inline-size: 100%;
 
     &[data-invalid] field-label {
-      color: var(--foreground-destructive);
+      color: var(--tui-danger);
     }
   }
 
@@ -835,15 +834,15 @@
     align-items: center;
     gap: 0 var(--space-3xs);
     font-size: var(--step--1);
-    color: var(--foreground-l2);
+    color: var(--tui-text);
   }
 
   req {
-    color: var(--foreground-destructive);
+    color: var(--tui-danger);
   }
 
   field-hint {
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
   }
 
   label-action {
@@ -852,7 +851,7 @@
 
   field-error {
     font-size: var(--step--1);
-    color: var(--foreground-destructive);
+    color: var(--tui-danger);
   }
 
   [data-field-trigger] {
@@ -862,26 +861,26 @@
     inline-size: 100%;
     block-size: 2.25rem;
     padding-inline: var(--space-2xs);
-    color: var(--foreground-l0);
+    color: var(--tui-text);
     text-align: start;
     cursor: pointer;
-    background: var(--background-l4);
-    border: 2px solid transparent;
-    border-radius: var(--radius-md);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: -1px;
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     &[data-disabled] {
       cursor: default;
-      opacity: 0.5;
+      color: var(--tui-muted);
     }
 
     :global(svg) {
       flex-shrink: 0;
-      color: var(--foreground-l3);
+      color: var(--tui-muted);
     }
   }
 </style>

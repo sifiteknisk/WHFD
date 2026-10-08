@@ -62,12 +62,14 @@
     block-size: 2.25rem;
     padding-inline: var(--space-s);
     color: var(--foreground-l1);
-    background: var(--background-l4);
-    border-radius: var(--radius-md);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
     cursor: text;
 
     &:focus-within {
-      outline: 2px solid var(--ring);
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
 
     > :global(svg),
@@ -88,7 +90,7 @@
     text-overflow: ellipsis;
 
     &::placeholder {
-      color: var(--foreground-l1);
+      color: var(--foreground-l3);
       text-overflow: ellipsis;
     }
   }

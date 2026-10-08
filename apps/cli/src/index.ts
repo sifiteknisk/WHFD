@@ -12,6 +12,7 @@ const main = defineCommand({
     user: () => import('./commands/user').then(m => m.default),
     seed: () => import('./commands/seed').then(m => m.default),
     export: () => import('./commands/export').then(m => m.default),
+    test: () => import('./commands/test').then(m => m.default),
   },
 })
 

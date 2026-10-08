@@ -576,7 +576,7 @@
 
     p {
       margin: 0;
-      color: var(--foreground-l3);
+      color: var(--tui-muted);
     }
   }
 
@@ -597,9 +597,9 @@
   settings-group {
     display: block;
     overflow: clip;
-    background: var(--background-l1);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-lg);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
   }
 
   group-header {
@@ -607,27 +607,42 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-s);
-    padding: 0.375rem var(--space-s);
-    background: var(--background-l3);
+    padding: 0.25rem 1rem;
+    color: var(--tui-selection-text);
+    background: var(--tui-selection-bg);
   }
 
   group-title {
     display: flex;
     align-items: center;
     gap: var(--space-2xs);
-    color: var(--foreground-l3);
+    font-weight: 700;
   }
 
   button[data-reset] {
-    padding: 0;
+    padding: 0 0.5ch;
     font-size: var(--step--1);
-    color: var(--foreground-l4);
+    color: inherit;
     background: none;
     border: none;
     cursor: pointer;
+    text-underline-offset: 3px;
+
+    &::before {
+      content: '[' / '';
+    }
+
+    &::after {
+      content: ']' / '';
+    }
 
     &:hover {
-      color: var(--foreground-l1);
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 1px dotted var(--tui-selection-text);
+      outline-offset: 0;
     }
   }
 
@@ -635,7 +650,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    padding: var(--space-s);
+    padding: var(--space-s) 1rem;
 
     &[data-flush] {
       padding: 0;
@@ -645,7 +660,7 @@
   field-error {
     display: block;
     font-size: var(--step--1);
-    color: var(--foreground-destructive);
+    color: var(--tui-danger);
   }
 
   timing-grid {
@@ -672,12 +687,14 @@
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    border-block-end: 2px solid var(--border);
+    margin: var(--space-2xs);
+    background: var(--tui-surface-light);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-recessed);
 
     @media (min-width: 40rem) {
       inline-size: 11rem;
-      border-block-end: none;
-      border-inline-end: 2px solid var(--border);
+      margin-inline-end: 0;
     }
   }
 
@@ -686,14 +703,12 @@
     flex: 1;
     flex-direction: row;
     flex-wrap: wrap;
-    gap: var(--space-3xs);
-    padding: var(--space-2xs);
+    padding-block: 0.125rem;
     overflow: hidden;
 
     @media (min-width: 40rem) {
       flex-direction: column;
       flex-wrap: nowrap;
-      gap: 2px;
     }
   }
 
@@ -701,7 +716,7 @@
     display: flex;
     flex-shrink: 0;
     padding: var(--space-2xs);
-    border-block-start: 2px solid var(--border);
+    border-block-start: 1px solid var(--tui-border-mid);
 
     :global(button) {
       inline-size: 100%;
@@ -713,17 +728,15 @@
     align-items: center;
     gap: var(--space-3xs);
     max-inline-size: 100%;
-    border-radius: var(--radius-md);
-    color: var(--foreground-l4);
+    color: var(--tui-text);
 
     &:hover {
-      background: var(--background-l3);
-      color: var(--foreground-l0);
+      background: var(--background-accent);
     }
 
     &[data-active] {
-      background: var(--background-l4);
-      color: var(--foreground-l0);
+      color: var(--tui-selection-text);
+      background: var(--tui-selection-bg);
     }
 
     @media (min-width: 40rem) {
@@ -733,15 +746,19 @@
     button[data-select] {
       overflow: hidden;
       flex: 1;
-      padding: 0.375rem var(--space-2xs);
+      padding: 0.125rem 0.5rem;
       color: inherit;
-      font-size: var(--step--1);
       white-space: nowrap;
       text-align: start;
       text-overflow: ellipsis;
       background: none;
       border: none;
       cursor: pointer;
+
+      &:focus-visible {
+        outline: 1px dotted currentColor;
+        outline-offset: -2px;
+      }
     }
 
     button[data-remove] {
@@ -752,7 +769,6 @@
       color: inherit;
       background: none;
       border: none;
-      border-radius: var(--radius-sm);
       cursor: pointer;
       opacity: 0;
 
@@ -762,12 +778,14 @@
       }
 
       &:hover {
-        color: var(--foreground-destructive);
-        background: var(--background-destructive);
+        color: var(--tui-selection-text);
+        background: var(--tui-danger);
       }
 
       &:focus-visible {
         opacity: 1;
+        outline: 1px dotted currentColor;
+        outline-offset: -2px;
       }
     }
 
@@ -782,7 +800,7 @@
     display: block;
     padding: 0.375rem var(--space-2xs);
     font-size: var(--step--1);
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
   }
 
   sponsor-placeholder {
@@ -808,7 +826,7 @@
     z-index: 1;
     display: flex;
     padding-block: var(--space-s);
-    background: var(--background-l0);
+    background: var(--tui-surface);
 
     :global(button) {
       inline-size: 100%;
@@ -822,7 +840,7 @@
     display: block;
     block-size: 1.5rem;
     pointer-events: none;
-    background: linear-gradient(to top, var(--background-l0), transparent);
+    background: linear-gradient(to top, var(--tui-surface), transparent);
     opacity: 0;
 
     @supports (animation-timeline: scroll()) {

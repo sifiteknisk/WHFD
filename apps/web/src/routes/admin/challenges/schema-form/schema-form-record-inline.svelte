@@ -282,7 +282,7 @@
   }
 
   record-eq {
-    color: var(--foreground-l4);
+    color: var(--tui-muted);
   }
 
   record-value {
@@ -293,7 +293,7 @@
   }
 
   record-error {
-    color: var(--foreground-destructive);
+    color: var(--tui-danger);
     font-size: var(--step--1);
   }
 </style>
