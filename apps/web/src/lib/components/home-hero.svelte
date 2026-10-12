@@ -56,6 +56,14 @@
     flex: 1;
     align-items: center;
 
+    @media (width < 48rem) {
+      justify-content: center;
+
+      > img {
+        display: none;
+      }
+    }
+
     &[data-overlay] {
       position: absolute;
       inset: 0;
