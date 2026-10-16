@@ -108,7 +108,7 @@
       --stat-strong: var(--foreground-gold-l0);
       --stat-soft: var(--foreground-gold-l1);
 
-      background: var(--background-gold);
+      background: color-mix(in oklab, var(--amber-9) 15%, var(--tui-surface-light));
     }
 
     &[data-place='silver'] {
@@ -116,7 +116,7 @@
       --stat-strong: var(--foreground-silver-l0);
       --stat-soft: var(--foreground-silver-l1);
 
-      background: var(--background-silver);
+      background: color-mix(in oklab, var(--slate-9) 30%, var(--tui-surface-light));
     }
 
     &[data-place='bronze'] {
@@ -124,7 +124,7 @@
       --stat-strong: var(--foreground-bronze-l0);
       --stat-soft: var(--foreground-bronze-l1);
 
-      background: var(--background-bronze);
+      background: color-mix(in oklab, var(--brown-9) 25%, var(--tui-surface-light));
     }
 
     @media (width < 64rem) {
