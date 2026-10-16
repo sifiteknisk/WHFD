@@ -9,6 +9,7 @@
   import ThemeToggle from '$lib/components/theme-toggle.svelte'
   import {
     IconCopy,
+    IconFiles,
     IconFlagBannerFold,
     IconGear,
     IconGlobeHemisphereWest,
@@ -129,6 +130,13 @@
         label: 'Settings',
         icon: IconGear,
         show: isAdmin && (canManageSettings || canManageUsers),
+      },
+      {
+        href: '/admin/api-docs',
+        activePath: '/admin/api-docs',
+        label: 'API docs',
+        icon: IconFiles,
+        show: isAdmin,
       },
     ].filter(item => item.show)
   )

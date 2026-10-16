@@ -7,11 +7,14 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import pino from 'pino'
 import type { AppEnv } from './lib/app-env'
 import { runMigrationsOnStartup } from './lib/migrations'
+import { adminPanelAuthMiddleware } from './middlewares/admin-panel-auth'
 import { appEnvMiddleware } from './middlewares/app-env'
 import { dynamicChallengeAuthMiddleware } from './middlewares/dynamic-challenge-auth'
 import { adminBotProvider } from './providers/instances/admin-bot'
 import { analyticsProvider } from './providers/instances/analytics'
 import { uploadProvider } from './providers/instances/uploads'
+import { buildOpenApiDocument } from './openapi/build'
+import { renderApiDocs } from './openapi/page'
 import { routeModules } from './routes'
 import { analyticsScriptHandler } from './routes/v2/integrations/routes/get-analytics-script'
 import { startLeaderboardWorker, stopWorkers } from './workers'
@@ -130,6 +133,15 @@ export const setupFullApiApp = async () => {
     adminBot: adminBotProvider?.authMiddleware || badEndpointMiddleware,
     dynamicChallenge: dynamicChallengeAuthMiddleware,
   })
+  const openApiDocument = buildOpenApiDocument(
+    routeModules.map(module => module.router.definition)
+  )
+  app.get('/api/openapi.json', adminPanelAuthMiddleware, c =>
+    c.json(openApiDocument)
+  )
+  app.get('/api/docs', adminPanelAuthMiddleware, c =>
+    c.html(renderApiDocs(openApiDocument))
+  )
   await uploadProvider.startupWebPart(app)
   if (adminBotProvider) {
     await adminBotProvider.startupWebPart(app)
