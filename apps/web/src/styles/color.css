@@ -590,6 +590,33 @@
   --foreground-gray-l0:       var(--gray-a12);
   --foreground-gray-l1:       var(--gray-a11);
 
+  --background-cyan-l0:       var(--cyan-a3);
+  --background-cyan-l1:       var(--cyan-a2);
+  --background-cyan-l1-hover: var(--cyan-a2);
+  --foreground-cyan-l0:       var(--cyan-a12);
+  --foreground-cyan-l1:       var(--cyan-a11);
+
+  --background-amber-l0:       var(--amber-a3);
+  --background-amber-l1:       var(--amber-a2);
+  --background-amber-l1-hover: var(--amber-a2);
+  --foreground-amber-l0:       var(--amber-a12);
+  --foreground-amber-l1:       var(--amber-a11);
+
+  --challenge-easy:   var(--foreground-green-l1);
+  --challenge-medium: var(--foreground-yellow-l1);
+  --challenge-hard:   var(--foreground-red-l1);
+  --challenge-fire: linear-gradient(
+    90deg,
+    #ff1543,
+    #ff9900,
+    #ffe600,
+    #33ff66,
+    #00ccff,
+    #6644ff,
+    #ff33aa,
+    #ff1543
+  );
+
   --category-background-l0:       var(--background-gray-l0);
   --category-background-l1:       var(--background-gray-l1);
   --category-background-l1-hover: var(--background-gray-l1-hover);
@@ -655,6 +682,14 @@
   --category-foreground-l1:       var(--foreground-sky-l1);
 }
 
+[data-category-color='cyan'] {
+  --category-background-l0:       var(--background-cyan-l0);
+  --category-background-l1:       var(--background-cyan-l1);
+  --category-background-l1-hover: var(--background-cyan-l1-hover);
+  --category-foreground-l0:       var(--foreground-cyan-l0);
+  --category-foreground-l1:       var(--foreground-cyan-l1);
+}
+
 [data-category-color='violet'] {
   --category-background-l0:       var(--background-violet-l0);
   --category-background-l1:       var(--background-violet-l1);
@@ -671,12 +706,26 @@
   --category-foreground-l1:       var(--foreground-plum-l1);
 }
 
+[data-category-color='amber'] {
+  --category-background-l0:       var(--background-amber-l0);
+  --category-background-l1:       var(--background-amber-l1);
+  --category-background-l1-hover: var(--background-amber-l1-hover);
+  --category-foreground-l0:       var(--foreground-amber-l0);
+  --category-foreground-l1:       var(--foreground-amber-l1);
+}
+
 [data-category-color='gray'] {
   --category-background-l0:       var(--background-gray-l0);
   --category-background-l1:       var(--background-gray-l1);
   --category-background-l1-hover: var(--background-gray-l1-hover);
   --category-foreground-l0:       var(--foreground-gray-l0);
   --category-foreground-l1:       var(--foreground-gray-l1);
+}
+
+@keyframes challenge-fire {
+  to {
+    background-position: -200% 0;
+  }
 }
 
 [data-series-role='self']   { color: var(--foreground-self-l0); }

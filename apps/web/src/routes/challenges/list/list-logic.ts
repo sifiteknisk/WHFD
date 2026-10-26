@@ -1,25 +1,25 @@
 import { ChallengeScoringKind, type Challenge } from '@rctf/types'
 import { compareCategories, getCategoryKeyOrAlias } from '$lib/utils/categories'
 
-export interface CategoryGroup {
+export type CategoryGroup = {
   category: string
   challenges: Challenge[]
 }
 
-export interface FilterOptions {
+export type FilterOptions = {
   query: string
   hideSolved: boolean
   solvedIds: ReadonlySet<string>
 }
 
-export interface AccordionValueOptions {
+export type AccordionValueOptions = {
   allCategories: string[]
   collapsedCategories: ReadonlySet<string> | readonly string[]
   searching: boolean
   deepLinkCategory: string | null
 }
 
-export interface ChallengeStats {
+export type ChallengeStats = {
   pointsEarned: number
   pointsTotal: number
   solvedCount: number
@@ -65,7 +65,9 @@ export function filterChallenges(
     return (
       challenge.name.toLowerCase().includes(needle) ||
       challenge.category.toLowerCase().includes(needle) ||
-      challenge.author.toLowerCase().includes(needle)
+      challenge.author.toLowerCase().includes(needle) ||
+      (challenge.tags?.some(tag => tag.toLowerCase().includes(needle)) ??
+        false)
     )
   })
 }

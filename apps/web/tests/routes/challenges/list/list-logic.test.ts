@@ -205,6 +205,7 @@ describe('filterChallenges', () => {
       name: 'Baby Rev',
       category: 'reverse',
       author: 'alice',
+      tags: ['beginner', '0-day'],
     }),
     makeChallenge({
       id: '2',
@@ -217,6 +218,7 @@ describe('filterChallenges', () => {
       name: 'Crypto Chaos',
       category: 'crypto',
       author: 'carol',
+      tags: ['hard'],
     }),
   ]
 
@@ -245,6 +247,24 @@ describe('filterChallenges', () => {
       solvedIds: new Set(),
     })
     expect(result.map(challenge => challenge.id)).toEqual(['3'])
+  })
+
+  test('matches on tags case-insensitively', () => {
+    const result = filterChallenges(challenges, {
+      query: '0-DAY',
+      hideSolved: false,
+      solvedIds: new Set(),
+    })
+    expect(result.map(challenge => challenge.id)).toEqual(['1'])
+  })
+
+  test('ignores null tags when searching', () => {
+    const result = filterChallenges(challenges, {
+      query: 'beginner',
+      hideSolved: false,
+      solvedIds: new Set(),
+    })
+    expect(result.map(challenge => challenge.id)).toEqual(['1'])
   })
 
   test('treats whitespace-only queries as no query', () => {

@@ -4,7 +4,7 @@
 
   type BloodTier = 'gold' | 'silver' | 'bronze'
 
-  interface Props {
+  type Props = {
     challenge: Challenge
     color: string
     solved: boolean
@@ -21,6 +21,7 @@
     bronze: '3',
   }
 
+  const tags = $derived(challenge.tags ?? [])
   const isDynamic = $derived(
     challenge.scoringKind === ChallengeScoringKind.DYNAMIC
   )
@@ -48,6 +49,13 @@
       <category-swatch data-category-color={color}></category-swatch>
       <span data-part="text">
         <span data-part="label">{challenge.name}</span>
+        {#if tags.length}
+          <span data-part="tags">
+            {#each tags as tag (tag)}
+              <span data-part="tag">[{tag}]</span>
+            {/each}
+          </span>
+        {/if}
         {#if challenge.author}
           <span data-part="author">by {challenge.author}</span>
         {/if}
@@ -156,6 +164,24 @@
     text-overflow: ellipsis;
   }
 
+  [data-part='tags'] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5ch;
+    min-inline-size: 0;
+    color: var(--tui-muted);
+    font-size: 0.875em;
+
+    button:is([data-selected], :focus-visible) & {
+      opacity: 0.7;
+    }
+  }
+
+  [data-part='tag'] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   [data-part='author'] {
     min-inline-size: 0;
     overflow: hidden;
@@ -186,16 +212,24 @@
   }
 
   [data-part='points'] {
-    &[data-tier='low'] {
-      color: var(--foreground-green-l1);
+    &[data-tier='easy'] {
+      color: var(--challenge-easy);
     }
 
-    &[data-tier='mid'] {
-      color: var(--foreground-yellow-l1);
+    &[data-tier='medium'] {
+      color: var(--challenge-medium);
     }
 
-    &[data-tier='high'] {
-      color: var(--foreground-red-l1);
+    &[data-tier='hard'] {
+      color: var(--challenge-hard);
+    }
+
+    &[data-tier='fire'] {
+      background-image: var(--challenge-fire);
+      background-size: 200% 100%;
+      background-clip: text;
+      color: transparent;
+      animation: challenge-fire 2s linear infinite;
     }
   }
 

@@ -457,16 +457,24 @@
     line-height: 1;
     white-space: nowrap;
 
-    &[data-tier='low'] {
-      color: var(--foreground-green-l1);
+    &[data-tier='easy'] {
+      color: var(--challenge-easy);
     }
 
-    &[data-tier='mid'] {
-      color: var(--foreground-yellow-l1);
+    &[data-tier='medium'] {
+      color: var(--challenge-medium);
     }
 
-    &[data-tier='high'] {
-      color: var(--foreground-red-l1);
+    &[data-tier='hard'] {
+      color: var(--challenge-hard);
+    }
+
+    &[data-tier='fire'] {
+      background-image: var(--challenge-fire);
+      background-size: 200% 100%;
+      background-clip: text;
+      color: transparent;
+      animation: challenge-fire 2s linear infinite;
     }
 
     &[data-dynamic] {

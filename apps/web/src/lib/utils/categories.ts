@@ -8,6 +8,7 @@ import {
   IconFingerprint,
   IconFlagBanner,
   IconGraph,
+  IconHouse,
   IconKey,
   IconPiggyBank,
   IconPuzzlePiece,
@@ -26,8 +27,10 @@ export type CategoryColor =
   | 'green'
   | 'teal'
   | 'sky'
+  | 'cyan'
   | 'violet'
   | 'plum'
+  | 'amber'
   | 'gray'
 
 export type CategoryConfig = {
@@ -49,6 +52,7 @@ export const categoryOrder = [
   'misc',
   'ppc',
   'osint',
+  'onsite',
 ]
 
 export const scoreboardCategoryOrder = [
@@ -63,6 +67,7 @@ export const scoreboardCategoryOrder = [
   'misc',
   'ppc',
   'osint',
+  'onsite',
   'sanity',
 ]
 
@@ -131,7 +136,12 @@ export const categoryConfigs: Record<string, CategoryConfig> = {
   osint: {
     name: 'OSINT',
     icon: IconEye,
-    color: 'gray',
+    color: 'cyan',
+  },
+  onsite: {
+    name: 'Onsite',
+    icon: IconHouse,
+    color: 'amber',
   },
 }
 

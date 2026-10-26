@@ -1,29 +1,42 @@
+x-rctf: &rctf
+  image: ghcr.io/otter-sec/rctf:${RCTF_GIT_REF}
+  build:
+    context: .
+    dockerfile: deploy/rctf/Dockerfile
+  restart: unless-stopped
+  stop_grace_period: 45s
+  read_only: true
+  tmpfs:
+    - /tmp
+  networks:
+    - rctf
+    - db
+  env_file:
+    - .env
+  volumes:
+    - ./rctf.d:/app/rctf.d
+    - ./.data/uploads:/app/uploads
+  depends_on:
+    redis:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+  healthcheck:
+    test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/api/readyz || exit 1"]
+    interval: 5s
+    timeout: 3s
+    retries: 12
+    start_period: 20s
+
 services:
-  rctf:
-    image: ghcr.io/otter-sec/rctf:${RCTF_GIT_REF}
-    build:
-      context: .
-      dockerfile: deploy/rctf/Dockerfile
-    restart: unless-stopped
-    stop_grace_period: 45s
-    read_only: true
-    tmpfs:
-      - /tmp
+  rctf-blue:
+    <<: *rctf
     ports:
-      - '127.0.0.1:8080:80'
-    networks:
-      - rctf
-      - db
-    env_file:
-      - .env
-    volumes:
-      - ./rctf.d:/app/rctf.d
-      - ./.data/uploads:/app/uploads
-    depends_on:
-      redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
+      - '127.0.0.1:8082:80'
+  rctf-green:
+    <<: *rctf
+    ports:
+      - '127.0.0.1:8083:80'
   redis:
     image: redis:8.2.2
     restart: always
