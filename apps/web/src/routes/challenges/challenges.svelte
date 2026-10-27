@@ -330,6 +330,11 @@
     :global(.tui-dialog-title) {
       z-index: 2;
     }
+
+    /* Let a burning challenge reach the top edge of the pane. */
+    &[data-side='detail']:has(:global(challenge-details[data-on-fire])) {
+      padding-block-start: 0;
+    }
   }
 
   challenges-list-slot,

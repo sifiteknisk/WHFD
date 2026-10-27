@@ -605,17 +605,7 @@
   --challenge-easy:   var(--foreground-green-l1);
   --challenge-medium: var(--foreground-yellow-l1);
   --challenge-hard:   var(--foreground-red-l1);
-  --challenge-fire: linear-gradient(
-    90deg,
-    #ff1543,
-    #ff9900,
-    #ffe600,
-    #33ff66,
-    #00ccff,
-    #6644ff,
-    #ff33aa,
-    #ff1543
-  );
+  --challenge-fire:   light-dark(#d94800, #ff8a1f);
 
   --category-background-l0:       var(--background-gray-l0);
   --category-background-l1:       var(--background-gray-l1);
@@ -720,12 +710,6 @@
   --category-background-l1-hover: var(--background-gray-l1-hover);
   --category-foreground-l0:       var(--foreground-gray-l0);
   --category-foreground-l1:       var(--foreground-gray-l1);
-}
-
-@keyframes challenge-fire {
-  to {
-    background-position: -200% 0;
-  }
 }
 
 [data-series-role='self']   { color: var(--foreground-self-l0); }

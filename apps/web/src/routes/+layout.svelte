@@ -11,6 +11,7 @@
   import '../styles/layers.css'
   import '../styles/prose.css'
   import '../styles/reveal.css'
+  import '../styles/fire.css'
   import '../styles/theme-visibility.css'
   import { QueryClientProvider } from '@tanstack/svelte-query'
   import { page } from '$app/state'

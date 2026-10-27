@@ -1,0 +1,25 @@
+/* Host for the `fire` attachment: the canvas burns behind the content, above
+   the host's own background. Forced dark so theme tokens stay light-on-dark. */
+[data-on-fire] {
+  position: relative;
+  isolation: isolate;
+  color-scheme: dark;
+  background-color: #140302;
+  text-shadow:
+    0 0 2px #000,
+    0 0 2px #000,
+    0 1px 2px #000,
+    0 0 8px rgb(0 0 0 / 0.9);
+}
+
+[data-on-fire] > canvas[data-fire] {
+  position: absolute;
+  inset-block-start: calc(-1 * var(--fire-overflow, 0px));
+  inset-inline-start: 0;
+  z-index: -1;
+  inline-size: 100%;
+  block-size: calc(100% + var(--fire-overflow, 0px));
+  image-rendering: pixelated;
+  opacity: 0.6;
+  pointer-events: none;
+}

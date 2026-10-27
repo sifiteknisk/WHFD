@@ -501,11 +501,7 @@
     }
 
     &[data-tier='fire'] {
-      background-image: var(--challenge-fire);
-      background-size: 200% 100%;
-      background-clip: text;
-      color: transparent;
-      animation: challenge-fire 2s linear infinite;
+      color: var(--challenge-fire);
     }
 
     &[data-dynamic] {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ChallengeScoringKind, type Challenge } from '@rctf/types'
-  import { pointsTier } from '../model/points-tier'
+  import { fire } from '$lib/attachments/fire'
+  import { isOnFire, pointsTier } from '../model/points-tier'
 
   type BloodTier = 'gold' | 'silver' | 'bronze'
 
@@ -13,7 +14,8 @@
     onSelect: () => void
   }
 
-  let { challenge, color, solved, bloodTier, selected, onSelect }: Props = $props()
+  let { challenge, color, solved, bloodTier, selected, onSelect }: Props =
+    $props()
 
   const bloodMarks: Record<BloodTier, string> = {
     gold: '1',
@@ -29,6 +31,7 @@
   const displayPoints = $derived(
     isDynamic ? (challenge.yourScore ?? 0) : challenge.points
   )
+  const onFire = $derived(isOnFire(challenge))
   const mark = $derived(bloodTier ? bloodMarks[bloodTier] : solved ? '*' : ' ')
   const delta = $derived(challenge.yourPointDelta ?? 0)
   const markLabel = $derived(
@@ -43,6 +46,8 @@
     data-solved={solved ? '' : undefined}
     data-blood={bloodTier ?? undefined}
     data-selected={selected ? '' : undefined}
+    data-on-fire={onFire ? '' : undefined}
+    {@attach onFire && fire}
   >
     <span data-part="mark" aria-label={markLabel}>[{mark}]</span>
     <span data-part="title">
@@ -121,6 +126,17 @@
     &:focus-visible {
       outline: 1px dotted var(--tui-selection-text);
       outline-offset: -2px;
+    }
+
+    &[data-on-fire] {
+      color: #fff;
+      --fire-overflow: 0.75rem;
+
+      [data-part='tags'],
+      [data-part='author'],
+      [data-part='solves']:not([data-trend='1'], [data-trend='-1']) {
+        color: rgb(255 255 255 / 0.8);
+      }
     }
   }
 
@@ -225,11 +241,7 @@
     }
 
     &[data-tier='fire'] {
-      background-image: var(--challenge-fire);
-      background-size: 200% 100%;
-      background-clip: text;
-      color: transparent;
-      animation: challenge-fire 2s linear infinite;
+      color: #fff2a8;
     }
   }
 

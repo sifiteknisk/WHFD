@@ -1,9 +1,11 @@
 <script lang="ts">
   import { ChallengeScoringKind, type Challenge } from '@rctf/types'
+  import { fire } from '$lib/attachments/fire'
   import { tuiList } from '$lib/attachments/tui-list'
   import EdgeFades from '$lib/components/edge-fades.svelte'
   import { IconFlagBanner } from '$lib/icons'
   import EmptyState from '$lib/ui/empty-state.svelte'
+  import { isOnFire } from '../model/points-tier'
   import ChallengeDetailsHeader from './details-header.svelte'
   import ChallengeDetailsOverview from './overview.svelte'
   import ChallengeDetailsPodiumDynamic from './podium-dynamic.svelte'
@@ -21,10 +23,15 @@
   const isDynamic = $derived(
     challenge?.scoringKind === ChallengeScoringKind.DYNAMIC
   )
+  const onFire = $derived(challenge !== null && isOnFire(challenge))
 </script>
 
 {#if challenge}
-  <challenge-details {@attach tuiList()}>
+  <challenge-details
+    data-on-fire={onFire ? '' : undefined}
+    {@attach tuiList()}
+    {@attach onFire && fire}
+  >
     <ChallengeDetailsHeader {challenge} {isSolved} />
 
     <details-body>
@@ -68,6 +75,18 @@
     &[data-empty] {
       align-items: center;
       justify-content: center;
+    }
+
+    &[data-on-fire] {
+      details-body {
+        background: rgb(0 0 0 / 0.72);
+        border-color: transparent;
+        --fade-color: transparent;
+      }
+
+      details-footer {
+        background: rgb(0 0 0 / 0.6);
+      }
     }
   }
 

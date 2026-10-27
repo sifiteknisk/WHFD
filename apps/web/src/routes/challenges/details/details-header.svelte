@@ -71,6 +71,21 @@
     @media (width >= 40rem) {
       padding-block: 1rem;
     }
+
+    :global([data-on-fire]) > & {
+      h2 {
+        color: #fff;
+      }
+
+      header-meta,
+      [data-slot='solves'] {
+        color: rgb(255 255 255 / 0.85);
+      }
+
+      category-chip {
+        background: rgb(0 0 0 / 0.55);
+      }
+    }
   }
 
   header-main {
@@ -199,11 +214,7 @@
     }
 
     &[data-tier='fire'] {
-      background-image: var(--challenge-fire);
-      background-size: 200% 100%;
-      background-clip: text;
-      color: transparent;
-      animation: challenge-fire 2s linear infinite;
+      color: #fff2a8;
     }
 
     font-size: 1.25rem;
