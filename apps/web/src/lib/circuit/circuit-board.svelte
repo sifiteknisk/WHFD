@@ -90,7 +90,7 @@
   }
 
   const run: Attachment<HTMLCanvasElement> = canvas => {
-    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
     let scene: Scene | undefined
     let pattern: HTMLCanvasElement | undefined
     const sprites: Partial<Record<PartKind, HTMLImageElement>> = {}
@@ -111,7 +111,7 @@
       if (!fitted) return
       ensure(fitted.width, fitted.height)
       if (!scene) return
-      if (!reduced) {
+      if (!reducedMotion.matches) {
         const dt = last === 0 ? 16 : Math.min(48, now - last)
         last = now
         advance(scene, dt, fitted.width, fitted.height)
@@ -130,7 +130,7 @@
     const boardImage = new Image()
     boardImage.onload = () => {
       board = boardImage
-      if (reduced && running) draw(0)
+      if (reducedMotion.matches && running) draw(0)
     }
     boardImage.src = '/circuit/board.png'
 
@@ -138,7 +138,7 @@
       const image = new Image()
       image.onload = () => {
         sprites[kind] = image
-        if (reduced && running) draw(0)
+        if (reducedMotion.matches && running) draw(0)
       }
       image.src = spriteSpec[kind].src
     }
@@ -156,22 +156,24 @@
       frame = requestAnimationFrame(loop)
     }
 
-    function onVisibility() {
+    function updateAnimation() {
       cancelAnimationFrame(frame)
       last = 0
-      if (!document.hidden && !reduced && running)
-        frame = requestAnimationFrame(loop)
+      if (!running || document.hidden) return
+      if (reducedMotion.matches) draw(0)
+      else frame = requestAnimationFrame(loop)
     }
 
-    if (reduced) draw(0)
-    else frame = requestAnimationFrame(loop)
-    document.addEventListener('visibilitychange', onVisibility)
+    updateAnimation()
+    document.addEventListener('visibilitychange', updateAnimation)
+    reducedMotion.addEventListener('change', updateAnimation)
 
     return () => {
       running = false
       cancelAnimationFrame(frame)
       observer.disconnect()
-      document.removeEventListener('visibilitychange', onVisibility)
+      document.removeEventListener('visibilitychange', updateAnimation)
+      reducedMotion.removeEventListener('change', updateAnimation)
     }
   }
 </script>
