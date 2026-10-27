@@ -331,9 +331,9 @@
       z-index: 2;
     }
 
-    /* Let a burning challenge reach the top edge of the pane. */
+    /* Keep the top spacing without a grey strip above a burning challenge. */
     &[data-side='detail']:has(:global(challenge-details[data-on-fire])) {
-      padding-block-start: 0;
+      background: transparent;
     }
   }
 
