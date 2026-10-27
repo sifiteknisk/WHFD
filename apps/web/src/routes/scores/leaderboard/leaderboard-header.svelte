@@ -20,6 +20,7 @@
     focusedChallengeId: string | null
     onFocus: (id: string) => void
     hoveredColumnId: string | null
+    onLabelOverflow?: (px: number) => void
   }
 
   let {
@@ -30,7 +31,32 @@
     focusedChallengeId,
     onFocus,
     hoveredColumnId,
+    onLabelOverflow,
   }: Props = $props()
+
+  // the rotated names hang past the last column; report how far so the
+  // board only reserves that much instead of a fixed gutter
+  const LABEL_SELECTOR = 'span[data-name], button[data-name]'
+
+  function measureLabelOverflow(header: HTMLElement) {
+    const bars = header.querySelector('header-bars')
+    if (!bars) return
+    const measure = () => {
+      const barsRect = bars.getBoundingClientRect()
+      if (barsRect.width === 0) return
+      let right = barsRect.right
+      for (const label of header.querySelectorAll(LABEL_SELECTOR)) {
+        right = Math.max(right, label.getBoundingClientRect().right)
+      }
+      onLabelOverflow?.(Math.ceil(right - barsRect.right))
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(bars)
+    for (const label of header.querySelectorAll(LABEL_SELECTOR)) {
+      observer.observe(label)
+    }
+    return () => observer.disconnect()
+  }
 
   function groupHasFocused(group: CategoryGroup): boolean {
     return (
@@ -146,7 +172,12 @@
   </category-footer>
 {/snippet}
 
-<challenge-header>
+<challenge-header
+  {@attach (node: HTMLElement) => {
+    void headerNameItems
+    return measureLabelOverflow(node)
+  }}
+>
   <header-names>
     {#each headerNameItems as item, index (item.type === 'category' ? `category:${item.group.category}` : `challenge:${item.challenge.id}`)}
       {@render nameLabel(

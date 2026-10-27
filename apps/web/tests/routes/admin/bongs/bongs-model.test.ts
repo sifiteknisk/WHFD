@@ -7,9 +7,30 @@ import {
 import { describe, expect, test } from 'bun:test'
 
 const teams: BongTeam[] = [
-  { id: 'a', name: 'otter-sec', score: 2400, bongsTotal: 2, bongsAvailable: 1 },
-  { id: 'b', name: 'zzz-crew', score: 900, bongsTotal: 0, bongsAvailable: 0 },
-  { id: 'c', name: 'alpha', score: 5100, bongsTotal: 5, bongsAvailable: 3 },
+  {
+    id: 'a',
+    name: 'otter-sec',
+    avatarUrl: null,
+    score: 2400,
+    bongsTotal: 2,
+    bongsAvailable: 1,
+  },
+  {
+    id: 'b',
+    name: 'zzz-crew',
+    avatarUrl: null,
+    score: 900,
+    bongsTotal: 0,
+    bongsAvailable: 0,
+  },
+  {
+    id: 'c',
+    name: 'alpha',
+    avatarUrl: null,
+    score: 5100,
+    bongsTotal: 5,
+    bongsAvailable: 3,
+  },
 ]
 
 describe('filterBongTeams', () => {
@@ -41,7 +62,9 @@ describe('sortBongTeams', () => {
 describe('bongFingerprint', () => {
   test('changes when search or sort changes', () => {
     const base = bongFingerprint('', { by: 'name', order: 'asc' })
-    expect(bongFingerprint('otter', { by: 'name', order: 'asc' })).not.toBe(base)
+    expect(bongFingerprint('otter', { by: 'name', order: 'asc' })).not.toBe(
+      base
+    )
     expect(bongFingerprint('', { by: 'score', order: 'asc' })).not.toBe(base)
   })
 })

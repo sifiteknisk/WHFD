@@ -138,6 +138,7 @@ export const loadEnvConfig = (): ConfigLayer => {
     ['endTime', getEnvInteger('RCTF_END_TIME')],
     ['leaderboard', leaderboard],
     ['loginTimeout', getEnvInteger('RCTF_LOGIN_TIMEOUT')],
+    ['bongPollInterval', getEnvInteger('RCTF_BONG_POLL_INTERVAL')],
     ['uploadProvider', uploadProvider],
   ]) || {}) as ConfigLayer
 }

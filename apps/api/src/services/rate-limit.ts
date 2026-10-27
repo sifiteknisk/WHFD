@@ -75,9 +75,9 @@ export const rateLimitRecoverByIp = (redis: TypedRedis, ip: string) =>
 export const rateLimitRecoverByEmail = (redis: TypedRedis, email: string) =>
   rateLimit(redis, `rl:RECOVER_EMAIL:${email}`, 2, 3_600_000)
 
-// burst 20, 1 per 30s per IP
+// burst 300, 1 per 5s per IP (sized for an onsite event behind one NAT IP)
 export const rateLimitRegisterByIp = (redis: TypedRedis, ip: string) =>
-  rateLimit(redis, `rl:REGISTER_IP:${ip}`, 20, 600_000)
+  rateLimit(redis, `rl:REGISTER_IP:${ip}`, 300, 1_500_000)
 
 // burst 2, 1 per 30min per email
 export const rateLimitRegisterByEmail = (redis: TypedRedis, email: string) =>

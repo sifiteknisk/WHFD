@@ -202,7 +202,7 @@
   @media (width >= 48rem) {
     scroll-track[data-axis='y'] {
       inset-block-start: var(--score-header-height);
-      inset-block-end: 0.75rem;
+      inset-block-end: var(--score-fade-rail);
     }
 
     scroll-track[data-axis='x'] {

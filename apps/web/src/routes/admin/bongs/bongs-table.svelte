@@ -1,6 +1,7 @@
 <script lang="ts">
   import { IconCaretDown, IconSearch, IconTicket } from '$lib/icons'
   import EmptyState from '$lib/ui/empty-state.svelte'
+  import LazyAvatar from '$lib/ui/lazy-avatar.svelte'
   import Spinner from '$lib/ui/spinner.svelte'
   import { nextSort, type SortState } from '../admin-table-logic'
   import AdminTable from '../admin-table.svelte'
@@ -17,10 +18,10 @@
     search: string
     fetching: boolean
     fingerprint: string
-    givingId: string | null
-    addingId: string | null
-    onGive: (team: BongTeam) => void
-    onAdd: (team: BongTeam) => void
+    decreasingId: string | null
+    increasingId: string | null
+    onDecrease: (team: BongTeam) => void
+    onIncrease: (team: BongTeam) => void
   }
 
   let {
@@ -29,10 +30,10 @@
     search = $bindable(),
     fetching,
     fingerprint,
-    givingId,
-    addingId,
-    onGive,
-    onAdd,
+    decreasingId,
+    increasingId,
+    onDecrease,
+    onIncrease,
   }: Props = $props()
 
   const columns: { col: BongSortBy; label: string; short: string }[] = [
@@ -101,12 +102,15 @@
 {/snippet}
 
 {#snippet row(team: BongTeam, index: number)}
-  {@const busy = givingId === team.id || addingId === team.id}
+  {@const busy = decreasingId === team.id || increasingId === team.id}
   <bongs-row
     data-even={index % 2 === 0 || undefined}
     data-ready={team.bongsAvailable > 0 || undefined}
   >
-    <cell>
+    <cell data-col="team">
+      <avatar-slot>
+        <LazyAvatar src={team.avatarUrl} name={team.name} />
+      </avatar-slot>
       <truncate>{team.name}</truncate>
     </cell>
     <cell data-col="score">
@@ -130,25 +134,27 @@
         <button
           type="button"
           disabled={busy}
-          aria-label="Add bong to {team.name}"
-          onclick={() => onAdd(team)}
+          aria-label="Increase available bongs for {team.name} by 1"
+          title="Increase available bongs by 1"
+          onclick={() => onIncrease(team)}
         >
-          {#if addingId === team.id}
+          {#if increasingId === team.id}
             <Spinner />
           {:else}
-            Add
+            +
           {/if}
         </button>
         <button
           type="button"
           disabled={team.bongsAvailable <= 0 || busy}
-          aria-label="Give bong to {team.name}"
-          onclick={() => onGive(team)}
+          aria-label="Decrease available bongs for {team.name} by 1"
+          title="Decrease available bongs by 1"
+          onclick={() => onDecrease(team)}
         >
-          {#if givingId === team.id}
+          {#if decreasingId === team.id}
             <Spinner />
           {:else}
-            Give
+            −
           {/if}
         </button>
       </actions>
@@ -244,16 +250,16 @@
   bongs-head,
   bongs-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 3.25rem 8.75rem;
+    grid-template-columns: minmax(0, 1fr) 3.25rem 6rem;
     inline-size: 100%;
     user-select: none;
 
     @media (width >= 48rem) {
-      grid-template-columns: minmax(0, 1fr) 4.25rem 2.75rem 2.75rem 8.75rem;
+      grid-template-columns: minmax(0, 1fr) 4.25rem 2.75rem 2.75rem 6rem;
     }
 
     @media (width >= 64rem) {
-      grid-template-columns: minmax(12rem, 1.4fr) 7rem 7rem 8rem 10rem;
+      grid-template-columns: minmax(12rem, 1.4fr) 7rem 7rem 8rem 6rem;
       min-inline-size: 45rem;
     }
   }
@@ -389,6 +395,17 @@
     }
   }
 
+  cell[data-col='team'] {
+    gap: var(--space-2xs);
+  }
+
+  avatar-slot {
+    --avatar-size: 2rem;
+    --avatar-radius: var(--radius-md);
+    display: flex;
+    flex-shrink: 0;
+  }
+
   actions {
     display: flex;
     align-items: center;
@@ -401,6 +418,7 @@
     align-items: center;
     justify-content: center;
     block-size: 2rem;
+    min-inline-size: 2rem;
     padding-inline: var(--space-xs);
     color: var(--tui-text);
     background: var(--tui-surface);
@@ -476,6 +494,7 @@
 
     cell button {
       min-block-size: 2.5rem;
+      min-inline-size: 2.5rem;
       padding-block: 0.4rem;
       padding-inline: 0.55rem;
       font-size: var(--step--1);

@@ -20,6 +20,8 @@ type LeaderboardTickRunnerOptions = {
     data: CalculatedLeaderboard
   ) => Promise<void>
   logger: Logger
+  /** Called with teams whose stored score rose in the last cache write. */
+  onScoresRaised?: (userIds: string[]) => Promise<void>
   now?: () => number
   periodicCacheIntervalMs?: number
 }
@@ -34,6 +36,7 @@ export const createLeaderboardTickRunner = ({
   createCalculator,
   cacheLeaderboardAndGraph,
   logger,
+  onScoresRaised,
   now = Date.now,
   periodicCacheIntervalMs = 60_000,
 }: LeaderboardTickRunnerOptions) => {
@@ -44,6 +47,9 @@ export const createLeaderboardTickRunner = ({
   let lastUpdatedAt = 0
   let consecutiveFailures = 0
   let pendingCacheWrite = false
+  // Scores as of the last cache write; unset until the first one so a fresh
+  // leader does not notify every team at once.
+  let writtenScores: Map<string, number> | undefined
 
   const runTick = async (forceCache: boolean): Promise<void> => {
     const currentTime = now()
@@ -59,7 +65,23 @@ export const createLeaderboardTickRunner = ({
       await cacheLeaderboardAndGraph(db, redis, result.calculated)
       pendingCacheWrite = false
       lastUpdatedAt = currentTime
+      await notifyRaisedScores(result.calculated.users)
     }
+  }
+
+  const notifyRaisedScores = async (
+    users: ReadonlyArray<{ id: string; score: number }>
+  ): Promise<void> => {
+    const previous = writtenScores
+    writtenScores = new Map(users.map(user => [user.id, user.score]))
+    if (!previous || !onScoresRaised) return
+    const raised = users
+      .filter(user => user.score > (previous.get(user.id) ?? 0))
+      .map(user => user.id)
+    if (raised.length === 0) return
+    await onScoresRaised(raised).catch(err =>
+      logger.error({ err }, 'failed to notify raised scores')
+    )
   }
 
   const tick = async (opts: TickOptions = {}): Promise<void> => {

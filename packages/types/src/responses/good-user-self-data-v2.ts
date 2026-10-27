@@ -55,11 +55,16 @@ export const GoodUserSelfDataV2 = response('goodUserSelfDataV2', {
     score: example(z.int(), 13370).check(z.describe('Total team score.')),
     bongsTotal: example(z.int(), 13).check(
       z.describe(
-        'Bongs earned so far, one per 1000 points gained (decay does not revoke).'
+        'Bongs earned so far from points gained (decay does not revoke).'
       )
     ),
     bongsAvailable: example(z.int(), 2).check(
-      z.describe('Earned bongs that have not been handed out yet.')
+      z.describe('Available bongs, including manual adjustments.')
+    ),
+    bongPoints: example(z.int(), 1200).check(
+      z.describe(
+        'Cumulative points gained that count toward bongs (decay does not revoke).'
+      )
     ),
     globalPlace: example(z.nullable(z.int()), 7).check(
       z.describe('Overall rank, or `null` when unranked.')

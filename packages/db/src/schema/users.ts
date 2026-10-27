@@ -67,7 +67,7 @@ export const users = pgTable(
     ),
     check(
       'bongs_available_in_range',
-      sql`bongs_available >= 0 AND bongs_available <= bongs_total`
+      sql`bongs_available >= 0 AND bongs_total >= 0`
     ),
     index('users_global_leaderboard_idx')
       .using('btree', sql`global_rank ASC`)

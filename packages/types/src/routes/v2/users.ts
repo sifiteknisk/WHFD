@@ -19,6 +19,7 @@ import {
   BadToken,
   BadUnknownUser,
   GoodAvatarUpdated,
+  GoodBongVersion,
   GoodEmailSet,
   GoodUserDataV2,
   GoodUserSelfDataV2,
@@ -45,6 +46,14 @@ export const GetUserSelfRouteV2 = defineRoute({
   path: '/v2/users/me',
   method: 'GET',
   goodResponses: [GoodUserSelfDataV2],
+  badResponses: [BadToken],
+  authRequired: true,
+})
+
+export const GetUserSelfBongVersionRouteV2 = defineRoute({
+  path: '/v2/users/me/bong-version',
+  method: 'GET',
+  goodResponses: [GoodBongVersion],
   badResponses: [BadToken],
   authRequired: true,
 })

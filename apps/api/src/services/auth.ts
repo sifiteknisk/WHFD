@@ -125,6 +125,15 @@ const prepareRegistration = async (
     return { hasResult: true, response: res.badCompetitionNotAllowed() }
   }
 
+  // Applies to every registration method, not just email
+  const ipTimeLeft = await rateLimitRegisterByIp(redis, ip)
+  if (ipTimeLeft) {
+    return {
+      hasResult: true,
+      response: res.badRateLimit({ timeLeft: ipTimeLeft }),
+    }
+  }
+
   // Registration with email:
   if (config.email && body.email) {
     // Prior to sending the verification email we need to make sure there are no conflicts
@@ -137,14 +146,6 @@ const prepareRegistration = async (
         return { hasResult: true, response: res.badKnownName() }
       }
       return { hasResult: true, response: res.badKnownEmail() }
-    }
-
-    const ipTimeLeft = await rateLimitRegisterByIp(redis, ip)
-    if (ipTimeLeft) {
-      return {
-        hasResult: true,
-        response: res.badRateLimit({ timeLeft: ipTimeLeft }),
-      }
     }
 
     const emailTimeLeft = await rateLimitRegisterByEmail(redis, body.email)

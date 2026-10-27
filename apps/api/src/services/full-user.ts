@@ -29,6 +29,8 @@ export type FullUser = Omit<User, 'email' | 'ctftimeId'> & {
   score: number
   bongsTotal: number
   bongsAvailable: number
+  /** Cumulative points gained that count toward bongs. */
+  bongPoints: number
   globalPlace: number | null
   divisionPlace: number | null
   solves: SolveData[]
@@ -119,6 +121,7 @@ export const getFullUser = async (
     score,
     bongsTotal: bongs.bongsTotal,
     bongsAvailable: bongs.bongsAvailable,
+    bongPoints: pointsEarned,
     globalPlace: freshRanks?.globalRank ?? null,
     divisionPlace: freshRanks?.divisionRank ?? null,
     dynamicScores: dynamicScoresByUser.get(user.id) ?? [],

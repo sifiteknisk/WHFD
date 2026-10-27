@@ -1,7 +1,9 @@
 import {
   GetMembersRoute,
   GetUserRouteV2,
+  GetUserSelfBongVersionRouteV2,
   GetUserSelfRouteV2,
+  GoodBongVersion,
   GoodMemberData,
   GoodUserDataV2,
   GoodUserSelfDataV2,
@@ -24,11 +26,30 @@ export const userSelfQueryOptions = queryOptions({
     return null
   },
   staleTime: 1000 * 60 * 5,
-  refetchInterval: 30 * 1000,
+  // Fallback only; the bong version poll refetches as soon as anything changes.
+  refetchInterval: 2 * 60 * 1000,
 })
 
 export function useCurrentUser() {
   return createQuery(() => userSelfQueryOptions)
+}
+
+export function useBongVersion(
+  userId: () => string | undefined,
+  /** Polling interval in ms, or `false` to stop; re-read after every poll. */
+  interval: () => number | false
+) {
+  return createQuery(() => ({
+    queryKey: queryKeys.bongVersion(userId()),
+    queryFn: async () => {
+      const response = await apiRequest(GetUserSelfBongVersionRouteV2)
+      return unwrapData(response, GoodBongVersion).version
+    },
+    enabled: userId() !== undefined,
+    // Re-check immediately when the tab becomes visible again.
+    staleTime: 0,
+    refetchInterval: () => interval(),
+  }))
 }
 
 export function userByIdQueryOptions(id: string) {

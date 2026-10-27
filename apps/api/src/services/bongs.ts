@@ -1,53 +1,29 @@
 import type { DatabaseClient, DatabaseTx } from '@rctf/db'
 import { scoreEvents, users } from '@rctf/db'
+import { bongsFromPoints, MAX_BONGS } from '@rctf/util'
 import { and, desc, eq, gt, notInArray, sql } from 'drizzle-orm'
 
 type Db = DatabaseClient | DatabaseTx
 
-export const BONG_POINTS = 1000
-
 /** Sources that undo/redo score for account state — not real point gains. */
 const BONG_POINTS_EXCLUDED_SOURCES = ['ban', 'delete'] as const
-
-/** Total bongs a team can earn. Unset means no cap. */
-export function maxBongs(): number | undefined {
-  const raw = process.env.RCTF_MAX_BONGS
-  if (raw === undefined || raw.trim() === '') return undefined
-  const parsed = Number(raw.trim())
-  if (!Number.isInteger(parsed) || parsed < 0) {
-    throw new Error(
-      `RCTF_MAX_BONGS must be a non-negative integer, got: ${JSON.stringify(raw)}`
-    )
-  }
-  return parsed
-}
-
-/** Cumulative points that count toward bongs (gains only; decay does not revoke). */
-export function earnedBongsFromPoints(
-  pointsEarned: number,
-  max = maxBongs()
-): number {
-  const earned = Math.floor(Math.max(0, pointsEarned) / BONG_POINTS)
-  if (max == null) return earned
-  return Math.min(max, earned)
-}
 
 export function settleBongCounts(
   pointsEarned: number,
   bongsTotal: number,
   bongsAvailable: number,
-  max = maxBongs()
+  max = MAX_BONGS
 ): { bongsTotal: number; bongsAvailable: number } {
-  const earned = earnedBongsFromPoints(pointsEarned, max)
-  const given = Math.max(0, bongsTotal - bongsAvailable)
-  // Keep manually added available bongs; only grant newly earned ones on top.
-  const available = Math.max(bongsAvailable, Math.max(0, earned - given))
-  return { bongsTotal: given + available, bongsAvailable: available }
+  const earned = bongsFromPoints(pointsEarned, max)
+  const newlyEarned = Math.max(0, earned - bongsTotal)
+  return {
+    bongsTotal: bongsTotal + newlyEarned,
+    bongsAvailable: bongsAvailable + newlyEarned,
+  }
 }
 
-const bongPointsSumSql = sql<number>`coalesce(sum(${scoreEvents.pointsDelta}), 0)`.mapWith(
-  Number
-)
+const bongPointsSumSql =
+  sql<number>`coalesce(sum(${scoreEvents.pointsDelta}), 0)`.mapWith(Number)
 
 export const bongPointsEarned = async (
   db: Db,
@@ -89,6 +65,7 @@ export const listBongs = async (db: DatabaseClient) => {
     .select({
       id: users.id,
       name: users.name,
+      avatarUrl: users.avatarUrl,
       score: users.score,
       bongsTotal: users.bongsTotal,
       bongsAvailable: users.bongsAvailable,
@@ -119,6 +96,7 @@ export const giveBong = async (
       })
       .from(users)
       .where(eq(users.id, id))
+      .for('update')
     if (!current) return undefined
 
     const settled = settleBongCounts(
@@ -153,6 +131,7 @@ export const addBong = async (
       })
       .from(users)
       .where(eq(users.id, id))
+      .for('update')
     if (!current) return undefined
 
     const settled = settleBongCounts(
@@ -164,7 +143,7 @@ export const addBong = async (
     const [row] = await tx
       .update(users)
       .set({
-        bongsTotal: settled.bongsTotal + 1,
+        bongsTotal: settled.bongsTotal,
         bongsAvailable: settled.bongsAvailable + 1,
       })
       .where(eq(users.id, id))

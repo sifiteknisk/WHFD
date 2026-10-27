@@ -18,8 +18,6 @@
   import { createAsyncAction } from '$lib/utils/async-action.svelte'
   import { hasPermissions } from '$lib/utils/permissions'
   import type { SortState } from '../admin-table-logic'
-  import { createConfirmState } from '../confirm-state.svelte'
-  import ConfirmDialog from '../profile/confirm-dialog.svelte'
   import {
     bongFingerprint,
     filterBongTeams,
@@ -53,25 +51,24 @@
   )
 
   const bongAction = createAsyncAction<string>()
-  const confirmState = createConfirmState()
 
-  const givingId = $derived(
-    bongAction.key?.startsWith('give:')
-      ? bongAction.key.slice('give:'.length)
+  const decreasingId = $derived(
+    bongAction.key?.startsWith('decrease:')
+      ? bongAction.key.slice('decrease:'.length)
       : null
   )
-  const addingId = $derived(
-    bongAction.key?.startsWith('add:')
-      ? bongAction.key.slice('add:'.length)
+  const increasingId = $derived(
+    bongAction.key?.startsWith('increase:')
+      ? bongAction.key.slice('increase:'.length)
       : null
   )
 
-  async function give(team: BongTeam) {
+  async function decrease(team: BongTeam) {
     await bongAction.run(
       async () => {
         const response = await apiRequest(GiveAdminBongRouteV2, { id: team.id })
         if (response.kind === GoodAdminBongGiven.kind) {
-          toast.success(`Gave a bong to ${team.name}.`)
+          toast.success(`Decreased available bongs for ${team.name} by 1.`)
           queryClient.setQueryData(
             queryKeys.adminBongs,
             (current: BongTeam[] | undefined) =>
@@ -87,18 +84,18 @@
         }
       },
       {
-        key: `give:${team.id}`,
-        errorMessage: `Failed to give a bong to ${team.name}`,
+        key: `decrease:${team.id}`,
+        errorMessage: `Failed to decrease available bongs for ${team.name}`,
       }
     )
   }
 
-  async function add(team: BongTeam) {
+  async function increase(team: BongTeam) {
     await bongAction.run(
       async () => {
         const response = await apiRequest(AddAdminBongRouteV2, { id: team.id })
         if (response.kind === GoodAdminBongAdded.kind) {
-          toast.success(`Added a bong to ${team.name}.`)
+          toast.success(`Increased available bongs for ${team.name} by 1.`)
           queryClient.setQueryData(
             queryKeys.adminBongs,
             (current: BongTeam[] | undefined) =>
@@ -118,30 +115,10 @@
         }
       },
       {
-        key: `add:${team.id}`,
-        errorMessage: `Failed to add a bong to ${team.name}`,
+        key: `increase:${team.id}`,
+        errorMessage: `Failed to increase available bongs for ${team.name}`,
       }
     )
-  }
-
-  function requestGive(team: BongTeam) {
-    confirmState.request({
-      title: 'Give bong',
-      message: `Mark one bong as handed out to ${team.name}? This lowers their available bongs by 1.`,
-      confirmLabel: 'Give bong',
-      destructive: false,
-      run: () => give(team),
-    })
-  }
-
-  function requestAdd(team: BongTeam) {
-    confirmState.request({
-      title: 'Add bong',
-      message: `Grant one extra available bong to ${team.name}? Use this for corrections.`,
-      confirmLabel: 'Add bong',
-      destructive: false,
-      run: () => add(team),
-    })
   }
 </script>
 
@@ -156,7 +133,8 @@
     <bongs-status>
       <Card title="Bongs unavailable">
         <p>
-          Your account needs the manage-teams permission to view and manage bongs.
+          Your account needs the manage-teams permission to view and manage
+          bongs.
         </p>
       </Card>
     </bongs-status>
@@ -178,26 +156,14 @@
         bind:search
         fetching={bongsQuery.isFetching}
         {fingerprint}
-        {givingId}
-        {addingId}
-        onGive={requestGive}
-        onAdd={requestAdd}
+        {decreasingId}
+        {increasingId}
+        onDecrease={decrease}
+        onIncrease={increase}
       />
     </bongs-reveal>
   {/if}
 </bongs-page>
-
-<ConfirmDialog
-  open={confirmState.current !== null}
-  onOpenChange={(open: boolean) => {
-    if (!open) confirmState.cancel()
-  }}
-  title={confirmState.current?.title ?? ''}
-  message={confirmState.current?.message ?? ''}
-  confirmLabel={confirmState.current?.confirmLabel ?? 'Confirm'}
-  destructive={confirmState.current?.destructive ?? false}
-  onConfirm={confirmState.confirm}
-/>
 
 <style>
   bongs-reveal {

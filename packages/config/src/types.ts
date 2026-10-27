@@ -181,6 +181,9 @@ export const ServerConfigSchema = z.object({
     {}
   ),
 
+  // How often each open tab checks whether its team's bongs changed (ms)
+  bongPollInterval: z._default(z.int().check(z.gte(1_000)), 5_000),
+
   // Moderation
   avatarsModeration: z.optional(
     z.object({

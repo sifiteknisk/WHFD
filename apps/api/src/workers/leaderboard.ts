@@ -1,6 +1,7 @@
 import { config } from '@rctf/config'
 import { ADVISORY_LOCK_KEYS, createDatabase } from '@rctf/db'
 import { pino } from 'pino'
+import { bumpBongVersion } from '../cache/bong-version'
 import { cacheLeaderboardAndGraph } from '../cache/leaderboard'
 import { getMaxSolveCount } from '../services/challenges'
 import { createCachedLeaderboardCalculator } from '../services/leaderboard-calculation'
@@ -29,6 +30,9 @@ const tickRunner = createLeaderboardTickRunner({
   createCalculator: () => createCachedLeaderboardCalculator(redis),
   cacheLeaderboardAndGraph,
   logger,
+  // Solve points land here (after the debounced recompute), not at submit
+  // time, so this is when teammates' tabs can actually see the new bongs.
+  onScoresRaised: userIds => bumpBongVersion(redis, userIds),
 })
 const tick = tickRunner.tick
 

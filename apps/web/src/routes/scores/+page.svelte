@@ -148,6 +148,7 @@
   }
 
   scores-frame {
+    container-type: inline-size;
     display: flex;
     flex: 1;
     justify-content: center;

@@ -1,4 +1,3 @@
-import { BONG_POINTS } from '@rctf/api/src/services/bongs'
 import { defineCommand } from 'citty'
 import { withDbAndRedis } from '../../lib/context'
 import { awardTestSolve, findTeam } from './award'
@@ -61,7 +60,7 @@ export default defineCommand({
       `${team.name} took first blood on ${result.challengeName} (${result.challengeId}) for ${result.points} pts.`
     )
     console.log(
-      `Score is ${result.score.toLocaleString()}. Bongs ${result.bongsAvailable}/${result.bongsTotal} (one bong per ${BONG_POINTS} pts gained).`
+      `Score is ${result.score.toLocaleString()}. Bongs ${result.bongsAvailable}/${result.bongsTotal}.`
     )
     console.log(
       'Have /scores open with First bloods on before the next leaderboard poll. Bloods that already existed when the page loaded will not replay.'

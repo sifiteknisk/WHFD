@@ -46,11 +46,12 @@
   }
 
   function unlockSound() {
+    if (released) return
     const node = crashSound()
     if (crashing) {
       node.muted = false
       node.volume = 1
-      if (node.paused) void node.play().catch(() => {})
+      if (node.paused && !node.ended) void node.play().catch(() => {})
       soundUnlocked = true
       return
     }

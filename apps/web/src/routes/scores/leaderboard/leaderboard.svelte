@@ -77,12 +77,14 @@
     refreshMs: SCORE_TELEPORT_REFRESH_MS,
   })
 
+  let labelOverflow = $state(SCORE_DIAGONAL_OVERFLOW_PX)
+
   const contentWidth = $derived(
     (urlState.viewMode === 'categories'
       ? getCategoryCellsInnerWidth(data.categoryGroups.length)
       : getChallengeCellsInnerWidth(data.challenges)) +
       SCORE_ROW_GAP_PX +
-      SCORE_DIAGONAL_OVERFLOW_PX
+      labelOverflow
   )
 
   const GRAPH_SCROLL_REFRESH_MS = 100
@@ -146,6 +148,7 @@
 
   let scrollRoot = $state<HTMLElement | null>(null)
   const geometry = createScrollGeometry(() => scrollRoot)
+  const scrollsX = $derived(geometry.scrollWidth - geometry.clientWidth > 1)
 
   $effect(() => {
     void urlState.search
@@ -271,8 +274,10 @@
 
 <scores-shell
   style:--score-content-width={`${contentWidth}px`}
+  style:--score-diagonal-overflow={`${labelOverflow}px`}
   data-fade-scope
   data-self-edge={selfEdge ?? undefined}
+  data-scroll-x={scrollsX || undefined}
 >
   <mobile-graph>
     {@render graphPanel()}
@@ -304,6 +309,7 @@
               focusedChallengeId={urlState.focusedChallengeId}
               onFocus={focusChallenge}
               hoveredColumnId={hover.hoveredColumnId}
+              onLabelOverflow={px => (labelOverflow = px)}
             />
           {/if}
         </header-content>
@@ -408,7 +414,6 @@
     );
     --score-header-height: 188px;
     --score-name-row-height: 128px;
-    --score-diagonal-overflow: 96px;
     --score-team-column-width: 100%;
     --score-mobile-graph-height: 12rem;
     --score-fade-size: 1.5rem;
@@ -675,12 +680,22 @@
 
   @media (width >= 48rem) {
     scores-shell {
-      --score-team-column-width: min(60vw - 4.5rem, 26rem);
+      --score-team-column-min: min(60vw - 4.5rem, 26rem);
+      /* grow into whatever the cells leave over so narrow boards (categories)
+         fill the frame instead of floating in the middle of it */
+      --score-team-column-width: max(
+        var(--score-team-column-min),
+        100cqi - var(--score-content-width) - 2 * var(--tui-border-width)
+      );
       --score-fade-region-top: var(--score-header-height);
-      --score-fade-rail: 0.75rem;
       inline-size: fit-content;
       margin-inline: auto;
       padding-block-end: var(--score-fade-rail);
+
+      /* only reserve the horizontal scrollbar rail when there's a scrollbar */
+      &[data-scroll-x] {
+        --score-fade-rail: 0.75rem;
+      }
     }
 
     edge-fade[data-edge='left'],
@@ -866,7 +881,7 @@
 
   @media (width >= 80rem) {
     scores-shell {
-      --score-team-column-width: clamp(36rem, 45vw - 4.5rem, 44rem);
+      --score-team-column-min: clamp(36rem, 45vw - 4.5rem, 44rem);
     }
   }
 </style>

@@ -9,7 +9,6 @@
     invalidateAfterSolve,
     useChallenges,
   } from '$lib/query/challenges'
-  import { useClientConfig } from '$lib/query/config'
   import { queryKeys } from '$lib/query/keys'
   import { useCurrentUser } from '$lib/query/user'
   import { bongsGainedFromSolve } from '$lib/bongs/queue'
@@ -50,7 +49,6 @@
   const queryClient = useQueryClient()
   const challengesQuery = useChallenges()
   const userQuery = useCurrentUser()
-  const configQuery = useClientConfig()
 
   const challenges = $derived(challengesQuery.data ?? [])
   const challengeIds = $derived(new Set(challenges.map(c => c.id)))
@@ -119,19 +117,14 @@
     const challenge = challenges.find(item => item.id === challengeId)
     const user = userQuery.data
     if (challenge && user?.score !== undefined) {
-      announceSolvePoints(user.score, challenge.points)
-      const gained = bongsGainedFromSolve(
-        user.bongsTotal,
-        challenge.points,
-        configQuery.data?.maxBongs
-      )
-      if (gained > 0) {
-        queryClient.setQueryData(queryKeys.userSelf, {
-          ...user,
-          bongsTotal: user.bongsTotal + gained,
-          bongsAvailable: user.bongsAvailable + gained,
-        })
-      }
+      announceSolvePoints(user.score, challenge.points, user.bongPoints)
+      const gained = bongsGainedFromSolve(user.bongPoints, challenge.points)
+      queryClient.setQueryData(queryKeys.userSelf, {
+        ...user,
+        bongPoints: user.bongPoints + challenge.points,
+        bongsTotal: user.bongsTotal + gained,
+        bongsAvailable: user.bongsAvailable + gained,
+      })
     }
     invalidateAfterSolve(queryClient, challengeId, id => localSolvedIds.add(id))
   }

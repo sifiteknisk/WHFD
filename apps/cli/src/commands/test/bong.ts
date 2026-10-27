@@ -1,4 +1,5 @@
-import { BONG_POINTS } from '@rctf/api/src/services/bongs'
+import { bongPointsEarned } from '@rctf/api/src/services/bongs'
+import { pointsToNextBong } from '@rctf/util'
 import { defineCommand } from 'citty'
 import { withDbAndRedis } from '../../lib/context'
 import { awardTestSolve, findTeam } from './award'
@@ -39,7 +40,12 @@ export default defineCommand({
         return { error: `${team.name} is banned` } as const
       }
 
-      const result = await awardTestSolve(db, redis, team, BONG_POINTS, 'bong')
+      const needed = pointsToNextBong(await bongPointsEarned(db, team.id))
+      if (needed === null) {
+        return { error: `${team.name} already earned the max bongs` } as const
+      }
+
+      const result = await awardTestSolve(db, redis, team, needed, 'bong')
       return { team, result }
     })
 

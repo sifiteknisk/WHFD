@@ -11,14 +11,18 @@ export const GoodAdminBongs = response('goodAdminBongs', {
       name: example(z.string(), 'otter-sec').check(
         z.describe('Team display name.')
       ),
+      avatarUrl: example(
+        z.nullable(z.string()),
+        'https://rctf.osec.io/uploads/avatar.png'
+      ).check(z.describe('Avatar URL, or `null` when unset.')),
       score: example(z.int(), 13370).check(z.describe('Total team score.')),
       bongsTotal: example(z.int(), 13).check(
         z.describe(
-          'Bongs earned so far, one per 1000 points gained (decay does not revoke).'
+          'Bongs earned so far from points gained (decay does not revoke).'
         )
       ),
       bongsAvailable: example(z.int(), 2).check(
-        z.describe('Earned bongs that have not been handed out yet.')
+        z.describe('Available bongs, including manual adjustments.')
       ),
     })
   ),
@@ -26,7 +30,7 @@ export const GoodAdminBongs = response('goodAdminBongs', {
 
 export const GoodAdminBongGiven = response('goodAdminBongGiven', {
   status: 200,
-  message: 'Bong marked as given.',
+  message: 'Available bongs decreased by 1.',
   data: z.object({
     bongsAvailable: example(z.int(), 1).check(
       z.describe('Bongs the team still has available after this one.')
@@ -36,10 +40,12 @@ export const GoodAdminBongGiven = response('goodAdminBongGiven', {
 
 export const GoodAdminBongAdded = response('goodAdminBongAdded', {
   status: 200,
-  message: 'Bong added to team.',
+  message: 'Available bongs increased by 1.',
   data: z.object({
     bongsTotal: example(z.int(), 14).check(
-      z.describe('Total bongs the team has after this grant.')
+      z.describe(
+        'Total bongs earned; manual availability adjustments do not increase it.'
+      )
     ),
     bongsAvailable: example(z.int(), 3).check(
       z.describe('Available bongs the team has after this grant.')

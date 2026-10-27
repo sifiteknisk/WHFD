@@ -89,9 +89,14 @@ export const GoodClientConfigV2 = response('goodClientConfigV2', {
     isArchived: example(z.boolean(), false).check(
       z.describe('Whether the CTF is archived (read-only).')
     ),
-    maxBongs: example(z.nullable(z.int()), 8).check(
+    maxBongs: example(z.nullable(z.int()), 4).check(
       z.describe(
-        'Maximum bongs a team can earn, or `null` when there is no cap.'
+        'Maximum bongs a team can earn from points, or `null` when there is no cap.'
+      )
+    ),
+    bongPollInterval: example(z.int(), 5000).check(
+      z.describe(
+        'How often clients should poll the team bong version, in milliseconds.'
       )
     ),
     captcha: z

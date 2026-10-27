@@ -1,9 +1,9 @@
 import { config } from '@rctf/config'
 import type { DatabaseClient } from '@rctf/db'
 import { challenges, scoreEvents, users } from '@rctf/db'
+import { bongThreshold, MAX_BONGS } from '@rctf/util'
 import { and, asc, eq, gte, inArray, sql } from 'drizzle-orm'
 import { inJsonbArray } from '../lib/db-bulk'
-import { BONG_POINTS, maxBongs } from '../services/bongs'
 import { challengeIsPublicSql } from '../services/challenge-queries'
 import { getCompetitionTiming } from '../services/settings'
 import type { TypedRedis } from './scripts'
@@ -68,7 +68,7 @@ export type CalculatedLeaderboard = {
   samples: Array<Sample>
 }
 
-const cacheLeaderboard = async (
+export const cacheLeaderboard = async (
   db: DatabaseClient,
   data: CalculatedLeaderboard
 ): Promise<void> => {
@@ -100,19 +100,20 @@ const cacheLeaderboard = async (
   )
 
   // Gains only — decay/ban/delete must not revoke bongs already earned.
-  const earnedFromPoints = sql`(COALESCE(resolved.earned_points, 0) / ${sql.raw(String(BONG_POINTS))})`
-  const cap = maxBongs()
-  const earnedBongs =
-    cap === undefined
-      ? earnedFromPoints
-      : sql`LEAST(${cap}, ${earnedFromPoints})`
+  const earnedPoints = 'COALESCE(resolved.earned_points, 0)'
+  const earnedBongs = sql.raw(
+    `(CASE ${Array.from({ length: MAX_BONGS }, (_, i) => MAX_BONGS - i)
+      .map(n => `WHEN ${earnedPoints} >= ${bongThreshold(n)} THEN ${n}`)
+      .join(' ')} ELSE 0 END)`
+  )
 
   await db.transaction(async tx => {
+    // Preserve manual grants as well as bongs earned from points.
     await tx.execute(sql`
       UPDATE users SET
         score = COALESCE(resolved.score, 0),
-        bongs_total = GREATEST(users.bongs_total - users.bongs_available, ${earnedBongs}),
-        bongs_available = GREATEST(0, ${earnedBongs} - (users.bongs_total - users.bongs_available)),
+        bongs_total = GREATEST(users.bongs_total, ${earnedBongs}),
+        bongs_available = users.bongs_available + GREATEST(0, ${earnedBongs} - users.bongs_total),
         global_rank = resolved.global_rank,
         division_rank = resolved.division_rank,
         last_solve_at = resolved.last_solve_at,
@@ -136,7 +137,7 @@ const cacheLeaderboard = async (
           WHERE points_delta > 0 AND source NOT IN ('ban', 'delete')
           GROUP BY userid
         ) life ON life.userid = u.id
-        WHERE u.global_rank IS NOT NULL OR vals.id IS NOT NULL OR u.bongs_total > 0
+        WHERE u.global_rank IS NOT NULL OR vals.id IS NOT NULL OR u.bongs_total > 0 OR u.bongs_available > 0
       ) resolved
       WHERE users.id = resolved.id
     `)
