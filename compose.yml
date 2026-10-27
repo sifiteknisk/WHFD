@@ -1,75 +1,109 @@
-x-rctf: &rctf
+x-rctf:
   image: ghcr.io/otter-sec/rctf:${RCTF_GIT_REF}
-  build:
+  build: &id001
     context: .
     dockerfile: deploy/rctf/Dockerfile
   restart: unless-stopped
   stop_grace_period: 45s
   read_only: true
-  tmpfs:
-    - /tmp
-  networks:
-    - rctf
-    - db
-  env_file:
-    - .env
-  volumes:
-    - ./rctf.d:/app/rctf.d
-    - ./.data/uploads:/app/uploads
-  depends_on:
+  tmpfs: &id002
+  - /tmp
+  networks: &id003
+  - rctf
+  - db
+  env_file: &id004
+  - .env
+  volumes: &id005
+  - ./rctf.d:/app/rctf.d
+  - ./.data/uploads:/app/uploads
+  - /opt/whfd-observability/instance-preload.mjs:/opt/whfd-observability/instance-preload.mjs:ro
+  - /opt/whfd-observability/api-entrypoint.mjs:/opt/whfd-observability/api-entrypoint.mjs:ro
+  - /opt/whfd-observability/supervisord.conf:/etc/supervisord.conf:ro
+  depends_on: &id006
     redis:
       condition: service_healthy
     postgres:
       condition: service_healthy
-  healthcheck:
-    test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/api/readyz || exit 1"]
+  healthcheck: &id007
+    test:
+    - CMD-SHELL
+    - wget -qO- http://127.0.0.1/api/readyz || exit 1
     interval: 5s
     timeout: 3s
     retries: 12
     start_period: 20s
-
 services:
   rctf-blue:
-    <<: *rctf
+    image: ghcr.io/otter-sec/rctf:${RCTF_GIT_REF}
+    build: *id001
+    restart: unless-stopped
+    stop_grace_period: 45s
+    read_only: true
+    tmpfs: *id002
+    networks: *id003
+    env_file: *id004
+    volumes: *id005
+    depends_on: *id006
+    healthcheck: *id007
     ports:
-      - '127.0.0.1:8082:80'
+    - 127.0.0.1:8082:80
+    environment:
+      WHFD_ENVIRONMENT: test
   rctf-green:
-    <<: *rctf
+    image: ghcr.io/otter-sec/rctf:${RCTF_GIT_REF}
+    build: *id001
+    restart: unless-stopped
+    stop_grace_period: 45s
+    read_only: true
+    tmpfs: *id002
+    networks: *id003
+    env_file: *id004
+    volumes: *id005
+    depends_on: *id006
+    healthcheck: *id007
     ports:
-      - '127.0.0.1:8083:80'
+    - 127.0.0.1:8083:80
+    environment:
+      WHFD_ENVIRONMENT: test
   redis:
     image: redis:8.2.2
     restart: always
     networks:
-      - db
-    command: ['redis-server', '--requirepass', '${RCTF_REDIS_PASSWORD}']
+    - db
+    command:
+    - redis-server
+    - --requirepass
+    - ${RCTF_REDIS_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli --pass ${RCTF_REDIS_PASSWORD} ping || exit 1"]
+      test:
+      - CMD-SHELL
+      - redis-cli --pass ${RCTF_REDIS_PASSWORD} ping || exit 1
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
     volumes:
-      - ./.data/redis:/data
+    - ./.data/redis:/data
   postgres:
     image: postgres:18.0
     restart: always
     networks:
-      - db
+    - db
     environment:
-      - POSTGRES_PASSWORD=${RCTF_DATABASE_PASSWORD}
-      - POSTGRES_USER=rctf
-      - POSTGRES_DB=rctf
+    - POSTGRES_PASSWORD=${RCTF_DATABASE_PASSWORD}
+    - POSTGRES_USER=rctf
+    - POSTGRES_DB=rctf
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rctf -d rctf"]
+      test:
+      - CMD-SHELL
+      - pg_isready -U rctf -d rctf
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
     volumes:
-      - ./.data/postgres:/var/lib/postgresql/
-
+    - ./.data/postgres:/var/lib/postgresql/
 networks:
-  db:
+  db: null
   rctf:
     name: rctf_network

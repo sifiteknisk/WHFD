@@ -29,6 +29,7 @@ import {
   GoodAdminBotJobPull,
   GoodAdminBotJobUpdate,
   GoodAdminBotQueueDepth,
+  GoodAdminBongAdded,
   GoodAdminBongGiven,
   GoodAdminBongs,
   GoodAdminBotStatus,
@@ -820,6 +821,16 @@ export const GiveAdminBongRouteV2 = defineRoute({
   method: 'POST',
   goodResponses: [GoodAdminBongGiven],
   badResponses: [BadNoAvailableBongs, BadPerms, BadToken],
+  authRequired: true,
+  params: AdminUserParams,
+  permissions: Permissions.usersWrite,
+})
+
+export const AddAdminBongRouteV2 = defineRoute({
+  path: '/v2/admin/bongs/:id/add',
+  method: 'POST',
+  goodResponses: [GoodAdminBongAdded],
+  badResponses: [BadPerms, BadToken, BadUnknownUser],
   authRequired: true,
   params: AdminUserParams,
   permissions: Permissions.usersWrite,

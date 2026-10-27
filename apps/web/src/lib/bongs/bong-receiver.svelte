@@ -15,11 +15,8 @@
   const show = $derived.by(() => {
     void stamp
     const solves = pendingSolves()
-    queue = noteServerBongs(
-      queue,
-      userQuery.data?.score,
-      userQuery.data?.bongsTotal
-    )
+    // Local predicts first so an optimistic bongsTotal bump cannot queue a
+    // second overlay on top of the same solve.
     for (const solve of solves.slice(applied)) {
       queue = noteLocalSolve(
         queue,
@@ -29,6 +26,11 @@
       )
     }
     applied = solves.length
+    queue = noteServerBongs(
+      queue,
+      userQuery.data?.score,
+      userQuery.data?.bongsTotal
+    )
     return queue.remaining > 0
   })
 

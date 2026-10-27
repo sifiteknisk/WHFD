@@ -99,10 +99,13 @@ const cacheLeaderboard = async (
     ([id, info]) => ({ id, score: info.score, solve_count: info.solves })
   )
 
-  const earnedFromScore = sql`(COALESCE(resolved.score, 0) / ${sql.raw(String(BONG_POINTS))})`
+  // Gains only — decay/ban/delete must not revoke bongs already earned.
+  const earnedFromPoints = sql`(COALESCE(resolved.earned_points, 0) / ${sql.raw(String(BONG_POINTS))})`
   const cap = maxBongs()
   const earnedBongs =
-    cap === undefined ? earnedFromScore : sql`LEAST(${cap}, ${earnedFromScore})`
+    cap === undefined
+      ? earnedFromPoints
+      : sql`LEAST(${cap}, ${earnedFromPoints})`
 
   await db.transaction(async tx => {
     await tx.execute(sql`
@@ -121,11 +124,18 @@ const cacheLeaderboard = async (
           vals.global_rank,
           vals.division_rank,
           vals.last_solve_at,
-          vals.last_tiebreak_solve_at
+          vals.last_tiebreak_solve_at,
+          life.earned_points
         FROM users u
         LEFT JOIN jsonb_to_recordset(${JSON.stringify(userUpdates)}::jsonb)
           AS vals(id text, score int, global_rank int, division_rank int, last_solve_at timestamptz, last_tiebreak_solve_at timestamptz)
           ON u.id = vals.id
+        LEFT JOIN (
+          SELECT userid, SUM(points_delta)::bigint AS earned_points
+          FROM score_events
+          WHERE points_delta > 0 AND source NOT IN ('ban', 'delete')
+          GROUP BY userid
+        ) life ON life.userid = u.id
         WHERE u.global_rank IS NOT NULL OR vals.id IS NOT NULL OR u.bongs_total > 0
       ) resolved
       WHERE users.id = resolved.id

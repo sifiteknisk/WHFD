@@ -6,7 +6,7 @@ export type BongTeam = RouteResponseData<typeof ListAdminBongsRouteV2>[number]
 
 export type BongSortBy = 'name' | 'score' | 'bongsTotal' | 'bongsAvailable'
 
-export const ROW_HEIGHT = 48
+export const ROW_HEIGHT = 56
 
 export const SORT_DEFAULTS: Record<BongSortBy, SortOrder> = {
   name: 'asc',

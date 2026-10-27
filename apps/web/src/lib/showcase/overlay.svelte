@@ -8,9 +8,8 @@
   /** Full-screen headline hold after the stamp. */
   const TITLE_MS = 2_200
   /** From sequence start: fade the whole overlay out. */
-  const FADE_AT_MS = 10_000
+  const DEFAULT_FADE_AT_MS = 10_000
   const FADE_MS = 1_000
-  const TOTAL_MS = FADE_AT_MS + FADE_MS
   /** Last stretch of the sting: ramp volume to 0 by the end of the file. */
   const TAIL_FADE_SEC = 0.5
 
@@ -25,6 +24,10 @@
     tone?: Tone
     /** Skip the buildup and headline stamp. The stage is on screen immediately. */
     instant?: boolean
+    /** When the overlay starts fading out. */
+    fadeAtMs?: number
+    /** Allow clicking the backdrop to dismiss (after phase 3, or immediately when instant). */
+    backdropDismiss?: boolean
     children: Snippet<[() => void]>
   }
 
@@ -34,8 +37,12 @@
     sound,
     tone = 'alert',
     instant = false,
+    fadeAtMs = DEFAULT_FADE_AT_MS,
+    backdropDismiss = true,
     children,
   }: Props = $props()
+
+  const totalMs = $derived(fadeAtMs + FADE_MS)
 
   let phase = $state<Phase>(1)
   let exiting = $state(false)
@@ -44,10 +51,17 @@
   let settled = false
   let playSynced = () => {}
 
-  function finish() {
+  function done() {
     if (settled) return
     settled = true
     onDone()
+  }
+
+  /** Fade out first, then unmount — never hard-cut. */
+  function finish() {
+    if (settled || exiting) return
+    exiting = true
+    setTimeout(done, FADE_MS)
   }
 
   function enableSound() {
@@ -56,8 +70,8 @@
 
   function arm() {
     const timers = [
-      setTimeout(() => (exiting = true), FADE_AT_MS),
-      setTimeout(finish, TOTAL_MS),
+      setTimeout(() => (exiting = true), fadeAtMs),
+      setTimeout(done, totalMs),
     ]
     if (!instant) {
       timers.push(
@@ -133,7 +147,7 @@
     {@attach arm}
     style:--buildup="{BUILDUP_MS}ms"
     style:--fade="{FADE_MS}ms"
-    style:--fade-at="{FADE_AT_MS}ms"
+    style:--fade-at="{fadeAtMs}ms"
     data-tone={tone}
     data-instant={instant || undefined}
     data-exiting={exiting || undefined}
@@ -145,7 +159,8 @@
       tabindex="-1"
       aria-hidden="true"
       data-part="backdrop"
-      onclick={() => (instant || phase === 3) && finish()}
+      onclick={() =>
+        backdropDismiss && (instant || phase === 3) && finish()}
     ></button>
 
     {#if instant || phase === 3}
@@ -155,11 +170,7 @@
     {:else if phase === 2}
       <p data-part="hero">
         {#each headline.split(' ') as word, wi (wi)}
-          <span style:--w={wi}>
-            {#each word.split('') as letter, li (li)}
-              <span style:--i={li}>{letter}</span>
-            {/each}
-          </span>
+          <span style:--w={wi} data-from={wi === 0 ? 'left' : 'right'}>{word}</span>
         {/each}
       </p>
     {:else}
@@ -184,7 +195,6 @@
     display: grid;
     place-items: center;
     padding: var(--space-m);
-    animation: showcase-exit var(--fade) var(--fade-at) ease-in forwards;
 
     &[data-tone='good'] {
       --showcase-accent: light-dark(#e6b400, #ffe14a);
@@ -192,6 +202,7 @@
 
     &[data-exiting] {
       pointer-events: none;
+      animation: showcase-exit var(--fade) ease-in forwards;
     }
   }
 
@@ -236,42 +247,27 @@
     text-align: center;
     text-transform: uppercase;
     letter-spacing: 0.02em;
+    color: var(--showcase-accent);
+    text-shadow: 0 0.04em 0.12em color-mix(in oklab, var(--tui-shadow) 55%, transparent);
 
     > span {
-      display: flex;
+      display: block;
       max-inline-size: 100%;
+      animation: showcase-word 240ms cubic-bezier(0.15, 1.35, 0.25, 1) both;
+      animation-delay: calc(var(--w) * 520ms);
 
-      > span {
-        padding: 0.04em 0.045em 0.07em;
-        color: #fff6f4;
-        background: var(--showcase-accent);
-        border: var(--tui-border-width) solid;
-        border-color: var(--bevel-raised);
-        box-shadow:
-          0.045em 0.045em 0 #140404,
-          0.09em 0.09em 0
-            color-mix(in oklab, var(--showcase-accent) 55%, black);
-        animation: showcase-letter 240ms cubic-bezier(0.15, 1.35, 0.25, 1) both;
-        animation-delay: calc(var(--w) * 520ms + var(--i) * 52ms);
+      &[data-from='right'] {
+        animation-name: showcase-word-right;
       }
     }
   }
 
-  showcase:not([data-tone='good']) [data-part='hero'] > span:last-child:not(:only-child) {
-    margin-top: 0.04em;
-    margin-inline-start: 0.04em;
-
-    > span {
-      color: var(--showcase-accent);
-      background: #160606;
-    }
+  showcase:not([data-tone='good']) [data-part='hero'] > span:first-child:not(:only-child) {
+    color: #fff6f4;
   }
 
-  showcase[data-tone='good'] [data-part='hero'] > span > span {
-    color: #3d2c00;
-    background: var(--showcase-accent);
-    box-shadow: 0.045em 0.045em 0
-      color-mix(in oklab, var(--showcase-accent) 40%, black);
+  showcase:not([data-tone='good']) [data-part='hero'] > span:last-child:not(:only-child) {
+    color: var(--showcase-accent);
   }
 
   [data-part='stage'] {
@@ -283,7 +279,7 @@
   }
 
   showcase[data-instant] [data-part='scrim'] {
-    animation: showcase-build 220ms ease-out both;
+    animation: showcase-build 420ms ease-out both;
 
     &::before {
       opacity: 0.8;
@@ -294,7 +290,7 @@
   showcase[data-instant] [data-part='stage'] {
     inline-size: max-content;
     max-inline-size: 100%;
-    animation: showcase-arrive 280ms cubic-bezier(0.2, 0.85, 0.2, 1) both;
+    animation: showcase-arrive 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   showcase:not([data-instant]) {
@@ -307,6 +303,7 @@
     display: grid;
     inline-size: auto;
     max-inline-size: none;
+    pointer-events: none;
     animation: none;
   }
 
@@ -360,17 +357,37 @@
     }
   }
 
-  @keyframes showcase-letter {
+  @keyframes showcase-word {
     0% {
       opacity: 0;
-      translate: 0 -1.35em;
-      scale: 1.35 0.45;
+      translate: -1.2em 0;
+      scale: 1.12 0.88;
     }
 
     62% {
       opacity: 1;
-      translate: 0 0.08em;
-      scale: 0.96 1.18;
+      translate: 0.06em 0;
+      scale: 0.96 1.08;
+    }
+
+    100% {
+      opacity: 1;
+      translate: 0 0;
+      scale: 1;
+    }
+  }
+
+  @keyframes showcase-word-right {
+    0% {
+      opacity: 0;
+      translate: 1.2em 0;
+      scale: 1.12 0.88;
+    }
+
+    62% {
+      opacity: 1;
+      translate: -0.06em 0;
+      scale: 0.96 1.08;
     }
 
     100% {
@@ -399,20 +416,31 @@
   @keyframes showcase-arrive {
     from {
       opacity: 0;
-      scale: 0.92;
-      translate: 0 0.6rem;
+      scale: 0.94;
+      translate: 0 1rem;
+    }
+
+    to {
+      opacity: 1;
+      scale: 1;
+      translate: 0 0;
     }
   }
 
   @keyframes showcase-exit {
+    from {
+      opacity: 1;
+    }
+
     to {
       opacity: 0;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    showcase {
-      animation: showcase-exit var(--fade) var(--fade-at) forwards;
+    showcase[data-exiting] {
+      animation: none;
+      opacity: 0;
     }
 
     [data-part='scrim'] {
@@ -427,7 +455,7 @@
     }
 
     [data-part='hero'],
-    [data-part='hero'] span,
+    [data-part='hero'] > span,
     [data-part='stage'],
     showcase[data-instant] [data-part='scrim'],
     showcase[data-instant] [data-part='stage'] {

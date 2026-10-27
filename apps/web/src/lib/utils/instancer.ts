@@ -13,6 +13,7 @@ export type FormattedEndpoint = {
   value: string
   protocolTag?: string
   copyValue: string
+  href?: string
 }
 
 function endpointValue(endpoint: InstancerEndpoint): string {
@@ -46,7 +47,8 @@ export function formatEndpoint(
       : endpoint.kind === ExposeKind.TCP_SSL
         ? 'TCP+SSL'
         : endpoint.kind
-  return { label, value, protocolTag, copyValue: value }
+  const href = endpoint.kind === ExposeKind.HTTPS ? value : undefined
+  return { label, value, protocolTag, copyValue: value, href }
 }
 
 export function instancePollInterval(

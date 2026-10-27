@@ -20,7 +20,7 @@
   import { useQueryClient } from '@tanstack/svelte-query'
   import { apiRequest, showApiError } from '$lib/api'
   import CaptchaNotice from '$lib/components/captcha-notice.svelte'
-  import { IconCopy, IconSignIn } from '$lib/icons'
+  import { IconArrowSquareOut, IconCopy, IconSignIn } from '$lib/icons'
   import { useChallengeInstance } from '$lib/query/challenges'
   import { useClientConfig } from '$lib/query/config'
   import { queryKeys } from '$lib/query/keys'
@@ -286,18 +286,30 @@
           <endpoint-value>
             <code>{endpoint.value}</code>
             {#if !transitioning}
-              <button
-                type="button"
-                aria-label="Copy {endpoint.label}"
-                onclick={() =>
-                  copyText(
-                    endpoint.copyValue,
-                    'Copied to clipboard',
-                    'Failed to copy'
-                  )}
-              >
-                <IconCopy />
-              </button>
+              <endpoint-actions>
+                {#if endpoint.href}
+                  <a
+                    href={endpoint.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Open {endpoint.label}"
+                  >
+                    <IconArrowSquareOut />
+                  </a>
+                {/if}
+                <button
+                  type="button"
+                  aria-label="Copy {endpoint.label}"
+                  onclick={() =>
+                    copyText(
+                      endpoint.copyValue,
+                      'Copied to clipboard',
+                      'Failed to copy'
+                    )}
+                  >
+                  <IconCopy />
+                </button>
+              </endpoint-actions>
             {/if}
           </endpoint-value>
         </instancer-endpoint>
@@ -453,6 +465,14 @@
       text-overflow: ellipsis;
     }
 
+    endpoint-actions {
+      display: inline-flex;
+      flex-shrink: 0;
+      align-items: center;
+      gap: var(--space-3xs);
+    }
+
+    a,
     button {
       display: inline-flex;
       flex-shrink: 0;

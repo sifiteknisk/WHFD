@@ -1,7 +1,7 @@
 export const BONG_POINTS = 1000
 
-export function earnedBongs(score: number, maxBongs?: number | null): number {
-  const earned = Math.floor(Math.max(0, score) / BONG_POINTS)
+export function earnedBongs(pointsEarned: number, maxBongs?: number | null): number {
+  const earned = Math.floor(Math.max(0, pointsEarned) / BONG_POINTS)
   if (maxBongs == null) return earned
   return Math.min(maxBongs, earned)
 }
@@ -11,7 +11,8 @@ export type BongQueue = {
   remaining: number
   /** Ignore server snapshots at or below this score; they predate a local solve. */
   unconfirmedFrom: number | undefined
-  predictedScore: number | undefined
+  /** Cumulative points counted toward bongs after local solves. */
+  predictedPoints: number | undefined
 }
 
 export function emptyBongQueue(): BongQueue {
@@ -19,7 +20,7 @@ export function emptyBongQueue(): BongQueue {
     known: undefined,
     remaining: 0,
     unconfirmedFrom: undefined,
-    predictedScore: undefined,
+    predictedPoints: undefined,
   }
 }
 
@@ -56,15 +57,19 @@ export function noteServerBongs(
       ? queue
       : emptyBongQueue()
   }
-  if (queue.unconfirmedFrom !== undefined && score <= queue.unconfirmedFrom) {
-    return queue
+  if (queue.unconfirmedFrom !== undefined) {
+    // Score snapshot still predates the local solve.
+    if (score <= queue.unconfirmedFrom) return queue
+    // Score moved, but bongsTotal has not caught the local prediction yet —
+    // keep the queued overlay instead of clearing it mid-celebration.
+    if (queue.known !== undefined && total < queue.known) return queue
   }
   const settled = applyBongTotal(queue.known, queue.remaining, total)
   if (
     settled.known === queue.known &&
     settled.remaining === queue.remaining &&
     queue.unconfirmedFrom === undefined &&
-    queue.predictedScore === undefined
+    queue.predictedPoints === undefined
   ) {
     return queue
   }
@@ -72,8 +77,19 @@ export function noteServerBongs(
     known: settled.known,
     remaining: settled.remaining,
     unconfirmedFrom: undefined,
-    predictedScore: undefined,
+    predictedPoints: undefined,
   }
+}
+
+/** How many new bongs a solve awards given the current total (client prediction). */
+export function bongsGainedFromSolve(
+  bongsTotal: number,
+  points: number,
+  maxBongs?: number | null
+): number {
+  if (points <= 0) return 0
+  const earned = earnedBongs(bongsTotal * BONG_POINTS + points, maxBongs)
+  return Math.max(0, earned - bongsTotal)
 }
 
 export function noteLocalSolve(
@@ -83,23 +99,23 @@ export function noteLocalSolve(
   maxBongs?: number | null
 ): BongQueue {
   if (queue.known === undefined || points <= 0) return queue
-  const from = Math.max(score, queue.predictedScore ?? score)
+  const from = queue.predictedPoints ?? queue.known * BONG_POINTS
   const predicted = from + points
   const earned = earnedBongs(predicted, maxBongs)
   const unconfirmedFrom = queue.unconfirmedFrom ?? score
   if (earned <= queue.known) {
     if (
       unconfirmedFrom === queue.unconfirmedFrom &&
-      predicted === queue.predictedScore
+      predicted === queue.predictedPoints
     ) {
       return queue
     }
-    return { ...queue, unconfirmedFrom, predictedScore: predicted }
+    return { ...queue, unconfirmedFrom, predictedPoints: predicted }
   }
   return {
     known: earned,
     remaining: queue.remaining + (earned - queue.known),
     unconfirmedFrom,
-    predictedScore: predicted,
+    predictedPoints: predicted,
   }
 }

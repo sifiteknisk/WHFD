@@ -1,6 +1,8 @@
 <script lang="ts">
   import {
+    AddAdminBongRouteV2,
     GiveAdminBongRouteV2,
+    GoodAdminBongAdded,
     GoodAdminBongGiven,
     Permissions,
   } from '@rctf/types'
@@ -50,11 +52,22 @@
     !clientConfig || (canWrite && bongsQuery.isPending && !bongsQuery.data)
   )
 
-  const giveAction = createAsyncAction<string>()
+  const bongAction = createAsyncAction<string>()
   const confirmState = createConfirmState()
 
+  const givingId = $derived(
+    bongAction.key?.startsWith('give:')
+      ? bongAction.key.slice('give:'.length)
+      : null
+  )
+  const addingId = $derived(
+    bongAction.key?.startsWith('add:')
+      ? bongAction.key.slice('add:'.length)
+      : null
+  )
+
   async function give(team: BongTeam) {
-    await giveAction.run(
+    await bongAction.run(
       async () => {
         const response = await apiRequest(GiveAdminBongRouteV2, { id: team.id })
         if (response.kind === GoodAdminBongGiven.kind) {
@@ -74,8 +87,39 @@
         }
       },
       {
-        key: team.id,
+        key: `give:${team.id}`,
         errorMessage: `Failed to give a bong to ${team.name}`,
+      }
+    )
+  }
+
+  async function add(team: BongTeam) {
+    await bongAction.run(
+      async () => {
+        const response = await apiRequest(AddAdminBongRouteV2, { id: team.id })
+        if (response.kind === GoodAdminBongAdded.kind) {
+          toast.success(`Added a bong to ${team.name}.`)
+          queryClient.setQueryData(
+            queryKeys.adminBongs,
+            (current: BongTeam[] | undefined) =>
+              current?.map(row =>
+                row.id === team.id
+                  ? {
+                      ...row,
+                      bongsTotal: response.data.bongsTotal,
+                      bongsAvailable: response.data.bongsAvailable,
+                    }
+                  : row
+              )
+          )
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminBongs })
+        } else {
+          showApiError(response)
+        }
+      },
+      {
+        key: `add:${team.id}`,
+        errorMessage: `Failed to add a bong to ${team.name}`,
       }
     )
   }
@@ -87,6 +131,16 @@
       confirmLabel: 'Give bong',
       destructive: false,
       run: () => give(team),
+    })
+  }
+
+  function requestAdd(team: BongTeam) {
+    confirmState.request({
+      title: 'Add bong',
+      message: `Grant one extra available bong to ${team.name}? Use this for corrections.`,
+      confirmLabel: 'Add bong',
+      destructive: false,
+      run: () => add(team),
     })
   }
 </script>
@@ -102,7 +156,7 @@
     <bongs-status>
       <Card title="Bongs unavailable">
         <p>
-          Your account needs the manage-teams permission to view and give bongs.
+          Your account needs the manage-teams permission to view and manage bongs.
         </p>
       </Card>
     </bongs-status>
@@ -124,8 +178,10 @@
         bind:search
         fetching={bongsQuery.isFetching}
         {fingerprint}
-        givingId={giveAction.key}
+        {givingId}
+        {addingId}
         onGive={requestGive}
+        onAdd={requestAdd}
       />
     </bongs-reveal>
   {/if}

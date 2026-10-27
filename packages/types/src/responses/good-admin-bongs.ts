@@ -13,7 +13,9 @@ export const GoodAdminBongs = response('goodAdminBongs', {
       ),
       score: example(z.int(), 13370).check(z.describe('Total team score.')),
       bongsTotal: example(z.int(), 13).check(
-        z.describe('Bongs earned so far, one per 1000 points reached.')
+        z.describe(
+          'Bongs earned so far, one per 1000 points gained (decay does not revoke).'
+        )
       ),
       bongsAvailable: example(z.int(), 2).check(
         z.describe('Earned bongs that have not been handed out yet.')
@@ -28,6 +30,19 @@ export const GoodAdminBongGiven = response('goodAdminBongGiven', {
   data: z.object({
     bongsAvailable: example(z.int(), 1).check(
       z.describe('Bongs the team still has available after this one.')
+    ),
+  }),
+})
+
+export const GoodAdminBongAdded = response('goodAdminBongAdded', {
+  status: 200,
+  message: 'Bong added to team.',
+  data: z.object({
+    bongsTotal: example(z.int(), 14).check(
+      z.describe('Total bongs the team has after this grant.')
+    ),
+    bongsAvailable: example(z.int(), 3).check(
+      z.describe('Available bongs the team has after this grant.')
     ),
   }),
 })

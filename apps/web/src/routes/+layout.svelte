@@ -14,7 +14,6 @@
   import '../styles/theme-visibility.css'
   import { QueryClientProvider } from '@tanstack/svelte-query'
   import { page } from '$app/state'
-  import favicon from '$lib/assets/favicon.svg'
   import BongReceiver from '$lib/bongs/bong-receiver.svelte'
   import CircuitBoard from '$lib/circuit/circuit-board.svelte'
   import Brainrot from '$lib/components/brainrot.svelte'
@@ -86,8 +85,8 @@
 <svelte:document onanimationend={onAnimationEnd} />
 
 <svelte:head>
-  <link rel="icon" href={data.clientConfig.faviconUrl ?? favicon} />
-  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="icon" href={data.clientConfig.faviconUrl ?? '/images/sifi.ico'} />
+  <link rel="shortcut icon" href="/images/sifi.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="apple-mobile-web-app-title" content={data.clientConfig.ctfName} />

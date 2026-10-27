@@ -1,6 +1,9 @@
 import { cacheLeaderboardAndGraph } from '@rctf/api/src/cache/leaderboard'
 import type { TypedRedis } from '@rctf/api/src/cache/scripts'
-import { settleBongCounts } from '@rctf/api/src/services/bongs'
+import {
+  bongPointsEarned,
+  settleBongCounts,
+} from '@rctf/api/src/services/bongs'
 import { upsertChallenge } from '@rctf/api/src/services/challenges'
 import { calculateLeaderboard } from '@rctf/api/src/services/leaderboard-calculation'
 import { applyDecayPointsForChallenge } from '@rctf/api/src/services/solve-points'
@@ -72,7 +75,7 @@ export const awardTestSolve = async (
 
   const row = await getUser(db, user.id)
   const bongs = settleBongCounts(
-    row?.score ?? 0,
+    await bongPointsEarned(db, user.id),
     row?.bongsTotal ?? 0,
     row?.bongsAvailable ?? 0
   )

@@ -18,7 +18,9 @@
     fetching: boolean
     fingerprint: string
     givingId: string | null
+    addingId: string | null
     onGive: (team: BongTeam) => void
+    onAdd: (team: BongTeam) => void
   }
 
   let {
@@ -28,7 +30,9 @@
     fetching,
     fingerprint,
     givingId,
+    addingId,
     onGive,
+    onAdd,
   }: Props = $props()
 
   const columns: { col: BongSortBy; label: string; short: string }[] = [
@@ -92,11 +96,12 @@
         <IconCaretDown aria-hidden="true" data-arrow />
       </button>
     </th-cell>
-    <th-cell data-static>Give</th-cell>
+    <th-cell data-static>Actions</th-cell>
   </bongs-head>
 {/snippet}
 
 {#snippet row(team: BongTeam, index: number)}
+  {@const busy = givingId === team.id || addingId === team.id}
   <bongs-row
     data-even={index % 2 === 0 || undefined}
     data-ready={team.bongsAvailable > 0 || undefined}
@@ -120,19 +125,33 @@
         >{team.bongsAvailable.toLocaleString()}</nums
       >/{team.bongsTotal.toLocaleString()}
     </cell>
-    <cell>
-      <button
-        type="button"
-        disabled={team.bongsAvailable <= 0 || givingId === team.id}
-        aria-label="Give bong to {team.name}"
-        onclick={() => onGive(team)}
-      >
-        {#if givingId === team.id}
-          <Spinner />
-        {:else}
-          Give
-        {/if}
-      </button>
+    <cell data-col="actions">
+      <actions>
+        <button
+          type="button"
+          disabled={busy}
+          aria-label="Add bong to {team.name}"
+          onclick={() => onAdd(team)}
+        >
+          {#if addingId === team.id}
+            <Spinner />
+          {:else}
+            Add
+          {/if}
+        </button>
+        <button
+          type="button"
+          disabled={team.bongsAvailable <= 0 || busy}
+          aria-label="Give bong to {team.name}"
+          onclick={() => onGive(team)}
+        >
+          {#if givingId === team.id}
+            <Spinner />
+          {:else}
+            Give
+          {/if}
+        </button>
+      </actions>
     </cell>
   </bongs-row>
 {/snippet}
@@ -176,8 +195,8 @@
     display: flex;
     align-items: center;
     gap: var(--space-2xs);
-    flex-shrink: 0;
-    inline-size: min(18rem, 42vw);
+    flex: 1;
+    min-inline-size: 0;
     block-size: 2rem;
     padding-inline: 0.5rem;
     color: var(--tui-muted);
@@ -209,6 +228,11 @@
         color: var(--tui-muted);
       }
     }
+
+    @media (width >= 48rem) {
+      flex: 0 0 auto;
+      inline-size: min(18rem, 42vw);
+    }
   }
 
   bongs-fetching {
@@ -220,16 +244,16 @@
   bongs-head,
   bongs-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 3.5rem 4.75rem;
+    grid-template-columns: minmax(0, 1fr) 3.25rem 8.75rem;
     inline-size: 100%;
     user-select: none;
 
     @media (width >= 48rem) {
-      grid-template-columns: minmax(0, 1fr) 4.25rem 2.75rem 2.75rem 4.75rem;
+      grid-template-columns: minmax(0, 1fr) 4.25rem 2.75rem 2.75rem 8.75rem;
     }
 
     @media (width >= 64rem) {
-      grid-template-columns: minmax(12rem, 1.4fr) 7rem 7rem 8rem 8rem;
+      grid-template-columns: minmax(12rem, 1.4fr) 7rem 7rem 8rem 10rem;
       min-inline-size: 45rem;
     }
   }
@@ -363,37 +387,44 @@
       border-inline-end: none;
       padding-inline: 0.75rem;
     }
+  }
 
-    button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      block-size: 2rem;
-      padding-inline: var(--space-xs);
-      color: var(--tui-text);
-      background: var(--tui-surface);
-      border: var(--tui-border-width) solid;
-      border-color: var(--bevel-raised);
-      cursor: pointer;
+  actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3xs);
+    min-inline-size: 0;
+  }
 
-      &:hover:not(:disabled) {
-        background: var(--tui-surface-light);
-      }
+  cell button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    block-size: 2rem;
+    padding-inline: var(--space-xs);
+    color: var(--tui-text);
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
+    cursor: pointer;
 
-      &:active:not(:disabled) {
-        border-color: var(--bevel-recessed);
-        translate: 1px 1px;
-      }
+    &:hover:not(:disabled) {
+      background: var(--tui-surface-light);
+    }
 
-      &:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-      }
+    &:active:not(:disabled) {
+      border-color: var(--bevel-recessed);
+      translate: 1px 1px;
+    }
 
-      &:focus-visible {
-        outline: 2px dotted var(--tui-focus);
-        outline-offset: 2px;
-      }
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    &:focus-visible {
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
     }
   }
 
@@ -431,6 +462,23 @@
     th-cell:not([data-active]) :global(svg[data-arrow]),
     [data-col='bongs'] :global(svg[data-arrow]) {
       display: none;
+    }
+  }
+
+  @media (width < 48rem) {
+    search-field {
+      block-size: 2.5rem;
+    }
+
+    bongs-row {
+      min-block-size: 3.5rem;
+    }
+
+    cell button {
+      min-block-size: 2.5rem;
+      padding-block: 0.4rem;
+      padding-inline: 0.55rem;
+      font-size: var(--step--1);
     }
   }
 </style>

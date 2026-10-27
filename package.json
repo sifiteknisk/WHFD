@@ -37,6 +37,7 @@
     "build:api": "bun run --filter '@rctf/api' build",
     "build:web": "bun run --filter '@rctf/web' build",
     "rctf": "bun run apps/cli/src/index.ts",
+    "rctf:docker": "sh deploy/rctf-cli.sh",
     "lint": "oxlint --deny-warnings",
     "lint:fix": "oxlint --fix",
     "format": "bun run format:oxc",

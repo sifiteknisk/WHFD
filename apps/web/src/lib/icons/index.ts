@@ -1,3 +1,4 @@
+export { default as IconArrowSquareOut } from './icon-arrow-square-out.svelte'
 export { default as IconArrowsInLineVertical } from './icon-arrows-in-line-vertical.svelte'
 export { default as IconAwardFilled } from './icon-award-filled.svelte'
 export { default as IconBomb } from './icon-bomb.svelte'

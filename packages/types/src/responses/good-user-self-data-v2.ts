@@ -54,7 +54,9 @@ export const GoodUserSelfDataV2 = response('goodUserSelfDataV2', {
     ),
     score: example(z.int(), 13370).check(z.describe('Total team score.')),
     bongsTotal: example(z.int(), 13).check(
-      z.describe('Bongs earned so far, one per 1000 points reached.')
+      z.describe(
+        'Bongs earned so far, one per 1000 points gained (decay does not revoke).'
+      )
     ),
     bongsAvailable: example(z.int(), 2).check(
       z.describe('Earned bongs that have not been handed out yet.')

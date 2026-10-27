@@ -2,7 +2,7 @@ import type { DatabaseClient, User } from '@rctf/db'
 import { challenges, scoreEvents, users } from '@rctf/db'
 import { takeUnique } from '@rctf/db/util'
 import { and, asc, eq, gt, inArray } from 'drizzle-orm'
-import { settleBongCounts } from './bongs'
+import { bongPointsEarned, settleBongCounts } from './bongs'
 import { getDynamicScoresForUsers, getUserChallengeSolves } from './challenges'
 import { getUser } from './users'
 
@@ -39,21 +39,23 @@ export const getFullUser = async (
   db: DatabaseClient,
   user: User
 ): Promise<FullUser> => {
-  const [solves, freshRanks, dynamicScoresByUser] = await Promise.all([
-    getUserChallengeSolves(db, user.id),
-    db
-      .select({
-        score: users.score,
-        bongsTotal: users.bongsTotal,
-        bongsAvailable: users.bongsAvailable,
-        globalRank: users.globalRank,
-        divisionRank: users.divisionRank,
-      })
-      .from(users)
-      .where(eq(users.id, user.id))
-      .then(takeUnique),
-    getDynamicScoresForUsers(db, [user.id]),
-  ])
+  const [solves, freshRanks, dynamicScoresByUser, pointsEarned] =
+    await Promise.all([
+      getUserChallengeSolves(db, user.id),
+      db
+        .select({
+          score: users.score,
+          bongsTotal: users.bongsTotal,
+          bongsAvailable: users.bongsAvailable,
+          globalRank: users.globalRank,
+          divisionRank: users.divisionRank,
+        })
+        .from(users)
+        .where(eq(users.id, user.id))
+        .then(takeUnique),
+      getDynamicScoresForUsers(db, [user.id]),
+      bongPointsEarned(db, user.id),
+    ])
 
   const challengeIds = solves.map(item => item.solve.challengeid)
   const challengeScores = new Map<
@@ -105,7 +107,7 @@ export const getFullUser = async (
 
   const score = freshRanks?.score ?? 0
   const bongs = settleBongCounts(
-    score,
+    pointsEarned,
     freshRanks?.bongsTotal ?? 0,
     freshRanks?.bongsAvailable ?? 0
   )

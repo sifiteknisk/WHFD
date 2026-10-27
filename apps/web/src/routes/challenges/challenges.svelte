@@ -9,7 +9,10 @@
     invalidateAfterSolve,
     useChallenges,
   } from '$lib/query/challenges'
+  import { useClientConfig } from '$lib/query/config'
+  import { queryKeys } from '$lib/query/keys'
   import { useCurrentUser } from '$lib/query/user'
+  import { bongsGainedFromSolve } from '$lib/bongs/queue'
   import { announceSolvePoints } from '$lib/bongs/session.svelte'
   import Dialog from '$lib/ui/dialog.svelte'
   import Splitter from '$lib/ui/splitter.svelte'
@@ -47,6 +50,7 @@
   const queryClient = useQueryClient()
   const challengesQuery = useChallenges()
   const userQuery = useCurrentUser()
+  const configQuery = useClientConfig()
 
   const challenges = $derived(challengesQuery.data ?? [])
   const challengeIds = $derived(new Set(challenges.map(c => c.id)))
@@ -113,9 +117,21 @@
 
   function handleSolve(challengeId: string) {
     const challenge = challenges.find(item => item.id === challengeId)
-    const score = userQuery.data?.score
-    if (challenge && score !== undefined) {
-      announceSolvePoints(score, challenge.points)
+    const user = userQuery.data
+    if (challenge && user?.score !== undefined) {
+      announceSolvePoints(user.score, challenge.points)
+      const gained = bongsGainedFromSolve(
+        user.bongsTotal,
+        challenge.points,
+        configQuery.data?.maxBongs
+      )
+      if (gained > 0) {
+        queryClient.setQueryData(queryKeys.userSelf, {
+          ...user,
+          bongsTotal: user.bongsTotal + gained,
+          bongsAvailable: user.bongsAvailable + gained,
+        })
+      }
     }
     invalidateAfterSolve(queryClient, challengeId, id => localSolvedIds.add(id))
   }

@@ -31,6 +31,9 @@ describe('formatEndpoint value + protocol tag', () => {
       expect(result.value).toBe(expectedValue)
       expect(result.copyValue).toBe(expectedValue)
       expect(result.protocolTag).toBe(expectedTag)
+      expect(result.href).toBe(
+        kind === ExposeKind.HTTPS ? expectedValue : undefined
+      )
     }
   )
 
