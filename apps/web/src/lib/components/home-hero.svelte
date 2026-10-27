@@ -12,46 +12,121 @@
   }
 
   let { overlay = false, interactive = true }: Props = $props()
+
+  // The hero is laid out once at a fixed design size (what it measures on a
+  // 1920x1080 screen at 100% zoom) and scaled as one piece to fit, so browser
+  // zoom keeps the composition instead of reflowing it. Below MIN_SCALE the
+  // text gets too small, so it falls back to the regular flowing layout. The
+  // mode only depends on width, which the flowing content can't feed back into.
+  const STAGE_WIDTH = 112.5
+  const STAGE_HEIGHT = 56.25
+  const MIN_SCALE = 0.55
+
+  let scale = $state(1)
+  let scaled = $state(false)
+
+  function fit(node: HTMLElement) {
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry) return
+      const rem = parseFloat(
+        getComputedStyle(document.documentElement).fontSize
+      )
+      const { width, height } = entry.contentRect
+      scaled = width >= MIN_SCALE * STAGE_WIDTH * rem
+      scale = Math.min(
+        width / (STAGE_WIDTH * rem),
+        height / (STAGE_HEIGHT * rem)
+      )
+    })
+    observer.observe(node)
+    return () => observer.disconnect()
+  }
 </script>
 
-<home-hero data-overlay={overlay ? '' : undefined}>
-  <home-start>
-    <logo-row>
-      <Card>
-        <home-logo>
-          <HomeLogo />
-        </home-logo>
+<home-hero
+  {@attach fit}
+  data-overlay={overlay ? '' : undefined}
+  data-scaled={scaled ? '' : undefined}
+  style:--stage-width="{STAGE_WIDTH}rem"
+  style:--stage-height="{STAGE_HEIGHT}rem"
+  style:--stage-scale={scale}
+>
+  <hero-stage>
+    <home-start>
+      <logo-row>
+        <Card>
+          <home-logo>
+            <HomeLogo />
+          </home-logo>
+        </Card>
+        <logo-error>
+          <ErrorWindow message="Vibecode Galore" />
+        </logo-error>
+      </logo-row>
+      <HomeCountdown />
+      <Card title="Main menu">
+        <HomeMenu hotkeys={interactive} />
       </Card>
-      <logo-error>
-        <ErrorWindow message="Vibecode Galore" />
-      </logo-error>
-    </logo-row>
-    <HomeCountdown />
-    <Card title="Main menu">
-      <HomeMenu hotkeys={interactive} />
-    </Card>
-  </home-start>
-  {#if !overlay}
-    <img src="/home.gif" alt="" />
-  {/if}
-  <WindowBox
-    image="/video/meeting.mp4"
-    title="Meeting with the new President"
-    size={8}
-    x={54}
-    y={1}
-  />
-  <WindowBox
-    image="/video/papers.mp4"
-    title="Gross code written by humans"
-    size={9}
-    x={38}
-    y={40}
-  />
+    </home-start>
+    {#if !overlay}
+      <img src="/home.gif" alt="" />
+    {/if}
+    <WindowBox
+      image="/video/meeting.mp4"
+      title="Meeting with the new President"
+      size={8}
+      x={54}
+      y={1}
+    />
+    <WindowBox
+      image="/video/papers.mp4"
+      title="Gross code written by humans"
+      size={9}
+      x={38}
+      y={40}
+    />
+  </hero-stage>
 </home-hero>
 
 <style>
   home-hero {
+    position: relative;
+    display: flex;
+    flex: 1;
+
+    &:not([data-scaled]) :global(window-box) {
+      display: none;
+    }
+
+    /* The stage is taken out of flow so the hero's size comes only from the
+       page; the floor keeps it from collapsing when sponsors follow it. */
+    &[data-scaled] {
+      flex: 1 0 0;
+      min-block-size: 50dvh;
+
+      > hero-stage {
+        position: absolute;
+        inset-block-start: 50%;
+        inset-inline-start: 50%;
+        flex: none;
+        inline-size: var(--stage-width);
+        block-size: var(--stage-height);
+        translate: -50% -50%;
+        scale: var(--stage-scale);
+      }
+    }
+
+    &[data-overlay] {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      min-block-size: 0;
+      padding: var(--space-s) var(--space-m-l);
+    }
+  }
+
+  hero-stage {
+    position: relative;
     display: flex;
     flex: 1;
     align-items: center;
@@ -62,13 +137,6 @@
       > img {
         display: none;
       }
-    }
-
-    &[data-overlay] {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      padding: var(--space-s) var(--space-m-l);
     }
   }
 
