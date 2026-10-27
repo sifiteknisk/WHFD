@@ -130,6 +130,7 @@
     const boardImage = new Image()
     boardImage.onload = () => {
       board = boardImage
+      if (reduced && running) draw(0)
     }
     boardImage.src = '/circuit/board.png'
 
@@ -137,6 +138,7 @@
       const image = new Image()
       image.onload = () => {
         sprites[kind] = image
+        if (reduced && running) draw(0)
       }
       image.src = spriteSpec[kind].src
     }
