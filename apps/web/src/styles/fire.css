@@ -1,10 +1,8 @@
 /* Host for the `fire` attachment: the canvas burns behind the content, above
-   the host's own background. Forced dark so theme tokens stay light-on-dark. */
+   the host's own background. */
 [data-on-fire] {
   position: relative;
   isolation: isolate;
-  color-scheme: dark;
-  background-color: #140302;
   text-shadow:
     0 0 2px #000,
     0 0 2px #000,

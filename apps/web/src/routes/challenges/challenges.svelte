@@ -331,9 +331,13 @@
       z-index: 2;
     }
 
-    /* Keep the top spacing without a grey strip above a burning challenge. */
+    /* Keep the spacing inside the fire so there is no gap above it. */
     &[data-side='detail']:has(:global(challenge-details[data-on-fire])) {
-      background: transparent;
+      padding-block-start: 0;
+
+      :global(challenge-details[data-on-fire]) {
+        padding-block-start: 0.35rem;
+      }
     }
   }
 

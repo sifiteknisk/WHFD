@@ -78,6 +78,9 @@
     }
 
     &[data-on-fire] {
+      color-scheme: dark;
+      background-color: #140302;
+
       details-body {
         background: rgb(0 0 0 / 0.72);
         border-color: transparent;
