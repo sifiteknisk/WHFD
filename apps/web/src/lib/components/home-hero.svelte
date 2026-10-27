@@ -13,13 +13,13 @@
 
   let { overlay = false, interactive = true }: Props = $props()
 
-  // The hero is laid out once at a fixed design size (what it measures on a
-  // 1920x1080 screen at 100% zoom) and scaled as one piece to fit, so browser
+  // The hero is laid out once at a fixed design size (cropped tight around the
+  // composition) and scaled as one piece to fill the space, so browser
   // zoom keeps the composition instead of reflowing it. Below MIN_SCALE the
   // text gets too small, so it falls back to the regular flowing layout. The
   // mode only depends on width, which the flowing content can't feed back into.
-  const STAGE_WIDTH = 112.5
-  const STAGE_HEIGHT = 56.25
+  const STAGE_WIDTH = 97.5
+  const STAGE_HEIGHT = 48.125
   const MIN_SCALE = 0.55
 
   let scale = $state(1)
@@ -75,15 +75,15 @@
       image="/video/meeting.mp4"
       title="Meeting with the new President"
       size={8}
-      x={54}
-      y={1}
+      x={62.3}
+      y={1.2}
     />
     <WindowBox
       image="/video/papers.mp4"
       title="Gross code written by humans"
       size={9}
-      x={38}
-      y={40}
+      x={43.8}
+      y={46.8}
     />
   </hero-stage>
 </home-hero>
@@ -113,6 +113,10 @@
         block-size: var(--stage-height);
         translate: -50% -50%;
         scale: var(--stage-scale);
+
+        > home-start {
+          align-self: flex-end;
+        }
       }
     }
 
