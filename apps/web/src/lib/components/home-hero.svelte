@@ -5,25 +5,34 @@
   import HomeMenu from '$lib/components/home-menu.svelte'
   import WindowBox from '$lib/components/window-box.svelte'
   import Card from '$lib/ui/card.svelte'
+  import type { Snippet } from 'svelte'
 
   type Props = {
     overlay?: boolean
     interactive?: boolean
+    /* Rendered in the stage's corner while scaled, so it scales with the
+       windows instead of growing over them. The page renders it otherwise. */
+    footer?: Snippet
+    scaled?: boolean
   }
 
-  let { overlay = false, interactive = true }: Props = $props()
+  let {
+    overlay = false,
+    interactive = true,
+    footer,
+    scaled = $bindable(false),
+  }: Props = $props()
 
-  // The hero is laid out once at a fixed design size (cropped tight around the
-  // composition) and scaled as one piece to fill the space, so browser
+  // The hero is laid out once at a fixed design size (what it measures in a
+  // 1632x877 viewport at 100% zoom) and scaled as one piece to fit, so browser
   // zoom keeps the composition instead of reflowing it. Below MIN_SCALE the
   // text gets too small, so it falls back to the regular flowing layout. The
   // mode only depends on width, which the flowing content can't feed back into.
-  const STAGE_WIDTH = 97.5
-  const STAGE_HEIGHT = 48.125
-  const MIN_SCALE = 0.55
+  const STAGE_WIDTH = 94.3
+  const STAGE_HEIGHT = 43.6
+  const MIN_SCALE = 0.5
 
   let scale = $state(1)
-  let scaled = $state(false)
 
   function fit(node: HTMLElement) {
     const observer = new ResizeObserver(([entry]) => {
@@ -75,16 +84,19 @@
       image="/video/meeting.mp4"
       title="Meeting with the new President"
       size={8}
-      x={62.3}
-      y={1.2}
+      x={54.2}
+      y={-1}
     />
     <WindowBox
       image="/video/papers.mp4"
       title="Gross code written by humans"
       size={9}
-      x={43.8}
-      y={46.8}
+      x={37.4}
+      y={39.6}
     />
+    {#if scaled}
+      {@render footer?.()}
+    {/if}
   </hero-stage>
 </home-hero>
 
@@ -96,6 +108,10 @@
 
     &:not([data-scaled]) :global(window-box) {
       display: none;
+    }
+
+    &[data-scaled] :global(window-box) {
+      display: flex;
     }
 
     /* The stage is taken out of flow so the hero's size comes only from the
@@ -113,10 +129,6 @@
         block-size: var(--stage-height);
         translate: -50% -50%;
         scale: var(--stage-scale);
-
-        > home-start {
-          align-self: flex-end;
-        }
       }
     }
 

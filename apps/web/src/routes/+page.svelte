@@ -6,10 +6,32 @@
   import type { PageProps } from './$types'
 
   const { data }: PageProps = $props()
+
+  let heroScaled = $state(false)
 </script>
 
+{#snippet footer()}
+  <footer>
+    <made-with>
+      made with
+      <a href="https://rctf.osec.io" target="_blank" rel="noopener noreferrer"
+        >rCTF</a
+      >
+    </made-with>
+    <a
+      class="discord"
+      href="https://discord.gg/ZnsrgrtqDG"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Join our Discord"
+    >
+      <IconDiscordLogo />
+    </a>
+  </footer>
+{/snippet}
+
 <home-page>
-  <HomeHero />
+  <HomeHero {footer} bind:scaled={heroScaled} />
 
   {#if data.clientConfig.sponsors.length > 0}
     <Card title="Sponsors">
@@ -53,23 +75,9 @@
     </Card>
   {/if}
 
-  <footer>
-    <made-with>
-      made with
-      <a href="https://rctf.osec.io" target="_blank" rel="noopener noreferrer"
-        >rCTF</a
-      >
-    </made-with>
-    <a
-      class="discord"
-      href="https://discord.gg/ZnsrgrtqDG"
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label="Join our Discord"
-    >
-      <IconDiscordLogo />
-    </a>
-  </footer>
+  {#if !heroScaled}
+    {@render footer()}
+  {/if}
 </home-page>
 
 <style>
@@ -169,6 +177,13 @@
       position: absolute;
       inset-block-end: var(--space-s);
       inset-inline-end: var(--space-m-l);
+    }
+
+    /* Inside the scaled hero stage: same corner, in stage coordinates. */
+    :global(hero-stage) > & {
+      position: absolute;
+      inset-block-end: 0.25rem;
+      inset-inline-end: 0;
     }
   }
 
