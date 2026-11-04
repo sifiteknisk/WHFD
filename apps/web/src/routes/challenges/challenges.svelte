@@ -331,8 +331,11 @@
       z-index: 2;
     }
 
-    /* Keep the spacing inside the fire so there is no gap above it. */
+    /* Keep the spacing inside the fire so there is no gap above it. The whole
+       window goes dark so its frame and title match the burning contents
+       instead of boxing a dark slab in light chrome. */
     &[data-side='detail']:has(:global(challenge-details[data-on-fire])) {
+      color-scheme: dark;
       padding-block-start: 0;
 
       :global(challenge-details[data-on-fire]) {
@@ -366,5 +369,10 @@
 
   :global([data-presentation='drawer']) {
     --dialog-drawer-max-size: 85dvh;
+  }
+
+  /* Same as the desktop pane: a burning challenge darkens the whole drawer. */
+  :global([data-presentation='drawer']:has(challenge-details[data-on-fire])) {
+    color-scheme: dark;
   }
 </style>

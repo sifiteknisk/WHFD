@@ -1,5 +1,6 @@
 <script lang="ts">
   import Markdown from '$lib/components/markdown.svelte'
+  import { IconArrowSquareOut } from '$lib/icons'
   import Card from '$lib/ui/card.svelte'
 
   const info = `
@@ -20,60 +21,234 @@ Questions or problems? Ask in our [Discord](https://discord.gg/ZnsrgrtqDG) or as
 7. Try to use as little AI as possible, the organizers will try to help you as much as possible! (use humans not AI)
 `
 
-  const tools = `
-TODO: add every tool that is needed.
-`
+  const tools = [
+    {
+      name: 'Ghidra',
+      href: 'https://ghidra-sre.org/',
+      description: 'Decompile binaries.',
+    },
+    {
+      name: 'DogBolt',
+      href: 'https://dogbolt.org/',
+      description: 'Online decompilers.',
+    },
+    {
+      name: 'pwntools',
+      href: 'https://docs.pwntools.com/',
+      description: 'Write Python exploits.',
+    },
+    {
+      name: 'CyberChef',
+      href: 'https://gchq.github.io/CyberChef/',
+      description: 'Decode and encode data.',
+    },
+    {
+      name: 'binwalk',
+      href: 'https://github.com/ReFirmLabs/binwalk',
+      description: 'Extract embedded files.',
+    },
+    {
+      name: 'xjwt',
+      href: 'https://xjwt.io/',
+      description: 'Decode and test JWTs.',
+    },
+    {
+      name: 'curl',
+      href: 'https://curl.se/',
+      description: 'Send terminal requests.',
+    },
+  ]
 </script>
 
 <info-page>
-  <info-stack>
+  <info-sidebar>
     <Card title="Info">
       <Markdown content={info} />
     </Card>
 
     <Card title="Tools">
-      <Markdown content={tools} />
+      <ul class="tools-list">
+        {#each tools as tool (tool.name)}
+          <li>
+            <a href={tool.href} target="_blank" rel="noopener noreferrer">
+              <span class="tool-details">
+                <strong>{tool.name}</strong>
+                <span class="tool-description">{tool.description}</span>
+              </span>
+              <IconArrowSquareOut aria-hidden="true" />
+            </a>
+          </li>
+        {/each}
+      </ul>
     </Card>
-  </info-stack>
+  </info-sidebar>
 
-  <Card title="Rules">
-    <Markdown content={rules} />
-  </Card>
+  <info-rules>
+    <Card title="Rules">
+      <Markdown content={rules} />
+    </Card>
+  </info-rules>
 </info-page>
 
 <style>
   info-page {
-    display: flex;
-    flex-direction: column;
-    gap: calc(var(--space-m) + var(--tui-shadow-offset));
+    display: grid;
+    align-content: start;
+    gap: calc(var(--space-s) + var(--tui-shadow-offset));
     inline-size: 100%;
     max-inline-size: calc(var(--measure) + 2rem);
     margin-inline: auto;
-    padding: var(--space-m) 1rem;
-
-    @media (width >= 48rem) {
-      max-inline-size: calc(var(--measure) + 4.5rem);
-      padding-inline: 2.25rem;
-    }
+    padding: var(--space-s) var(--space-xs);
 
     @media (width >= 64rem) {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       align-items: start;
-      max-inline-size: calc(var(--measure) * 2 + 4.5rem);
+      max-inline-size: 84rem;
     }
 
     :global(ui-card) {
+      min-inline-size: 0;
+      padding: var(--space-s);
       box-shadow: var(--tui-shadow-offset) var(--tui-shadow-offset) 0
         var(--tui-shadow);
     }
+
+    :global(card-header) {
+      display: contents;
+    }
+
+    :global(card-title) {
+      inset-inline-start: var(--space-s);
+      translate: 0 -55%;
+    }
+
+    :global(prose-content) {
+      font-size: var(--step--1);
+      line-height: 1.45;
+    }
   }
 
-  info-stack {
-    display: flex;
-    flex-direction: column;
-    gap: calc(var(--space-m) + var(--tui-shadow-offset));
+  info-sidebar {
+    display: grid;
+    gap: calc(var(--space-s) + var(--tui-shadow-offset));
     min-inline-size: 0;
+
+    > :global(ui-card:first-child) {
+      padding-block: calc(var(--space-s) + var(--space-3xs));
+
+      :global(prose-content) {
+        line-height: 1.55;
+      }
+    }
+  }
+
+  .tools-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3xs);
+
+    li:last-child {
+      grid-column: 1 / -1;
+
+      .tool-details {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: var(--space-2xs);
+      }
+    }
+
+    a {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: var(--space-2xs);
+      block-size: 100%;
+      padding: var(--space-3xs) var(--space-2xs);
+      color: var(--tui-link);
+      background: var(--tui-surface-light);
+      border: 1px solid var(--tui-border-mid);
+      text-decoration: none;
+
+      &:hover {
+        border-color: var(--tui-link);
+
+        strong {
+          text-decoration: underline;
+          text-underline-offset: 0.2em;
+        }
+      }
+
+      &:focus-visible {
+        outline: 2px dotted var(--tui-focus);
+        outline-offset: -2px;
+      }
+
+      :global(svg) {
+        flex-shrink: 0;
+        margin-block-start: 0.25em;
+      }
+    }
+  }
+
+  .tool-details {
+    display: grid;
+    flex: 1;
+    min-inline-size: 0;
+    font-size: var(--step--1);
+  }
+
+  .tool-description {
+    font-size: var(--step--1);
+    color: var(--tui-muted);
+  }
+
+  info-rules {
+    display: block;
+    min-inline-size: 0;
+
+    :global(ol) {
+      padding: 0;
+      list-style: none;
+      counter-reset: rules;
+    }
+
+    :global(li) {
+      position: relative;
+      margin: 0;
+      padding: var(--space-2xs) 0 var(--space-2xs) 3ch;
+      counter-increment: rules;
+    }
+
+    :global(li + li) {
+      border-block-start: 1px solid var(--tui-border-mid);
+    }
+
+    :global(li::before) {
+      position: absolute;
+      inset-inline-start: 0;
+      color: var(--tui-title);
+      font-weight: 700;
+      content: counter(rules, decimal-leading-zero);
+    }
+  }
+
+  @media (64rem <= width < 76rem) {
+    info-page :global(ui-card) {
+      padding: var(--space-xs);
+    }
+
+    info-sidebar :global(prose-content p:not(:last-child)) {
+      margin-block-end: 0.75em;
+    }
+
+    info-sidebar > :global(ui-card:first-child) {
+      padding-block: var(--space-s);
+    }
+
+    .tools-list a {
+      padding-block: 0.125rem;
+    }
   }
 
   :global(app-shell:has(countdown-hero)) info-page {
