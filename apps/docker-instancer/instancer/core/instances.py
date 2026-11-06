@@ -1,6 +1,7 @@
 import asyncio
 import uuid
 from contextlib import asynccontextmanager
+from datetime import datetime
 from functools import cache
 from http import HTTPStatus
 from typing import TYPE_CHECKING
@@ -10,7 +11,13 @@ from aiodocker import Docker, DockerError
 from aiodocker.containers import DockerContainer
 from fastapi import HTTPException
 
-from instancer.core.cache import delete_instance_expiration, instance_lock, set_instance_expiration
+from instancer.core.cache import (
+    delete_instance_expiration,
+    instance_lock,
+    is_instance_ready,
+    mark_instance_ready,
+    set_instance_expiration,
+)
 from instancer.core.config import config
 from instancer.core.instancer.const import ContainerLabels, get_common_labels
 from instancer.core.instancer.containers import (
@@ -20,6 +27,7 @@ from instancer.core.instancer.containers import (
     instance_exists,
 )
 from instancer.core.instancer.networks import cleanup_networks, create_networks, create_routing_network
+from instancer.core.instancer.probe import endpoints_reachable
 from instancer.core.instancer.traefik import build_exposed_hostnames, extract_exposes
 from instancer.core.instancer.volumes import cleanup_volumes, create_volumes
 from instancer.protocol import types as protocol
@@ -301,6 +309,30 @@ def _get_highest_status(statuses: list[protocol.InstanceStatus]) -> protocol.Ins
     return protocol.InstanceStatus.RUNNING
 
 
+async def _get_instance_status(
+    details: list[dict],
+    endpoints: list[protocol.RCTFInstanceDetails.Endpoint],
+    expires_at: int | None,
+) -> protocol.InstanceStatus:
+    status = _get_highest_status([_get_container_status(detail) for detail in details])
+    if status != protocol.InstanceStatus.RUNNING or not endpoints:
+        return status
+
+    # NOTE: Docker calls a container running as soon as its process starts, which
+    # is before the challenge listens or Traefik routes to it.
+    instance_id = details[0]['Config']['Labels'][ContainerLabels.INSTANCE_ID]
+    if await is_instance_ready(instance_id):
+        return status
+
+    running_since = max(datetime.fromisoformat(detail['State']['StartedAt']) for detail in details)
+    if not await endpoints_reachable(endpoints, running_since):
+        return protocol.InstanceStatus.STARTING
+
+    if expires_at:
+        await mark_instance_ready(instance_id, expires_at, timestamp_milliseconds())
+    return status
+
+
 async def get_instance(challenge_name: str, team_id: str) -> protocol.RCTFInstanceDetails:
     docker = get_docker()
     containers = await get_containers(docker, challenge_name, team_id)
@@ -310,19 +342,14 @@ async def get_instance(challenge_name: str, team_id: str) -> protocol.RCTFInstan
     indexed_endpoints: list[tuple[int, protocol.RCTFInstanceDetails.Endpoint]] = []
 
     details = await _show_containers(containers)
-    if details:
-        first_labels = details[0]['Config']['Labels']
-        expires_at = await get_effective_expiration(first_labels)
-
-        statuses: list[protocol.InstanceStatus] = []
-        for detail in details:
-            labels = detail['Config']['Labels']
-            statuses.append(_get_container_status(detail))
-            indexed_endpoints.extend(extract_exposes(labels))
-
-        status = _get_highest_status(statuses)
-
+    for detail in details:
+        indexed_endpoints.extend(extract_exposes(detail['Config']['Labels']))
     endpoints = [endpoint for _, endpoint in sorted(indexed_endpoints, key=lambda item: item[0])]
+
+    if details:
+        expires_at = await get_effective_expiration(details[0]['Config']['Labels'])
+        status = await _get_instance_status(details, endpoints, expires_at)
+
     return protocol.RCTFInstanceDetails(
         status=status,
         endpoints=endpoints if expires_at else None,
@@ -353,22 +380,18 @@ async def renew_instance(form: protocol.RCTFRenewInstanceForm) -> protocol.RCTFI
             raise HTTPException(status_code=500, detail='Instance ID not found in container labels')
 
         indexed_endpoints: list[tuple[int, protocol.RCTFInstanceDetails.Endpoint]] = []
-        statuses: list[protocol.InstanceStatus] = []
-
         for detail in details:
-            labels = detail['Config']['Labels']
-            statuses.append(_get_container_status(detail))
-            indexed_endpoints.extend(extract_exposes(labels))
+            indexed_endpoints.extend(extract_exposes(detail['Config']['Labels']))
+        endpoints = [endpoint for _, endpoint in sorted(indexed_endpoints, key=lambda item: item[0])]
 
         await set_instance_expiration(instance_id, new_expires_at, now)
 
-        status = _get_highest_status(statuses)
+        status = await _get_instance_status(details, endpoints, new_expires_at)
         logger.info(
             f'Renewed instance {form.challenge_integration_id=} {form.team_id=} '
             f'{instance_id=} new_expires_at={new_expires_at}'
         )
 
-        endpoints = [endpoint for _, endpoint in sorted(indexed_endpoints, key=lambda item: item[0])]
         return protocol.RCTFInstanceDetails(
             status=status,
             time_left_milliseconds=new_expires_at - timestamp_milliseconds(),

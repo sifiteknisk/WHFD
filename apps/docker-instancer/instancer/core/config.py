@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     TRAEFIK_TCP_ENTRYPOINT: str = 'tcp'
     TRAEFIK_TCP_PORT: int = 1337
     TRAEFIK_PERMANENT_REDIRECT_MIDDLEWARE_NAME: str = 'permanent-https-redirect@file'
+    # Where the instancer reaches Traefik to check that an instance answers before
+    # reporting it running. Defaults to the Traefik container on the shared network.
+    TRAEFIK_PROBE_HOST: str = ''
 
     DOCKER_MANAGER_NAME: str = 'tiny-instancer'
     PREFIX: str = 'ti'
@@ -52,6 +55,10 @@ class Settings(BaseSettings):
 
     GHCR_USERNAME: str = ''
     GHCR_TOKEN: SecretStr = SecretStr('')
+
+    @property
+    def traefik_probe_host(self) -> str:
+        return self.TRAEFIK_PROBE_HOST or self.TRAEFIK_CONTAINER_NAME
 
     @property
     def cache_connection_url(self) -> str:

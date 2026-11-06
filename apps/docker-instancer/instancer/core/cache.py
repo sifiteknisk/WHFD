@@ -55,3 +55,16 @@ async def set_instance_expiration(instance_id: str, expires_at_ms: int, now_ms: 
 
 async def delete_instance_expiration(instance_id: str) -> None:
     await redis.delete(_expiration_key(instance_id))
+
+
+def _ready_key(instance_id: str) -> str:
+    return f'{config.PREFIX}:ready:{instance_id}'
+
+
+async def is_instance_ready(instance_id: str) -> bool:
+    return bool(await redis.exists(_ready_key(instance_id)))
+
+
+async def mark_instance_ready(instance_id: str, expires_at_ms: int, now_ms: int) -> None:
+    ttl_seconds = max(1, ((expires_at_ms - now_ms) // 1000) + 120)
+    await redis.set(_ready_key(instance_id), '1', ex=ttl_seconds)
