@@ -331,8 +331,10 @@
 
 <style>
   table-region {
-    display: block;
-    block-size: 100%;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-block-size: 0;
     inline-size: 100%;
   }
 
