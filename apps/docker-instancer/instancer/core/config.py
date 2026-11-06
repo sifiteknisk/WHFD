@@ -45,12 +45,13 @@ class Settings(BaseSettings):
 
     DOCKER_STOP_TIMEOUT_SECONDS: int = 5
 
-    # Builds allowed at once per web worker; 0 disables the limit. A start that
-    # can't get a slot within the queue timeout fails fast with 400 instead of
-    # queueing until the reverse proxy gives up with a 504.
-    MAX_CONCURRENT_STARTS: int = Field(default=5, ge=0)
-    START_QUEUE_TIMEOUT_SECONDS: float = Field(default=10, gt=0, allow_inf_nan=False)
-    # Starts are refused while the host's MemAvailable is below this; 0 disables.
+    # Start queues a job in Redis and returns at once; a single builder process
+    # builds this many at a time, oldest first.
+    MAX_CONCURRENT_STARTS: int = Field(default=10, ge=1)
+    # Starts are refused with "server is full" past this many waiting jobs.
+    MAX_QUEUED_STARTS: int = Field(default=500, ge=1)
+    # Starts are refused, and the builder pauses, while the host's MemAvailable
+    # is below this; 0 disables.
     MIN_AVAILABLE_MEMORY_MB: int = Field(default=0, ge=0)
     # Parent cgroup for instance containers, e.g. a systemd slice with MemoryMax set,
     # so challenges can't take memory from dockerd, Traefik or the instancer.

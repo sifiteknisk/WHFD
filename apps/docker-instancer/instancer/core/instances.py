@@ -1,12 +1,10 @@
 import asyncio
 import uuid
 from collections import defaultdict
-from contextlib import asynccontextmanager
 from datetime import datetime
 from functools import cache
 from http import HTTPStatus
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import orjson
 from aiodocker import Docker, DockerError
@@ -14,10 +12,14 @@ from aiodocker.containers import DockerContainer
 from fastapi import HTTPException
 
 from instancer.core.cache import (
+    cancel_start,
     delete_instance_expiration,
     instance_lock,
     is_instance_ready,
+    is_start_queued,
     mark_instance_ready,
+    queue_start,
+    queued_start_count,
     set_instance_expiration,
 )
 from instancer.core.config import config
@@ -38,15 +40,7 @@ from instancer.util.logger import logger
 from instancer.util.time import timestamp_milliseconds
 
 
-if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
-
-
 NOT_ACQUIRED_ERROR = HTTPException(status_code=400, detail='Another instance operation is in progress.')
-START_BUSY_ERROR = HTTPException(
-    status_code=400,
-    detail='The instance server is busy starting other instances. Wait about 10 seconds and press Start again.',
-)
 
 START_FULL_ERROR = HTTPException(
     status_code=400,
@@ -55,32 +49,20 @@ START_FULL_ERROR = HTTPException(
     ),
 )
 
-_start_slots = asyncio.Semaphore(config.MAX_CONCURRENT_STARTS) if config.MAX_CONCURRENT_STARTS > 0 else None
 _image_locks: defaultdict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
-
-
-@asynccontextmanager
-async def _start_slot() -> AsyncGenerator[None]:
-    if _start_slots is None:
-        yield
-        return
-
-    try:
-        async with asyncio.timeout(config.START_QUEUE_TIMEOUT_SECONDS):
-            await _start_slots.acquire()
-    except TimeoutError:
-        logger.warning('Instance start rejected: no free start slot')
-        raise START_BUSY_ERROR from None
-
-    try:
-        yield
-    finally:
-        _start_slots.release()
 
 
 def _memory_available_mb() -> int:
     lines = Path('/proc/meminfo').read_text().splitlines()
     return next(int(line.split()[1]) // 1024 for line in lines if line.startswith('MemAvailable:'))
+
+
+def memory_low() -> bool:
+    return bool(config.MIN_AVAILABLE_MEMORY_MB) and _memory_available_mb() < config.MIN_AVAILABLE_MEMORY_MB
+
+
+def _details(status: protocol.InstanceStatus) -> protocol.RCTFInstanceDetails:
+    return protocol.RCTFInstanceDetails(status=status, time_left_milliseconds=None, endpoints=None)
 
 
 @cache
@@ -138,95 +120,88 @@ async def _show_containers(containers: list[DockerContainer]) -> list[dict]:
 
 
 async def start_instance(form: protocol.RCTFCreateInstanceForm) -> protocol.RCTFInstanceDetails:
-    async with _start_slot(), instance_lock(form.challenge_integration_id, form.team_id) as acquired:
-        if not acquired:
-            raise NOT_ACQUIRED_ERROR
+    if await is_start_queued(form.challenge_integration_id, form.team_id):
+        return _details(protocol.InstanceStatus.STARTING)
 
-        if config.MIN_AVAILABLE_MEMORY_MB and _memory_available_mb() < config.MIN_AVAILABLE_MEMORY_MB:
-            logger.warning('Instance start rejected: host memory low')
-            raise START_FULL_ERROR
+    if memory_low():
+        logger.warning('Instance start rejected: host memory low')
+        raise START_FULL_ERROR
+    if await queued_start_count() >= config.MAX_QUEUED_STARTS:
+        logger.warning('Instance start rejected: start queue full')
+        raise START_FULL_ERROR
 
-        docker = get_docker()
-        if await instance_exists(docker, form.challenge_integration_id, form.team_id):
-            raise HTTPException(status_code=400, detail='Instance already exists, stop it first')
+    await queue_start(form.challenge_integration_id, form.team_id, form.model_dump_json(), timestamp_milliseconds())
+    return _details(protocol.InstanceStatus.STARTING)
 
-        started_at = timestamp_milliseconds()
-        expires_at = started_at + form.timeout_milliseconds
-        instance_id = uuid.uuid4().hex[:12]
 
-        common_labels = get_common_labels(
-            instance_id=instance_id,
-            expires_at=expires_at,
-            challenge_id=form.challenge_integration_id,
-            team_id=form.team_id,
-            started_at=started_at,
-        )
+async def build_instance(form: protocol.RCTFCreateInstanceForm) -> None:
+    """Builds a queued start. Runs in the builder process with the instance lock held."""
+    docker = get_docker()
+    if await instance_exists(docker, form.challenge_integration_id, form.team_id):
+        logger.info(f'Instance already exists: {form.challenge_integration_id=} {form.team_id=}')
+        return
 
-        exposes: dict[str, list[protocol.InstancerExpose]] = {}
-        expose_indices: dict[str, list[int]] = {}
-        for index, expose in enumerate(form.expose):
-            exposes.setdefault(expose.container_name, []).append(expose)
-            expose_indices.setdefault(expose.container_name, []).append(index)
+    started_at = timestamp_milliseconds()
+    expires_at = started_at + form.timeout_milliseconds
+    instance_id = uuid.uuid4().hex[:12]
 
-        env_context = {
-            'RCTF_FLAG': form.flags[0].flag if form.flags else '',
-            'RCTF_FLAGS': orjson.dumps([flag.model_dump() for flag in form.flags]).decode(),
-            'RCTF_EXPOSED_HOSTNAMES': orjson.dumps(build_exposed_hostnames(form.expose, instance_id)).decode(),
-        }
+    common_labels = get_common_labels(
+        instance_id=instance_id,
+        expires_at=expires_at,
+        challenge_id=form.challenge_integration_id,
+        team_id=form.team_id,
+        started_at=started_at,
+    )
 
-        created_containers: list[DockerContainer] = []
-        networks_created: dict[str, str] = {}
-        routing_networks_created: list[str] = []
-        volumes_created: dict[str, str] = {}
-        indexed_endpoints: list[tuple[int, protocol.RCTFInstanceDetails.Endpoint]] = []
+    exposes: dict[str, list[protocol.InstancerExpose]] = {}
+    expose_indices: dict[str, list[int]] = {}
+    for index, expose in enumerate(form.expose):
+        exposes.setdefault(expose.container_name, []).append(expose)
+        expose_indices.setdefault(expose.container_name, []).append(index)
 
-        try:
-            networks_created = await create_networks(docker, form.config.networks, common_labels)
-            volumes_created = await create_volumes(docker, form.config.volumes, common_labels)
-            for i, (svc_name, container) in enumerate(form.config.services.items()):
-                await _ensure_image(docker, container.image)
+    env_context = {
+        'RCTF_FLAG': form.flags[0].flag if form.flags else '',
+        'RCTF_FLAGS': orjson.dumps([flag.model_dump() for flag in form.flags]).decode(),
+        'RCTF_EXPOSED_HOSTNAMES': orjson.dumps(build_exposed_hostnames(form.expose, instance_id)).decode(),
+    }
 
-                routing_network: str | None = None
-                if exposes.get(svc_name):
-                    routing_network = await create_routing_network(docker, instance_id, i, common_labels)
-                    routing_networks_created.append(routing_network)
+    created_containers: list[DockerContainer] = []
+    networks_created: dict[str, str] = {}
+    routing_networks_created: list[str] = []
+    volumes_created: dict[str, str] = {}
 
-                created, endpoints = await create_container(
-                    docker=docker,
-                    challenge_integration_id=form.challenge_integration_id,
-                    exposes=exposes,
-                    networks_created=networks_created,
-                    volumes_created=volumes_created,
-                    common_labels=common_labels,
-                    svc_name=svc_name,
-                    container=container,
-                    routing_network=routing_network,
-                    global_indices=expose_indices.get(svc_name, []),
-                    env_context=env_context,
-                )
-                created_containers.append(created)
-                indexed_endpoints.extend(zip(expose_indices.get(svc_name, []), endpoints, strict=True))
+    try:
+        networks_created = await create_networks(docker, form.config.networks, common_labels)
+        volumes_created = await create_volumes(docker, form.config.volumes, common_labels)
+        for i, (svc_name, container) in enumerate(form.config.services.items()):
+            await _ensure_image(docker, container.image)
 
-            await asyncio.gather(*[container.start() for container in created_containers])
-        except Exception as err:
-            await cleanup_containers(created_containers)
-            await cleanup_networks(docker, list(networks_created.values()) + routing_networks_created)
-            await cleanup_volumes(docker, list(volumes_created.values()))
+            routing_network: str | None = None
+            if exposes.get(svc_name):
+                routing_network = await create_routing_network(docker, instance_id, i, common_labels)
+                routing_networks_created.append(routing_network)
 
-            if isinstance(err, HTTPException):
-                raise
-
-            logger.opt(exception=err).error(
-                f'Failed to start instance: {form.challenge_integration_id=} {form.team_id=}'
+            created, _ = await create_container(
+                docker=docker,
+                challenge_integration_id=form.challenge_integration_id,
+                exposes=exposes,
+                networks_created=networks_created,
+                volumes_created=volumes_created,
+                common_labels=common_labels,
+                svc_name=svc_name,
+                container=container,
+                routing_network=routing_network,
+                global_indices=expose_indices.get(svc_name, []),
+                env_context=env_context,
             )
-            raise HTTPException(status_code=500, detail='Failed to start instance') from err
+            created_containers.append(created)
 
-        all_endpoints = [endpoint for _, endpoint in sorted(indexed_endpoints, key=lambda item: item[0])]
-        return protocol.RCTFInstanceDetails(
-            status=protocol.InstanceStatus.STARTING,
-            time_left_milliseconds=expires_at - timestamp_milliseconds(),
-            endpoints=all_endpoints,
-        )
+        await asyncio.gather(*[container.start() for container in created_containers])
+    except BaseException:
+        await cleanup_containers(created_containers)
+        await cleanup_networks(docker, list(networks_created.values()) + routing_networks_created)
+        await cleanup_volumes(docker, list(volumes_created.values()))
+        raise
 
 
 async def _collect_instance_resources(
@@ -265,6 +240,11 @@ async def _stop_and_delete_containers(containers: list[DockerContainer], challen
 
 
 async def stop_instance(challenge_name: str, team_id: str) -> protocol.RCTFInstanceDetails:
+    # NOTE: The job is dropped before taking the lock, so a build already holding
+    # it finishes first and its containers are removed below.
+    if await cancel_start(challenge_name, team_id):
+        return _details(protocol.InstanceStatus.STOPPED)
+
     async with instance_lock(challenge_name, team_id) as acquired:
         if not acquired:
             raise NOT_ACQUIRED_ERROR
@@ -292,11 +272,7 @@ async def stop_instance(challenge_name: str, team_id: str) -> protocol.RCTFInsta
         if instance_id:
             await delete_instance_expiration(instance_id)
 
-        return protocol.RCTFInstanceDetails(
-            status=protocol.InstanceStatus.STOPPED,
-            endpoints=None,
-            time_left_milliseconds=None,
-        )
+        return _details(protocol.InstanceStatus.STOPPED)
 
 
 def _get_container_status(detail: dict) -> protocol.InstanceStatus:
@@ -368,6 +344,8 @@ async def get_instance(challenge_name: str, team_id: str) -> protocol.RCTFInstan
     if details:
         expires_at = await get_effective_expiration(details[0]['Config']['Labels'])
         status = await _get_instance_status(details, endpoints, expires_at)
+    elif await is_start_queued(challenge_name, team_id):
+        return _details(protocol.InstanceStatus.STARTING)
 
     return protocol.RCTFInstanceDetails(
         status=status,

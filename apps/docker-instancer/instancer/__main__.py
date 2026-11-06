@@ -3,6 +3,7 @@ from multiprocessing import Process
 
 from uvicorn import run as uvicorn_run
 
+from instancer.core.builder import builder_process
 from instancer.core.config import config
 from instancer.core.prunner import pruner_process
 from instancer.util.logger import logger
@@ -10,6 +11,7 @@ from instancer.util.logger import logger
 
 def main() -> None:
     Process(target=pruner_process, daemon=True).start()
+    Process(target=builder_process, daemon=True).start()
 
     logger.info(f'Starting instancer at {config.BIND_HOST}:{config.BIND_PORT}')
     uvicorn_run(

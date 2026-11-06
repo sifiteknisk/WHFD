@@ -23,6 +23,7 @@ dev = [
     "ty>=0.0.1a7",
     "pytest>=8.4.2",
     "ruff>=0.14.7",
+    "fakeredis>=2.40.0",
 ]
 
 [tool.uv.sources]
