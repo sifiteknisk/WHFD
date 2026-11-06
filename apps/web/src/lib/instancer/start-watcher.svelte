@@ -1,11 +1,13 @@
 <script lang="ts">
   import { useQueryClient } from '@tanstack/svelte-query'
-  import { goto } from '$app/navigation'
-  import { page } from '$app/state'
   import { challengeInstanceQueryOptions } from '$lib/query/challenges'
   import { useCurrentUser } from '$lib/query/user'
-  import { toast } from '$lib/toast'
   import { onMount, untrack } from 'svelte'
+  import {
+    reportStartFailure,
+    reportStartReady,
+    startNotices,
+  } from './start-feedback.svelte'
   import {
     clearPendingStarts,
     markStarting,
@@ -34,20 +36,13 @@
     const userId = userQuery.data?.id
     if (!userId) {
       clearPendingStarts()
+      startNotices.clear()
       return
     }
     for (const entry of pendingStarts.values()) {
       if (entry.userId !== userId) untrackStart(entry.challengeId)
     }
   })
-
-  function isViewing(challengeId: string): boolean {
-    return (
-      document.visibilityState === 'visible' &&
-      page.url.pathname.startsWith('/challenges') &&
-      page.url.searchParams.get('challenge') === challengeId
-    )
-  }
 
   async function check(entry: PendingStart): Promise<void> {
     let status
@@ -73,40 +68,38 @@
     if (pendingStarts.get(entry.challengeId) !== entry) return
     if (entry.userId !== userQuery.data?.id) return
 
-    const name = entry.challengeName
+    const { challengeId, challengeName } = entry
     switch (resolvePendingStart(entry, status, Date.now())) {
       case 'ready':
-        untrackStart(entry.challengeId)
-        if (!isViewing(entry.challengeId)) {
-          toast.success('Instance ready', {
-            description: name,
-            duration: 10_000,
-            action: {
-              label: 'Open',
-              onClick: () => {
-                void goto(
-                  `/challenges?challenge=${encodeURIComponent(entry.challengeId)}`
-                )
-              },
-            },
-          })
-        }
+        untrackStart(challengeId)
+        reportStartReady(challengeId, challengeName)
         break
       case 'errored':
-        untrackStart(entry.challengeId)
-        toast.error('Instance failed to start', { description: name })
+        untrackStart(challengeId)
+        reportStartFailure(
+          challengeId,
+          challengeName,
+          'It crashed while starting.'
+        )
         break
       case 'failed':
-        untrackStart(entry.challengeId)
-        toast.error('Instance failed to start', {
-          description: `${name}: press Start to try again.`,
-        })
+        untrackStart(challengeId)
+        reportStartFailure(
+          challengeId,
+          challengeName,
+          'It stopped before it was ready. Press Start to try again.'
+        )
         break
       case 'timed-out':
-        untrackStart(entry.challengeId)
-        toast.error('Instance still not ready', {
-          description: `${name}: check its status before pressing Start again.`,
-        })
+        // NOTE: Pressing Start again is safe: if the first start is still
+        // running, the instancer says so and the page keeps waiting.
+        untrackStart(challengeId)
+        reportStartFailure(
+          challengeId,
+          challengeName,
+          "It's taking much longer than usual. Press Start to check on it.",
+          'Instance still not ready'
+        )
         break
       case 'starting':
         markStarting(entry.challengeId)

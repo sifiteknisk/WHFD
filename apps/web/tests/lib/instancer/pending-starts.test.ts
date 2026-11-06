@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, mock, test } from 'bun:test'
 
 mock.module('$app/environment', () => ({ browser: true }))
 
+const { PENDING_START_TIMEOUT_MS } =
+  await import('$lib/instancer/pending-start-rules')
+
 const {
   clearPendingStarts,
   markStarting,
@@ -81,7 +84,11 @@ describe('pending instance starts', () => {
     }
     saved = JSON.stringify([
       entry,
-      { ...entry, challengeId: 'expired', startedAt: Date.now() - 200_000 },
+      {
+        ...entry,
+        challengeId: 'expired',
+        startedAt: Date.now() - PENDING_START_TIMEOUT_MS,
+      },
       { ...entry, challengeId: 'future', startedAt: Date.now() + 200_000 },
       { ...entry, challengeId: 'wrong-type', userId: 12 },
     ])

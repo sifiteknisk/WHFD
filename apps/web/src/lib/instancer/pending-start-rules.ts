@@ -1,7 +1,11 @@
 import { InstanceStatus } from '@rctf/types'
 
-/** How long a start is watched before the team is told to try again. */
-export const PENDING_START_TIMEOUT_MS = 150_000
+/**
+ * How long a start is watched before the team is told to try again. Cloudflare
+ * drops the Start request after about 100 s, but the instancer keeps going, and
+ * pulling a challenge image for the first time can take minutes.
+ */
+export const PENDING_START_TIMEOUT_MS = 300_000
 
 export type PendingStartOutcome =
   | 'ready'

@@ -34,6 +34,11 @@
     untrackStart,
     type PendingStart,
   } from '$lib/instancer/pending-starts.svelte'
+  import {
+    reportStartFailure,
+    reportStartReady,
+    startNotices,
+  } from '$lib/instancer/start-feedback.svelte'
   import { useChallengeInstance } from '$lib/query/challenges'
   import { useClientConfig } from '$lib/query/config'
   import { queryKeys } from '$lib/query/keys'
@@ -91,6 +96,9 @@
   const runningAction = $derived(runningInstanceAction(actionScope))
   const actionKey = $derived(runningAction?.key ?? null)
   const startIsSlow = $derived(actionKey === 'start' && runningAction?.slow)
+  const startNotice = $derived(
+    admin ? undefined : startNotices.get(challengeId)
+  )
 
   const status = $derived(instanceQuery.data?.status ?? InstanceStatus.STOPPED)
   const endpoints = $derived(instanceQuery.data?.endpoints ?? [])
@@ -180,6 +188,7 @@
       actionScope,
       'start',
       async () => {
+        startNotices.delete(id)
         if (!isAdmin && owner) {
           tracked = trackStart({
             challengeId: id,
@@ -198,12 +207,14 @@
         if (res.kind === GoodInstanceStatus.kind) {
           queryClient.setQueryData(key, res.data)
           void queryClient.invalidateQueries({ queryKey: key })
-          if (!isAdmin && res.data.status === InstanceStatus.STARTING) {
-            // The panel shows it starting; the watcher toasts once it is ready.
+          if (isAdmin) {
+            toast.success('Instance started')
+          } else if (res.data.status === InstanceStatus.STARTING) {
+            // The panel shows it starting; the watcher reports when it is ready.
             markStarting(id)
           } else {
-            if (!isAdmin) untrackStart(id)
-            toast.success('Instance started', { description: name })
+            untrackStart(id)
+            reportStartReady(id, name)
           }
         } else if (
           !isAdmin &&
@@ -211,6 +222,9 @@
           isAlreadyStartingError(res.data.message)
         ) {
           void queryClient.invalidateQueries({ queryKey: key })
+        } else if (!isAdmin && res.kind === BadInstancerError.kind) {
+          untrackStart(id)
+          reportStartFailure(id, name, res.data.message)
         } else {
           if (!isAdmin) untrackStart(id)
           if (res.kind === BadInstancerError.kind) {
@@ -252,6 +266,7 @@
         if (userQuery.data?.id !== owner) return
         if (res.kind === GoodInstanceStatus.kind) {
           if (!isAdmin) untrackStart(id)
+          startNotices.delete(id)
           queryClient.setQueryData(key, res.data)
           void queryClient.invalidateQueries({ queryKey: key })
           toast.success('Instance stopped')
@@ -365,13 +380,16 @@
     </instancer-empty>
   {:else if view === 'stopped'}
     <instancer-empty>
-      <instancer-message>
-        {#if startIsSlow}
-          Lots of teams are starting instances, so this can take a minute.
-        {:else}
-          No instance running.
-        {/if}
-      </instancer-message>
+      {#if startIsSlow}
+        <instancer-message>
+          Lots of teams are starting instances right now, so this can take a
+          while.
+        </instancer-message>
+      {:else if startNotice}
+        <instancer-message data-tone="error">{startNotice}</instancer-message>
+      {:else}
+        <instancer-message>No instance running.</instancer-message>
+      {/if}
       <Button onclick={start} disabled={runningAction !== undefined}>
         {#if actionKey === 'start'}<Spinner />{/if}
         Start instance
