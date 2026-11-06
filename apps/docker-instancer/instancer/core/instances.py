@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from functools import cache
 from http import HTTPStatus
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import orjson
@@ -47,6 +48,13 @@ START_BUSY_ERROR = HTTPException(
     detail='The instance server is busy starting other instances. Wait about 10 seconds and press Start again.',
 )
 
+START_FULL_ERROR = HTTPException(
+    status_code=400,
+    detail=(
+        'The instance server is full. Stop instances you no longer need, or wait a few minutes and press Start again.'
+    ),
+)
+
 _start_slots = asyncio.Semaphore(config.MAX_CONCURRENT_STARTS) if config.MAX_CONCURRENT_STARTS > 0 else None
 _image_locks: defaultdict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
 
@@ -68,6 +76,11 @@ async def _start_slot() -> AsyncGenerator[None]:
         yield
     finally:
         _start_slots.release()
+
+
+def _memory_available_mb() -> int:
+    lines = Path('/proc/meminfo').read_text().splitlines()
+    return next(int(line.split()[1]) // 1024 for line in lines if line.startswith('MemAvailable:'))
 
 
 @cache
@@ -128,6 +141,10 @@ async def start_instance(form: protocol.RCTFCreateInstanceForm) -> protocol.RCTF
     async with _start_slot(), instance_lock(form.challenge_integration_id, form.team_id) as acquired:
         if not acquired:
             raise NOT_ACQUIRED_ERROR
+
+        if config.MIN_AVAILABLE_MEMORY_MB and _memory_available_mb() < config.MIN_AVAILABLE_MEMORY_MB:
+            logger.warning('Instance start rejected: host memory low')
+            raise START_FULL_ERROR
 
         docker = get_docker()
         if await instance_exists(docker, form.challenge_integration_id, form.team_id):

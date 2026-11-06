@@ -153,6 +153,22 @@ def test_same_image_is_pulled_once(instances: ModuleType) -> None:
     asyncio.run(scenario())
 
 
+def test_start_rejected_when_host_memory_low(instances: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(instances.config, 'MIN_AVAILABLE_MEMORY_MB', 6144)
+    monkeypatch.setattr(instances, '_memory_available_mb', lambda: 6000)
+    with pytest.raises(HTTPException) as err:
+        asyncio.run(instances.start_instance(form(instances)))
+    assert err.value.status_code == HTTPStatus.BAD_REQUEST
+    assert 'full' in err.value.detail
+
+    monkeypatch.setattr(instances, '_memory_available_mb', lambda: 7000)
+    asyncio.run(instances.start_instance(form(instances)))
+
+
+def test_memory_available_reads_proc_meminfo(instances: ModuleType) -> None:
+    assert instances._memory_available_mb() > 0
+
+
 def test_limit_can_be_disabled(instances: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(instances, '_start_slots', None)
     asyncio.run(instances.start_instance(form(instances)))

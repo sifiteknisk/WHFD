@@ -50,6 +50,11 @@ class Settings(BaseSettings):
     # queueing until the reverse proxy gives up with a 504.
     MAX_CONCURRENT_STARTS: int = Field(default=5, ge=0)
     START_QUEUE_TIMEOUT_SECONDS: float = Field(default=10, gt=0, allow_inf_nan=False)
+    # Starts are refused while the host's MemAvailable is below this; 0 disables.
+    MIN_AVAILABLE_MEMORY_MB: int = Field(default=0, ge=0)
+    # Parent cgroup for instance containers, e.g. a systemd slice with MemoryMax set,
+    # so challenges can't take memory from dockerd, Traefik or the instancer.
+    INSTANCE_CGROUP_PARENT: str = ''
 
     PRUNNER_INTERVAL_SECONDS: int = 3
 
