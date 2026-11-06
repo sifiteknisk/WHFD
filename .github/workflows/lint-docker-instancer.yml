@@ -5,10 +5,10 @@ on:
   push:
     branches: [main]
     paths:
-      - "apps/docker-instancer/**"
+      - 'apps/docker-instancer/**'
   pull_request:
     paths:
-      - "apps/docker-instancer/**"
+      - 'apps/docker-instancer/**'
 
 permissions:
   contents: read
@@ -48,3 +48,6 @@ jobs:
 
       - name: Type check
         run: uv run ty check instancer/
+
+      - name: Test
+        run: uv run pytest -q

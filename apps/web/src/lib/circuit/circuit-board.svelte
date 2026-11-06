@@ -26,7 +26,7 @@
     const ctx = canvas.getContext('2d')
     if (!ctx || width === 0 || height === 0) return
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    return { ctx, width, height }
+    return { ctx, width, height, dpr }
   }
 
   function tintedBoard(image: HTMLImageElement, tint: string) {
@@ -49,7 +49,8 @@
     sprites: Partial<Record<PartKind, HTMLImageElement>>,
     tint: string,
     width: number,
-    height: number
+    height: number,
+    dpr: number
   ) {
     ctx.imageSmoothingEnabled = false
     ctx.fillStyle = tint
@@ -69,7 +70,13 @@
       const drawWidth = spec.frameW * part.scale
       const drawHeight = spec.frameH * part.scale
       ctx.save()
-      ctx.translate(part.x, part.y)
+      // Snap to the device-pixel grid: with smoothing off, a sub-pixel offset
+      // shifts which source pixels nearest-neighbour sampling picks, so at
+      // non-integer zoom (e.g. 80%) sprite detail pops in and out every frame.
+      ctx.translate(
+        Math.round(part.x * dpr) / dpr,
+        Math.round(part.y * dpr) / dpr
+      )
       ctx.rotate((part.quarter * Math.PI) / 2)
       ctx.shadowColor = 'rgb(8 24 48 / 0.35)'
       ctx.shadowBlur = 8
@@ -123,7 +130,8 @@
         sprites,
         BOARD_TINT,
         fitted.width,
-        fitted.height
+        fitted.height,
+        fitted.dpr
       )
     }
 

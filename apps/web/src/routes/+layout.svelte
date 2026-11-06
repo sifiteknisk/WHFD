@@ -22,6 +22,7 @@
   import Navigation from '$lib/components/navigation.svelte'
   import PageWipe from '$lib/components/page-wipe.svelte'
   import RootEdgeFades from '$lib/components/root-edge-fades.svelte'
+  import InstanceStartWatcher from '$lib/instancer/start-watcher.svelte'
   import { resetSessionQueries } from '$lib/query/core'
   import ToastHost from '$lib/ui/toast-host.svelte'
   import { initAnalytics } from '$lib/utils/analytics'
@@ -145,6 +146,7 @@
     <key-hints aria-hidden="true">{keyHints}</key-hints>
   </app-shell>
   <BongReceiver />
+  <InstanceStartWatcher />
 </QueryClientProvider>
 
 <ToastHost />

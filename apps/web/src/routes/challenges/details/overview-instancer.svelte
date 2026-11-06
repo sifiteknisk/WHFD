@@ -21,6 +21,15 @@
   import { apiRequest, showApiError } from '$lib/api'
   import CaptchaNotice from '$lib/components/captcha-notice.svelte'
   import { IconArrowSquareOut, IconCopy, IconSignIn } from '$lib/icons'
+  import { isAlreadyStartingError } from '$lib/instancer/pending-start-rules'
+  import {
+    isStartPending,
+    markStarting,
+    pendingStarts,
+    trackStart,
+    untrackStart,
+    type PendingStart,
+  } from '$lib/instancer/pending-starts.svelte'
   import { useChallengeInstance } from '$lib/query/challenges'
   import { useClientConfig } from '$lib/query/config'
   import { queryKeys } from '$lib/query/keys'
@@ -30,12 +39,15 @@
   import Progress from '$lib/ui/progress.svelte'
   import Spinner from '$lib/ui/spinner.svelte'
   import { createAsyncAction } from '$lib/utils/async-action.svelte'
+  import { CaptchaError } from '$lib/utils/captcha'
   import { copyText } from '$lib/utils/clipboard'
   import { formatEndpoint } from '$lib/utils/instancer'
   import { formatCountdown } from '$lib/utils/time'
 
   interface Props {
     challengeId: string
+    /** Used in the "instance is ready" toast shown after leaving the page. */
+    challengeName?: string
     instancerLifetime: number
     instancerExtendable: boolean
     instancerStoppable: boolean
@@ -47,6 +59,7 @@
 
   let {
     challengeId,
+    challengeName = 'this challenge',
     instancerLifetime,
     instancerExtendable,
     instancerStoppable,
@@ -61,6 +74,7 @@
 
   const userQuery = useCurrentUser()
   const isAuthenticated = $derived(userQuery.data != null)
+  const userId = $derived(userQuery.data?.id)
 
   const queryClient = useQueryClient()
   const instanceEnabled = $derived(isAuthenticated && !isArchived)
@@ -78,6 +92,10 @@
     )
   )
 
+  // A start that timed out or was queued: the instancer may still be building
+  // it, so show that instead of offering Start again.
+  const startPending = $derived(!admin && isStartPending(challengeId))
+
   const transitioning = $derived(
     status === InstanceStatus.STARTING || status === InstanceStatus.STOPPING
   )
@@ -88,14 +106,23 @@
     | 'loading'
     | 'error'
     | 'stopped'
+    | 'queued'
     | 'running'
 
   const view = $derived.by((): PanelView => {
     if (isArchived) return 'archived'
     if (!isAuthenticated) return 'login'
+    if (
+      startPending &&
+      (status === InstanceStatus.STOPPED || instanceQuery.isError)
+    ) {
+      return 'queued'
+    }
     if (instanceQuery.isLoading) return 'loading'
     if (instanceQuery.isError) return 'error'
-    if (status === InstanceStatus.STOPPED) return 'stopped'
+    if (status === InstanceStatus.STOPPED) {
+      return 'stopped'
+    }
     return 'running'
   })
 
@@ -126,34 +153,109 @@
     return () => clearInterval(tick)
   })
 
+  const BUSY_START_MESSAGE =
+    "Your instance may still be starting in the background. Please don't press Start again while we check. You can keep browsing; we'll let you know when it's ready."
+
   async function start() {
+    // The user can switch challenges or navigate away while Start is pending.
+    const id = challengeId
+    const name = challengeName
+    const key = instanceKey
+    const isAdmin = admin
+    const owner = userId
+    let tracked: PendingStart | undefined
+    const stillTracked = () =>
+      tracked !== undefined &&
+      pendingStarts.get(id)?.startedAt === tracked.startedAt &&
+      userQuery.data?.id === owner
+
     await instanceAction.run(
       async () => {
-        const res = admin
-          ? await apiRequest(CreateAdminInstanceRouteV2, { id: challengeId })
-          : await apiRequest(CreateInstanceRouteV2, { id: challengeId })
+        if (!isAdmin && owner) {
+          tracked = trackStart({
+            challengeId: id,
+            challengeName: name,
+            userId: owner,
+          })
+        }
+        const res = isAdmin
+          ? await apiRequest(CreateAdminInstanceRouteV2, { id })
+          : await apiRequest(CreateInstanceRouteV2, { id })
+        if (userQuery.data?.id !== owner) return
+        if (!isAdmin && !stillTracked()) {
+          void queryClient.invalidateQueries({ queryKey: key })
+          return
+        }
         if (res.kind === GoodInstanceStatus.kind) {
-          queryClient.setQueryData(instanceKey, res.data)
-          void queryClient.invalidateQueries({ queryKey: instanceKey })
-          toast.success('Instance started')
+          queryClient.setQueryData(key, res.data)
+          void queryClient.invalidateQueries({ queryKey: key })
+          if (!isAdmin && res.data.status === InstanceStatus.STARTING) {
+            markStarting(id)
+            toast.info(`Your instance for ${name} is starting`)
+          } else {
+            if (!isAdmin) untrackStart(id)
+            toast.success(
+              isAdmin
+                ? 'Instance started'
+                : `Your instance for ${name} is ready`
+            )
+          }
+        } else if (
+          !isAdmin &&
+          res.kind === BadInstancerError.kind &&
+          isAlreadyStartingError(res.data.message)
+        ) {
+          void queryClient.invalidateQueries({ queryKey: key })
+          toast.info(`Your instance for ${name} is already starting`)
         } else {
-          showApiError(res)
+          if (!isAdmin) untrackStart(id)
+          if (res.kind === BadInstancerError.kind) {
+            toast.error(res.data.message)
+          } else {
+            showApiError(res)
+          }
         }
       },
-      { key: 'start', errorMessage: 'Failed to start instance' }
+      {
+        key: 'start',
+        onError: error => {
+          if (error instanceof CaptchaError) {
+            // The request never went out, and the captcha already toasted.
+            if (stillTracked()) untrackStart(id)
+          } else if (isAdmin) {
+            toast.error(
+              error instanceof Error
+                ? error.message
+                : 'Failed to start instance'
+            )
+          } else if (stillTracked()) {
+            // A 504 or dropped connection can leave the build running.
+            void queryClient.invalidateQueries({ queryKey: key })
+            toast.info(BUSY_START_MESSAGE, { duration: 15_000 })
+          }
+        },
+      }
     )
   }
 
   async function stop() {
+    const id = challengeId
+    const key = instanceKey
+    const isAdmin = admin
+    const owner = userId
     await instanceAction.run(
       async () => {
-        const res = admin
-          ? await apiRequest(DeleteAdminInstanceRouteV2, { id: challengeId })
-          : await apiRequest(DeleteInstanceRouteV2, { id: challengeId })
+        const res = isAdmin
+          ? await apiRequest(DeleteAdminInstanceRouteV2, { id })
+          : await apiRequest(DeleteInstanceRouteV2, { id })
+        if (userQuery.data?.id !== owner) return
         if (res.kind === GoodInstanceStatus.kind) {
-          queryClient.setQueryData(instanceKey, res.data)
-          void queryClient.invalidateQueries({ queryKey: instanceKey })
+          if (!isAdmin) untrackStart(id)
+          queryClient.setQueryData(key, res.data)
+          void queryClient.invalidateQueries({ queryKey: key })
           toast.success('Instance stopped')
+        } else if (res.kind === BadInstancerError.kind) {
+          toast.error(res.data.message)
         } else {
           showApiError(res)
         }
@@ -172,6 +274,8 @@
           queryClient.setQueryData(instanceKey, res.data)
           void queryClient.invalidateQueries({ queryKey: instanceKey })
           toast.success('Instance extended')
+        } else if (res.kind === BadInstancerError.kind) {
+          toast.error(res.data.message)
         } else {
           showApiError(res)
         }
@@ -266,6 +370,13 @@
         action={ProtectedAction.InstancerStart}
       />
     </instancer-empty>
+  {:else if view === 'queued'}
+    <instancer-empty>
+      <instancer-status><Spinner /><span>Starting…</span></instancer-status>
+      <instancer-message>
+        {BUSY_START_MESSAGE}
+      </instancer-message>
+    </instancer-empty>
   {:else}
     <instancer-running>
       {#if status === InstanceStatus.STARTING}
@@ -307,7 +418,7 @@
                       'Copied to clipboard',
                       'Failed to copy'
                     )}
-                  >
+                >
                   <IconCopy />
                 </button>
               </endpoint-actions>

@@ -25,6 +25,9 @@
   {#if api.description}
     <span {...api.getDescriptionProps()}>{api.description}</span>
   {/if}
+  {#if actor.action}
+    <button {...api.getActionTriggerProps()}>{actor.action.label}</button>
+  {/if}
   <button {...api.getCloseTriggerProps()}>&times;</button>
   <div {...api.getGhostAfterProps()}></div>
 </div>

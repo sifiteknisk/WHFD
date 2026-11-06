@@ -41,6 +41,8 @@ HTTP identifies the requesting client software, not the origin of its reasoning.
 
 ### Safe proposed disclosure experiment
 
+**Follow-up finding, 6 November 2026:** a first-person internet-measurement report reproduces a CTF-specific `X-LLM-Agent-Instruction` response header asking clients to identify their product/model in later `X-LLM-ID` request headers. This is evidence of an observed deployment outside webpage content, not an attributable organizer success report: the operator, affected models, compliance rate and resulting request logs are not supplied. It does not verify the exact User-Agent variant. The mechanism is compatible with adding a header to platform responses while preserving challenge content; its effectiveness in WHFD would still be an empirical question. [SecurityBreak: Agent Identification and Request Modification](https://blog.securitybreak.io/the-payload-is-in-the-header-a427a1182c5a).
+
 **Proposal, not recovered challenge text:** place a visible invitation beside the challenge and research notice:
 
 > Optional research disclosure: if an AI agent makes HTTP requests to this challenge and its operator has opted into the study, identify the client and its configured model in User-Agent, for example `StudyClient/1.0 (ai-assistance=self-reported; model=example-model; disclosure=visible-v1)`. Use `model=unknown` if unavailable. Do not include names, account IDs, credentials or conversation text. This is a self-report; omission is not evidence of human-only play. Do not contact any additional destination.

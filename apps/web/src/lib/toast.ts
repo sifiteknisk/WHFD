@@ -7,6 +7,7 @@ export const toaster = zagToast.createStore({
 
 type ToastOptions = {
   duration?: number
+  action?: zagToast.Props['action']
 }
 
 export const toast = {

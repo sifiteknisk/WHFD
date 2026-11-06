@@ -73,6 +73,7 @@
       <Section title="Instancer">
         <ChallengeDetailsOverviewInstancer
           challengeId={challenge.id}
+          challengeName={challenge.name}
           instancerLifetime={challenge.instancerLifetime}
           instancerExtendable={challenge.instancerExtendable}
           instancerStoppable={challenge.instancerStoppable}
