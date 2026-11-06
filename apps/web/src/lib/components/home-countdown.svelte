@@ -81,7 +81,8 @@
         aria-valuenow={hasEnded ? 100 : elapsed}
         aria-label="CTF progress"
       >
-        <countdown-fill style:inline-size="{hasEnded ? 100 : elapsed}%"></countdown-fill>
+        <countdown-fill style:inline-size="{hasEnded ? 100 : elapsed}%"
+        ></countdown-fill>
         {#if !hasEnded}
           <countdown-sheen aria-hidden="true"></countdown-sheen>
         {/if}
@@ -147,13 +148,12 @@
   countdown-fill {
     display: block;
     block-size: 100%;
-    background:
-      linear-gradient(
-        to bottom,
-        color-mix(in srgb, white 28%, var(--tui-selection-bg)),
-        var(--tui-selection-bg) 46%,
-        color-mix(in srgb, black 16%, var(--tui-selection-bg))
-      );
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, white 28%, var(--tui-selection-bg)),
+      var(--tui-selection-bg) 46%,
+      color-mix(in srgb, black 16%, var(--tui-selection-bg))
+    );
   }
 
   countdown-sheen {

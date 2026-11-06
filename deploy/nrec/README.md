@@ -12,11 +12,19 @@ Run `rctfscript` after `ssh nrec-rctf`, or connect directly with:
 ssh -t nrec-rctf rctfscript
 ```
 
-The Charm Gum TUI groups all commands into Monitor, Users, Deploy, Backups,
-Competition and Advanced. Use arrows and Enter to choose a category, then type
-to search its actions. Esc returns to categories. Guided inputs collect emails,
-permissions, log services and line counts. Ctrl-C stops following logs and
-returns to the menu; output remains visible until you continue.
+The Charm Gum TUI is a short list of command names. `pull` and `restart` are
+first. Type to filter, then Enter. It remembers the last command. Esc cancels a
+form. Ctrl-C quits. Guided inputs keep your text after validation errors.
+Ctrl-C stops following logs and returns to the results. Output stays up until
+you continue; read-only views can refresh.
+
+Grant admin permissions accepts comma-separated emails, such as
+`alice@example.org, bob@example.org`. Spaces around addresses are trimmed and
+the entire list is validated before confirmation. Duplicate addresses are removed
+without regard to case. Choose full admin access or select individual permissions
+with `x`, then review the accounts before confirming. The selected permissions
+apply to each address. Per-account progress and a final summary show what happened.
+Processing stops at the first failure; earlier successful promotions remain applied.
 
 Deploy also includes `/home/ubuntu/pull-challenge-images.sh`. Competition includes
 a read-only reset preview and the full reset helper. Team deletion still requires
@@ -62,6 +70,7 @@ rctf unban person@example.org
 rctf backup
 rctf backups
 rctf restart
+rctf pull
 rctf rollback
 rctf cli test --help
 ```
@@ -90,10 +99,9 @@ traffic switch. It does not restore the database or uploads. The nginx upstream
 snippet records the active slot; all helpers follow it. A systemd drop-in makes
 `whfd-platform` start the selected slot after reboot and stop both slots on shutdown.
 
-Restart does not pull or rebuild source. NREC has local source changes and a
-runtime image override, so deploying new code requires deliberately reconciling
-both. The previous `/root/restart.sh` (which pulled and rebuilt) is retained in
-the installer backup. Both slots share PostgreSQL, Redis and uploads.
+Restart does not pull or rebuild source. `rctf pull` fast-forwards git, backs up
+the database, builds the app image and deploys through the same traffic switch.
+Both slots share PostgreSQL, Redis and uploads.
 
 ## Backups
 

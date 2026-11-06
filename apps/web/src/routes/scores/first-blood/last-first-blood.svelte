@@ -48,11 +48,7 @@
     <strong>{teamName}</strong>
   </a>
   <span data-verb>on</span>
-  <button
-    type="button"
-    data-category-color={category.color}
-    onclick={onFocus}
-  >
+  <button type="button" data-category-color={category.color} onclick={onFocus}>
     <category.icon aria-hidden="true" />
     <span>{blood.challengeName}</span>
   </button>

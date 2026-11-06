@@ -115,13 +115,7 @@
           {@const hasHatch = (item.segments ?? []).some(
             segment => segment.hatched
           )}
-          <rect
-            data-track
-            x={x0}
-            {y}
-            width={trackWidth}
-            height={barHeight}
-          />
+          <rect data-track x={x0} {y} width={trackWidth} height={barHeight} />
 
           {#if item.segments && item.segments.length > 0}
             {@const earnedEnd = earnedSegmentEnd(item.segments)}
@@ -129,12 +123,7 @@
             <g data-category-color={item.color}>
               <defs>
                 <clipPath id={clipId}>
-                  <rect
-                    x={x0}
-                    {y}
-                    width={itemWidth}
-                    height={barHeight}
-                  />
+                  <rect x={x0} {y} width={itemWidth} height={barHeight} />
                 </clipPath>
                 {#if hasHatch}
                   <pattern

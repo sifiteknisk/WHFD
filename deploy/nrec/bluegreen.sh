@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 (( EUID == 0 )) || { echo 'Run through rctf restart or sudo.' >&2; exit 1; }
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/common.sh"
+lib_dir=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+source "$lib_dir/common.sh"
 [[ -f "$upstream" && -f "$slot_config" ]] || fail 'Blue/green is not installed. Run install.sh.'
 exec 9>/run/lock/rctf-tools-restart.lock
 flock -n 9 || fail 'Another restart or installation is running.'
@@ -32,8 +33,8 @@ case "${1:-}" in
     exit
     ;;
   stop) "${compose[@]}" stop; exit ;;
-  restart|rollback) ;;
-  *) fail 'Usage: bluegreen.sh start|stop|restart|rollback' ;;
+  restart|rollback|pull) ;;
+  *) fail 'Usage: bluegreen.sh start|stop|restart|rollback|pull' ;;
 esac
 
 work=$(mktemp -d)
@@ -42,10 +43,13 @@ cp "$slot_config" "$work/slots"
 switched=0
 committed=0
 candidate_started=0
+deployment_started=0
 cleanup() {
   local code=$? restored=0
   trap - EXIT
-  if (( code != 0 && committed == 0 )); then
+  if (( code != 0 && deployment_started == 0 )); then
+    echo "Preparation failed; no deployment was attempted. $live remains live." >&2
+  elif (( code != 0 && committed == 0 )); then
     cp "$work/slots" "$slot_config.recover"
     mv "$slot_config.recover" "$slot_config"
     cp "$work/upstream" "$upstream.recover"
@@ -73,13 +77,21 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 old=$(container "rctf-$live")
-if [[ "$1" == rollback ]]; then
+if [[ "$1" == pull ]]; then
+  git pull --ff-only
+  # The base file tags the build; the slot override still pins the live image.
+  docker compose -f compose.nrec.yml build rctf-green
+  image=$(docker image inspect ghcr.io/otter-sec/rctf:local --format '{{.Id}}')
+  [[ "$image" =~ ^sha256:[0-9a-f]{64}$ ]] || fail 'Could not identify the built app image.'
+  "$lib_dir/rctf" backup
+elif [[ "$1" == rollback ]]; then
   candidate=$("${compose[@]}" ps -a -q "rctf-$next")
   [[ -n "$candidate" && "$candidate" != *$'\n'* ]] || fail "No previous $next container is available."
   image=$(docker inspect "$candidate" --format '{{.Image}}')
 else
   image=$(docker inspect "$old" --format '{{.Image}}')
 fi
+deployment_started=1
 write_slot_config "$image"
 echo "Starting $next with $image; $live continues serving traffic."
 candidate_started=1

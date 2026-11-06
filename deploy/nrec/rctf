@@ -21,6 +21,7 @@ Usage: rctf <command> [arguments]
   backups                      List backup directories
   restart                      Warm the other slot, switch traffic, drain the old slot
   rollback                     Switch back to the retained previous slot
+  pull                         Pull code, build and switch to the updated app
   db                           Interactive PostgreSQL console
   cli <arguments...>          Run the application's rctf CLI in its container
 
@@ -32,7 +33,7 @@ Examples:
 
 Backups: /srv/rctf-data/platform/backups (root only; no automatic pruning).
 Restart reuses the running image; it never pulls code or rebuilds images.
-Existing deployment script: /root/restart.sh in the installer backup directory.
+Pull uses git pull --ff-only, backs up the database and deploys through blue/green.
 HELP
 }
 
@@ -197,7 +198,7 @@ SQL
     echo "Backup complete: $backup_dir"
     ;;
   backups) arity "$@"; ls -lht "$backup_root" ;;
-  restart|rollback)
+  restart|rollback|pull)
     arity "$@"
     exec bash "$lib_dir/bluegreen.sh" "$command"
     ;;

@@ -9,9 +9,55 @@
     partKinds,
     sprites as spriteSpec,
     tintPixels,
+    type Part,
     type PartKind,
     type Scene,
   } from './board'
+
+  const spriteFrames = new WeakMap<
+    Part,
+    { dpr: number; frames: HTMLCanvasElement[] }
+  >()
+
+  function spriteFrame(part: Part, image: HTMLImageElement, dpr: number) {
+    let cached = spriteFrames.get(part)
+    if (!cached || cached.dpr !== dpr) {
+      cached = { dpr, frames: [] }
+      spriteFrames.set(part, cached)
+    }
+    const spec = spriteSpec[part.kind]
+    const frame = Math.floor(part.frame) % spec.frames
+    const existing = cached.frames[frame]
+    if (existing) return existing
+
+    // Rasterize at a fixed origin: Firefox's fractional transforms can shimmer in motion.
+    const width = Math.max(1, Math.round(spec.frameW * part.scale * dpr))
+    const height = Math.max(1, Math.round(spec.frameH * part.scale * dpr))
+    const rotated = part.quarter % 2 !== 0
+    const bitmap = document.createElement('canvas')
+    bitmap.width = rotated ? height : width
+    bitmap.height = rotated ? width : height
+    const ctx = bitmap.getContext('2d')
+    if (!ctx) return
+    const angle = (part.quarter * Math.PI) / 2
+    const cos = Math.round(Math.cos(angle))
+    const sin = Math.round(Math.sin(angle))
+    ctx.setTransform(cos, sin, -sin, cos, bitmap.width / 2, bitmap.height / 2)
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(
+      image,
+      frame * spec.frameW,
+      0,
+      spec.frameW,
+      spec.frameH,
+      -width / 2,
+      -height / 2,
+      width,
+      height
+    )
+    cached.frames[frame] = bitmap
+    return bitmap
+  }
 
   function fit(canvas: HTMLCanvasElement) {
     const dpr = Math.min(globalThis.devicePixelRatio || 1, 2)
@@ -64,33 +110,18 @@
     }
     for (const part of scene.parts) {
       const image = sprites[part.kind]
-      const spec = spriteSpec[part.kind]
       if (!image) continue
-      const frame = Math.floor(part.frame) % spec.frames
-      const drawWidth = spec.frameW * part.scale
-      const drawHeight = spec.frameH * part.scale
+      const bitmap = spriteFrame(part, image, dpr)
+      if (!bitmap) continue
       ctx.save()
-      // Snap to the device-pixel grid: with smoothing off, a sub-pixel offset
-      // shifts which source pixels nearest-neighbour sampling picks, so at
-      // non-integer zoom (e.g. 80%) sprite detail pops in and out every frame.
-      ctx.translate(
-        Math.round(part.x * dpr) / dpr,
-        Math.round(part.y * dpr) / dpr
-      )
-      ctx.rotate((part.quarter * Math.PI) / 2)
+      ctx.resetTransform()
       ctx.shadowColor = 'rgb(8 24 48 / 0.35)'
       ctx.shadowBlur = 8
       ctx.shadowOffsetY = 5
       ctx.drawImage(
-        image,
-        frame * spec.frameW,
-        0,
-        spec.frameW,
-        spec.frameH,
-        -drawWidth / 2,
-        -drawHeight / 2,
-        drawWidth,
-        drawHeight
+        bitmap,
+        Math.round(part.x * dpr - bitmap.width / 2),
+        Math.round(part.y * dpr - bitmap.height / 2)
       )
       ctx.restore()
     }

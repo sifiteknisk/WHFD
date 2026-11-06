@@ -87,7 +87,12 @@
     flex-shrink: 0;
     inline-size: 2.25rem;
     block-size: 2.25rem;
-    background: radial-gradient(circle at 35% 30%, #ff8a7a, #d6261a 45%, #8a0a05);
+    background: radial-gradient(
+      circle at 35% 30%,
+      #ff8a7a,
+      #d6261a 45%,
+      #8a0a05
+    );
     border: 2px solid #e6e6e6;
     border-radius: 50%;
     box-shadow:

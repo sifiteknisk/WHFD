@@ -76,7 +76,7 @@
     if (!instant) {
       timers.push(
         setTimeout(() => (phase = 2), BUILDUP_MS),
-        setTimeout(() => (phase = 3), BUILDUP_MS + TITLE_MS),
+        setTimeout(() => (phase = 3), BUILDUP_MS + TITLE_MS)
       )
     }
 
@@ -108,11 +108,12 @@
             needsSound = false
             return
           }
-          if (Number.isFinite(duration) && elapsed > 0) audio.currentTime = elapsed
+          if (Number.isFinite(duration) && elapsed > 0)
+            audio.currentTime = elapsed
           audio.volume = 1
           void audio.play().then(
             () => (needsSound = false),
-            () => (needsSound = true),
+            () => (needsSound = true)
           )
         }
         if (audio.readyState >= 1) begin()
@@ -124,7 +125,7 @@
               arming = false
               begin()
             },
-            { once: true },
+            { once: true }
           )
         }
       }
@@ -159,8 +160,7 @@
       tabindex="-1"
       aria-hidden="true"
       data-part="backdrop"
-      onclick={() =>
-        backdropDismiss && (instant || phase === 3) && finish()}
+      onclick={() => backdropDismiss && (instant || phase === 3) && finish()}
     ></button>
 
     {#if instant || phase === 3}
@@ -170,7 +170,9 @@
     {:else if phase === 2}
       <p data-part="hero">
         {#each headline.split(' ') as word, wi (wi)}
-          <span style:--w={wi} data-from={wi === 0 ? 'left' : 'right'}>{word}</span>
+          <span style:--w={wi} data-from={wi === 0 ? 'left' : 'right'}
+            >{word}</span
+          >
         {/each}
       </p>
     {:else}
@@ -248,7 +250,8 @@
     text-transform: uppercase;
     letter-spacing: 0.02em;
     color: var(--showcase-accent);
-    text-shadow: 0 0.04em 0.12em color-mix(in oklab, var(--tui-shadow) 55%, transparent);
+    text-shadow: 0 0.04em 0.12em
+      color-mix(in oklab, var(--tui-shadow) 55%, transparent);
 
     > span {
       display: block;
@@ -262,11 +265,15 @@
     }
   }
 
-  showcase:not([data-tone='good']) [data-part='hero'] > span:first-child:not(:only-child) {
+  showcase:not([data-tone='good'])
+    [data-part='hero']
+    > span:first-child:not(:only-child) {
     color: #fff6f4;
   }
 
-  showcase:not([data-tone='good']) [data-part='hero'] > span:last-child:not(:only-child) {
+  showcase:not([data-tone='good'])
+    [data-part='hero']
+    > span:last-child:not(:only-child) {
     color: var(--showcase-accent);
   }
 

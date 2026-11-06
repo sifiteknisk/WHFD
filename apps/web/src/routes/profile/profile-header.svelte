@@ -71,9 +71,7 @@
       </profile-body>
     </profile-identity>
 
-    {#if (user.globalPlace !== null &&
-      user.division.toLowerCase() !== 'relaxed') ||
-    user.divisionPlace !== null}
+    {#if (user.globalPlace !== null && user.division.toLowerCase() !== 'relaxed') || user.divisionPlace !== null}
       <profile-ranks>
         {#if user.globalPlace !== null && user.division.toLowerCase() !== 'relaxed'}
           <profile-rank>

@@ -119,8 +119,7 @@
     inline-size: 100%;
     max-inline-size: 48rem;
     margin-inline: auto;
-    padding-block: 0.7rem
-      calc(var(--space-2xs) + var(--tui-shadow-offset));
+    padding-block: 0.7rem calc(var(--space-2xs) + var(--tui-shadow-offset));
     padding-inline: var(--space-2xs)
       calc(var(--space-2xs) + var(--tui-shadow-offset));
     flex: 1;

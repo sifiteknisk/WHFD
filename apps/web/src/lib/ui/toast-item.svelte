@@ -1,7 +1,6 @@
 <script lang="ts">
   import { normalizeProps, useMachine } from '@zag-js/svelte'
   import * as toast from '@zag-js/toast'
-
   type Props = {
     actor: toast.Props
     parent: toast.GroupService
@@ -25,19 +24,20 @@
   {#if api.description}
     <span {...api.getDescriptionProps()}>{api.description}</span>
   {/if}
+  <button {...api.getCloseTriggerProps()}>&times;</button>
   {#if actor.action}
     <button {...api.getActionTriggerProps()}>{actor.action.label}</button>
   {/if}
-  <button {...api.getCloseTriggerProps()}>&times;</button>
   <div {...api.getGhostAfterProps()}></div>
 </div>
 
 <style>
   [data-part='root'] {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr auto;
     align-items: center;
-    gap: var(--space-2xs);
+    column-gap: var(--space-2xs);
+    row-gap: var(--space-3xs);
     inline-size: 20rem;
     height: var(--height);
     padding: var(--space-2xs) var(--space-xs);
@@ -66,17 +66,55 @@
   }
 
   [data-part='title'] {
-    flex: 1;
+    grid-area: 1 / 1;
     font-size: var(--step--1);
   }
 
   [data-part='description'] {
-    flex-basis: 100%;
+    grid-column: 1 / -1;
     font-size: var(--step--1);
     color: var(--foreground-l3);
   }
 
   [data-part='close-trigger'] {
+    grid-area: 1 / 2;
+    align-self: start;
     cursor: pointer;
+  }
+
+  [data-part='action-trigger'] {
+    grid-column: 1 / -1;
+    justify-self: start;
+    block-size: 1.75rem;
+    margin-block-start: var(--space-3xs);
+    padding-inline: var(--space-xs);
+    color: var(--tui-text);
+    font-size: var(--step--1);
+    cursor: pointer;
+    background: var(--tui-surface);
+    border: var(--tui-border-width) solid;
+    border-color: var(--bevel-raised);
+
+    &::before {
+      content: '<' / '';
+    }
+
+    &::after {
+      content: '>' / '';
+    }
+
+    &:hover {
+      background: var(--tui-surface-light);
+    }
+
+    &:active {
+      border-color: var(--bevel-recessed);
+      transform: translate(1px, 1px);
+    }
+
+    &:focus-visible {
+      outline: 2px dotted var(--tui-focus);
+      outline-offset: 2px;
+    }
   }
 </style>

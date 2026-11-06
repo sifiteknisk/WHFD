@@ -44,8 +44,22 @@
     { text: 'jackpot!!', top: '20%', left: '85%', tilt: '10deg', d: '950ms' },
     { text: 'mega bong!', top: '80%', left: '14%', tilt: '8deg', d: '1.2s' },
     { text: 'big win!!', top: '78%', left: '86%', tilt: '-9deg', d: '1.45s' },
-    { text: '福', top: '48%', left: '9%', tilt: '-6deg', d: '1.7s', side: true },
-    { text: 'lucky!!', top: '50%', left: '91%', tilt: '7deg', d: '1.95s', side: true },
+    {
+      text: '福',
+      top: '48%',
+      left: '9%',
+      tilt: '-6deg',
+      d: '1.7s',
+      side: true,
+    },
+    {
+      text: 'lucky!!',
+      top: '50%',
+      left: '91%',
+      tilt: '7deg',
+      d: '1.95s',
+      side: true,
+    },
   ]
 
   const FIREWORK_COLORS = ['#ffd34d', '#ff4d5e', '#fff4c2', '#ff8ad8']
@@ -667,7 +681,8 @@
       box-shadow: 0 0 0.45rem var(--c);
       opacity: 0;
       transform-origin: 0 50%;
-      animation: bong-burst 1.9s cubic-bezier(0.1, 0.75, 0.3, 1) var(--d) infinite;
+      animation: bong-burst 1.9s cubic-bezier(0.1, 0.75, 0.3, 1) var(--d)
+        infinite;
     }
   }
 

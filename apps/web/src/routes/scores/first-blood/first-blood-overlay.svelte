@@ -73,59 +73,56 @@
 
   const team = useUserById(() => blood.teamId)
   const teamName = $derived(
-    team.isPending ? '…' : (team.data?.name ?? 'Unknown team'),
+    team.isPending ? '…' : (team.data?.name ?? 'Unknown team')
   )
 </script>
 
 <Showcase headline="First blood" {onDone} sound="/sound/firstblood.mp3">
   <crash>
-      {#each falls as fall (fall.id)}
-        <crash-error
-          aria-hidden="true"
-          style:left={fall.x}
-          style:top={fall.y}
-          style:--tilt={fall.tilt}
-          style:--delay="{fall.delay}ms"
-          style:--dur="{fall.dur}ms"
-        >
-          <ErrorWindow message={fall.message} />
-        </crash-error>
-      {/each}
+    {#each falls as fall (fall.id)}
+      <crash-error
+        aria-hidden="true"
+        style:left={fall.x}
+        style:top={fall.y}
+        style:--tilt={fall.tilt}
+        style:--delay="{fall.delay}ms"
+        style:--dur="{fall.dur}ms"
+      >
+        <ErrorWindow message={fall.message} />
+      </crash-error>
+    {/each}
 
-      <crash-anchor>
-        <crash-card role="dialog" aria-label="First blood">
-          <crash-bar>
-            <crash-mark aria-hidden="true">
-              <svg viewBox="0 0 36 36">
-                <circle cx="13" cy="14" r="7" fill="#4cc83a" />
-                <circle cx="23" cy="13" r="7.2" fill="#2f7cf6" />
-                <path
-                  fill="#f6b429"
-                  d="M6 27c6-8 16-9 24-2-6 1-12 0-18 3-2 1-4 1-6-1z"
-                />
-              </svg>
-            </crash-mark>
-            <span>First blood</span>
-          </crash-bar>
-          <crash-body>
-            <crash-portrait>
-              <LazyAvatar src={team.data?.avatarUrl} name={teamName} />
-            </crash-portrait>
-            <crash-copy>
-              <strong>{teamName}</strong>
-              <p>has just drawn first blood on</p>
-              <b>{blood.challengeName}</b>
-            </crash-copy>
-          </crash-body>
-        </crash-card>
-      </crash-anchor>
+    <crash-anchor>
+      <crash-card role="dialog" aria-label="First blood">
+        <crash-bar>
+          <crash-mark aria-hidden="true">
+            <svg viewBox="0 0 36 36">
+              <circle cx="13" cy="14" r="7" fill="#4cc83a" />
+              <circle cx="23" cy="13" r="7.2" fill="#2f7cf6" />
+              <path
+                fill="#f6b429"
+                d="M6 27c6-8 16-9 24-2-6 1-12 0-18 3-2 1-4 1-6-1z"
+              />
+            </svg>
+          </crash-mark>
+          <span>First blood</span>
+        </crash-bar>
+        <crash-body>
+          <crash-portrait>
+            <LazyAvatar src={team.data?.avatarUrl} name={teamName} />
+          </crash-portrait>
+          <crash-copy>
+            <strong>{teamName}</strong>
+            <p>has just drawn first blood on</p>
+            <b>{blood.challengeName}</b>
+          </crash-copy>
+        </crash-body>
+      </crash-card>
+    </crash-anchor>
 
-      <crash-blue aria-hidden="true">
-        <img
-          src="/images/bluescreen.png"
-          alt=""
-        />
-      </crash-blue>
+    <crash-blue aria-hidden="true">
+      <img src="/images/bluescreen.png" alt="" />
+    </crash-blue>
   </crash>
 </Showcase>
 

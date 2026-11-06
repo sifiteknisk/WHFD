@@ -84,6 +84,8 @@
     () => admin
   )
 
+  const instanceAction = createAsyncAction<string>()
+
   const status = $derived(instanceQuery.data?.status ?? InstanceStatus.STOPPED)
   const endpoints = $derived(instanceQuery.data?.endpoints ?? [])
   const formattedEndpoints = $derived(
@@ -94,7 +96,9 @@
 
   // A start that timed out or was queued: the instancer may still be building
   // it, so show that instead of offering Start again.
-  const startPending = $derived(!admin && isStartPending(challengeId))
+  const startPending = $derived(
+    !admin && instanceAction.key !== 'start' && isStartPending(challengeId)
+  )
 
   const transitioning = $derived(
     status === InstanceStatus.STARTING || status === InstanceStatus.STOPPING
@@ -126,7 +130,6 @@
     return 'running'
   })
 
-  const instanceAction = createAsyncAction<string>()
   const actionsDisabled = $derived(
     instanceAction.pending || status === InstanceStatus.STOPPING
   )
@@ -152,9 +155,6 @@
     }, 1000)
     return () => clearInterval(tick)
   })
-
-  const BUSY_START_MESSAGE =
-    "Your instance may still be starting in the background. Please don't press Start again while we check. You can keep browsing; we'll let you know when it's ready."
 
   async function start() {
     // The user can switch challenges or navigate away while Start is pending.
@@ -191,22 +191,16 @@
           void queryClient.invalidateQueries({ queryKey: key })
           if (!isAdmin && res.data.status === InstanceStatus.STARTING) {
             markStarting(id)
-            toast.info(`Your instance for ${name} is starting`)
-          } else {
-            if (!isAdmin) untrackStart(id)
-            toast.success(
-              isAdmin
-                ? 'Instance started'
-                : `Your instance for ${name} is ready`
-            )
+          } else if (!isAdmin) {
+            untrackStart(id)
           }
+          toast.success('Instance started')
         } else if (
           !isAdmin &&
           res.kind === BadInstancerError.kind &&
           isAlreadyStartingError(res.data.message)
         ) {
           void queryClient.invalidateQueries({ queryKey: key })
-          toast.info(`Your instance for ${name} is already starting`)
         } else {
           if (!isAdmin) untrackStart(id)
           if (res.kind === BadInstancerError.kind) {
@@ -231,7 +225,10 @@
           } else if (stillTracked()) {
             // A 504 or dropped connection can leave the build running.
             void queryClient.invalidateQueries({ queryKey: key })
-            toast.info(BUSY_START_MESSAGE, { duration: 15_000 })
+            toast.info('Lots of teams are starting instances', {
+              description:
+                "Yours is still starting. We'll tell you when it's ready.",
+            })
           }
         },
       }
@@ -374,7 +371,8 @@
     <instancer-empty>
       <instancer-status><Spinner /><span>Starting…</span></instancer-status>
       <instancer-message>
-        {BUSY_START_MESSAGE}
+        Lots of teams are starting instances. You can keep browsing; we'll tell
+        you when it's ready.
       </instancer-message>
     </instancer-empty>
   {:else}

@@ -101,7 +101,10 @@
   })
 
   const showHero = $derived(
-    !released && !isAdmin && configQuery.data != null && (now < startTime || hold)
+    !released &&
+      !isAdmin &&
+      configQuery.data != null &&
+      (now < startTime || hold)
   )
   const blockPage = $derived(showHero && fullCover)
 

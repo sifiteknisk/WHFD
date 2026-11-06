@@ -79,7 +79,12 @@
     await tick()
     const animations = overlay?.getAnimations({ subtree: true }) ?? []
     const finished = Promise.all(
-      animations.map(animation => animation.finished.then(() => {}, () => {}))
+      animations.map(animation =>
+        animation.finished.then(
+          () => {},
+          () => {}
+        )
+      )
     )
     await Promise.race([
       finished,

@@ -70,7 +70,11 @@
       <svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="var(--sparkline-stroke)" stop-opacity="0" />
+            <stop
+              offset="0%"
+              stop-color="var(--sparkline-stroke)"
+              stop-opacity="0"
+            />
             <stop offset="100%" stop-color="var(--sparkline-stroke)" />
           </linearGradient>
         </defs>
@@ -108,7 +112,11 @@
       --stat-strong: var(--foreground-gold-l0);
       --stat-soft: var(--foreground-gold-l1);
 
-      background: color-mix(in oklab, var(--amber-9) 15%, var(--tui-surface-light));
+      background: color-mix(
+        in oklab,
+        var(--amber-9) 15%,
+        var(--tui-surface-light)
+      );
     }
 
     &[data-place='silver'] {
@@ -116,7 +124,11 @@
       --stat-strong: var(--foreground-silver-l0);
       --stat-soft: var(--foreground-silver-l1);
 
-      background: color-mix(in oklab, var(--slate-9) 30%, var(--tui-surface-light));
+      background: color-mix(
+        in oklab,
+        var(--slate-9) 30%,
+        var(--tui-surface-light)
+      );
     }
 
     &[data-place='bronze'] {
@@ -124,7 +136,11 @@
       --stat-strong: var(--foreground-bronze-l0);
       --stat-soft: var(--foreground-bronze-l1);
 
-      background: color-mix(in oklab, var(--brown-9) 25%, var(--tui-surface-light));
+      background: color-mix(
+        in oklab,
+        var(--brown-9) 25%,
+        var(--tui-surface-light)
+      );
     }
 
     @media (width < 64rem) {

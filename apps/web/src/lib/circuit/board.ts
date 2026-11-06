@@ -4,12 +4,48 @@ export const TILE_H = 177
 export const BOARD_TINT = 'rgb(12, 26, 44)'
 
 export const sprites = {
-  dip: { src: '/circuit/dip.png', frameW: 108, frameH: 68, frames: 12, fit: 0.88 },
-  dipSm: { src: '/circuit/dip-sm.png', frameW: 64, frameH: 64, frames: 12, fit: 1 },
-  chip: { src: '/circuit/chip.png', frameW: 124, frameH: 124, frames: 12, fit: 0.72 },
-  capRed: { src: '/circuit/cap-red.png', frameW: 64, frameH: 64, frames: 12, fit: 1 },
-  capBlue: { src: '/circuit/cap-blue.png', frameW: 64, frameH: 64, frames: 12, fit: 1 },
-  axial: { src: '/circuit/axial.png', frameW: 100, frameH: 60, frames: 12, fit: 1 },
+  dip: {
+    src: '/circuit/dip.png',
+    frameW: 108,
+    frameH: 68,
+    frames: 12,
+    fit: 0.88,
+  },
+  dipSm: {
+    src: '/circuit/dip-sm.png',
+    frameW: 64,
+    frameH: 64,
+    frames: 12,
+    fit: 1,
+  },
+  chip: {
+    src: '/circuit/chip.png',
+    frameW: 124,
+    frameH: 124,
+    frames: 12,
+    fit: 0.72,
+  },
+  capRed: {
+    src: '/circuit/cap-red.png',
+    frameW: 64,
+    frameH: 64,
+    frames: 12,
+    fit: 1,
+  },
+  capBlue: {
+    src: '/circuit/cap-blue.png',
+    frameW: 64,
+    frameH: 64,
+    frames: 12,
+    fit: 1,
+  },
+  axial: {
+    src: '/circuit/axial.png',
+    frameW: 100,
+    frameH: 60,
+    frames: 12,
+    fit: 1,
+  },
   axialDark: {
     src: '/circuit/axial-dark.png',
     frameW: 100,
@@ -77,7 +113,12 @@ export function createScene(width: number, height: number): Scene {
   return { parts }
 }
 
-export function advance(scene: Scene, dt: number, width: number, height: number) {
+export function advance(
+  scene: Scene,
+  dt: number,
+  width: number,
+  height: number
+) {
   const step = dt / 1000
   const margin = -48
   for (const part of scene.parts) {

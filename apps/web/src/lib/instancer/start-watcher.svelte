@@ -78,10 +78,11 @@
       case 'ready':
         untrackStart(entry.challengeId)
         if (!isViewing(entry.challengeId)) {
-          toast.success(`Your instance for ${name} is ready`, {
+          toast.success('Instance ready', {
+            description: name,
             duration: 10_000,
             action: {
-              label: 'Open challenge',
+              label: 'Open',
               onClick: () => {
                 void goto(
                   `/challenges?challenge=${encodeURIComponent(entry.challengeId)}`
@@ -93,19 +94,19 @@
         break
       case 'errored':
         untrackStart(entry.challengeId)
-        toast.error(`Your instance for ${name} failed to start`)
+        toast.error('Instance failed to start', { description: name })
         break
       case 'failed':
         untrackStart(entry.challengeId)
-        toast.error(
-          `Your instance for ${name} failed to start. Please press Start again.`
-        )
+        toast.error('Instance failed to start', {
+          description: `${name}: press Start to try again.`,
+        })
         break
       case 'timed-out':
         untrackStart(entry.challengeId)
-        toast.error(
-          `Couldn't confirm whether your instance for ${name} started. Check its status before trying Start again.`
-        )
+        toast.error('Instance still not ready', {
+          description: `${name}: check its status before pressing Start again.`,
+        })
         break
       case 'starting':
         markStarting(entry.challengeId)

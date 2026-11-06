@@ -69,9 +69,7 @@
     >
   )
   const allTags = $derived(groups.map(g => g.tag))
-  const accordionValue = $derived(
-    openTags.filter(tag => allTags.includes(tag))
-  )
+  const accordionValue = $derived(openTags.filter(tag => allTags.includes(tag)))
   const anyOpen = $derived(accordionValue.length > 0)
 
   const handleValueChange = (open: string[]) => {

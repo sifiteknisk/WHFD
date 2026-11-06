@@ -19,7 +19,11 @@
 
     &[data-edge='top'] {
       inset-block-start: var(--header-height);
-      background: linear-gradient(to bottom, var(--tui-desktop-bg), transparent);
+      background: linear-gradient(
+        to bottom,
+        var(--tui-desktop-bg),
+        transparent
+      );
     }
 
     &[data-edge='bottom'] {

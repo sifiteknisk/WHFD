@@ -12,9 +12,7 @@
   const configQuery = useClientConfig()
   const startTime = $derived(configQuery.data?.startTime ?? 0)
 
-  const secondsLeft = $derived(
-    Math.max(0, Math.ceil((startTime - now) / 1000))
-  )
+  const secondsLeft = $derived(Math.max(0, Math.ceil((startTime - now) / 1000)))
   const popping = $derived(!covered && secondsLeft <= 60)
   const duration = $derived(intervalToDuration(Math.max(0, startTime - now)))
   const pad = (value: number) => String(value).padStart(2, '0')

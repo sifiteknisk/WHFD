@@ -52,7 +52,11 @@
     gap: 0.5rem;
     padding: 0.2rem 0.7rem;
     color: var(--foreground-l3);
-    background: color-mix(in oklab, var(--tui-border-dark) 32%, var(--tui-surface));
+    background: color-mix(
+      in oklab,
+      var(--tui-border-dark) 32%,
+      var(--tui-surface)
+    );
     border: var(--tui-border-width) solid;
     border-color: var(--bevel-recessed);
     font-size: var(--step--1);

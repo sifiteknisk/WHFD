@@ -12,7 +12,9 @@
   )
   const toNext = $derived(user ? pointsToNextBong(user.bongPoints) : null)
   const nextLabel = $derived(
-    toNext === null ? 'max bongs reached' : `${toNext.toLocaleString()} pts to next bong`
+    toNext === null
+      ? 'max bongs reached'
+      : `${toNext.toLocaleString()} pts to next bong`
   )
 </script>
 
@@ -95,7 +97,11 @@
 
     50% {
       color: var(--tui-text);
-      background-color: color-mix(in oklch, var(--tui-success) 32%, var(--tui-surface-light));
+      background-color: color-mix(
+        in oklch,
+        var(--tui-success) 32%,
+        var(--tui-surface-light)
+      );
     }
   }
 </style>
