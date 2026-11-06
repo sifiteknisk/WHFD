@@ -8,6 +8,11 @@ if [[ -e /usr/local/bin/rctf || -L /usr/local/bin/rctf ]]; then
     echo 'Refusing to overwrite an unrelated /usr/local/bin/rctf.' >&2; exit 1;
   }
 fi
+if [[ -e /usr/local/bin/rctfscript || -L /usr/local/bin/rctfscript ]]; then
+  [[ $(readlink -f /usr/local/bin/rctfscript) == /usr/local/lib/rctf-tools/rctfscript ]] || {
+    echo 'Refusing to overwrite an unrelated /usr/local/bin/rctfscript.' >&2; exit 1;
+  }
+fi
 for tool in docker curl tar flock python3 nginx; do command -v "$tool" >/dev/null; done
 exec 9>/run/lock/rctf-tools-restart.lock
 flock -n 9 || { echo 'Another restart or installation is running.' >&2; exit 1; }
@@ -36,6 +41,7 @@ cleanup() {
 trap cleanup EXIT
 install -d -m 755 /usr/local/lib/rctf-tools /usr/local/share/doc/rctf-tools
 install -m 755 "$source_dir/rctf" /usr/local/lib/rctf-tools/rctf
+install -m 755 "$source_dir/rctfscript" /usr/local/lib/rctf-tools/rctfscript
 install -m 755 "$source_dir/bluegreen.sh" /usr/local/lib/rctf-tools/bluegreen.sh
 install -m 644 "$source_dir/common.sh" /usr/local/lib/rctf-tools/common.sh
 install -m 644 "$source_dir/api-user.mjs" /usr/local/lib/rctf-tools/api-user.mjs
@@ -49,6 +55,10 @@ fi
 ln -sfn /usr/local/lib/rctf-tools/deleteflagsubmissions /usr/local/bin/deleteflagsubmissions
 install -m 644 "$source_dir/README.md" /usr/local/share/doc/rctf-tools/README.md
 ln -sfn /usr/local/lib/rctf-tools/rctf /usr/local/bin/rctf
+if [[ -e /usr/local/bin/rctfscript || -L /usr/local/bin/rctfscript ]]; then
+  cp -a --parents /usr/local/bin/rctfscript "$saved"
+fi
+ln -sfn /usr/local/lib/rctf-tools/rctfscript /usr/local/bin/rctfscript
 source /usr/local/lib/rctf-tools/common.sh
 install -d -m 700 /etc/rctf-tools
 install -d -m 755 /etc/systemd/system/whfd-platform.service.d

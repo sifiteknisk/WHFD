@@ -4,6 +4,45 @@ After `ssh nrec-rctf`, run `rctf help`. Commands elevate through `sudo` when
 needed. The old `./makeadmin.sh`, `./listadmins.sh`, `./deleteuser.sh` and
 `./restart.sh` names work in both `/home/ubuntu` and `/root`.
 
+## Terminal menu
+
+Run `rctfscript` after `ssh nrec-rctf`, or connect directly with:
+
+```sh
+ssh -t nrec-rctf rctfscript
+```
+
+The Charm Gum TUI groups all commands into Monitor, Users, Deploy, Backups,
+Competition and Advanced. Use arrows and Enter to choose a category, then type
+to search its actions. Esc returns to categories. Guided inputs collect emails,
+permissions, log services and line counts. Ctrl-C stops following logs and
+returns to the menu; output remains visible until you continue.
+
+Deploy also includes `/home/ubuntu/pull-challenge-images.sh`. Competition includes
+a read-only reset preview and the full reset helper. Team deletion still requires
+typing the email in the existing helper; a competition reset still requires
+typing `confirm` and makes its normal database backup. Application CLI arguments
+are entered one per line, without shell quotes or expansion. The PostgreSQL
+console and application CLI operate directly on production.
+
+The installer adds `/usr/local/bin/rctfscript`. Install Charm Gum separately;
+this is the verified Linux x86-64 version used on NREC:
+
+```sh
+curl -fL https://github.com/charmbracelet/gum/releases/download/v2.0.2/gum_2.0.2_Linux_x86_64.tar.gz -o /tmp/rctf-gum.tar.gz
+echo 'd842e06d93dbed90af48cb8dd10698db6f22e331fc40346bb37bbc753109edc2  /tmp/rctf-gum.tar.gz' | sha256sum -c -
+tar -xzf /tmp/rctf-gum.tar.gz -C /tmp gum_2.0.2_Linux_x86_64/gum
+sudo install -m 755 /tmp/gum_2.0.2_Linux_x86_64/gum /usr/local/bin/gum
+```
+
+To update only the TUI from a checkout on NREC, without running the platform
+installer:
+
+```sh
+sudo install -m 755 deploy/nrec/rctfscript /usr/local/lib/rctf-tools/rctfscript
+sudo ln -sfn /usr/local/lib/rctf-tools/rctfscript /usr/local/bin/rctfscript
+```
+
 To reset all solves, scores and bongs with a typed confirmation and database backup,
 see [deleteflagsubmissions](deleteflagsubmissions.md).
 
@@ -104,6 +143,7 @@ The scripts find running containers by Compose service.
 
 ```sh
 bash -n deploy/nrec/rctf deploy/nrec/install.sh deploy/nrec/compat.sh deploy/nrec/common.sh deploy/nrec/bluegreen.sh
+python3 deploy/nrec/test_rctfscript.py
 node --test deploy/nrec/api-user.test.mjs
 # Root is needed because the real command elevates to root. Docker/API calls are mocked.
 sudo python3 deploy/nrec/test_rctf.py
