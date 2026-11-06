@@ -235,7 +235,7 @@ async def _stop_and_delete_containers(containers: list[DockerContainer], challen
         stop_tasks.append(container.stop(t=config.DOCKER_STOP_TIMEOUT_SECONDS))
 
     await asyncio.gather(*stop_tasks, return_exceptions=True)
-    await asyncio.gather(*[c.delete(force=True) for c in containers], return_exceptions=True)
+    await asyncio.gather(*[c.delete(force=True, v=True) for c in containers], return_exceptions=True)
     logger.info(f'Removed {len(containers)} containers.')
 
 
