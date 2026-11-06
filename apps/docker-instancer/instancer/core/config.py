@@ -46,9 +46,9 @@ class Settings(BaseSettings):
     DOCKER_STOP_TIMEOUT_SECONDS: int = 5
 
     # Builds allowed at once per web worker; 0 disables the limit. A start that
-    # can't get a slot within the queue timeout fails fast with 503 instead of
+    # can't get a slot within the queue timeout fails fast with 400 instead of
     # queueing until the reverse proxy gives up with a 504.
-    MAX_CONCURRENT_STARTS: int = Field(default=10, ge=0)
+    MAX_CONCURRENT_STARTS: int = Field(default=5, ge=0)
     START_QUEUE_TIMEOUT_SECONDS: float = Field(default=10, gt=0, allow_inf_nan=False)
 
     PRUNNER_INTERVAL_SECONDS: int = 3

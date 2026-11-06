@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime
 from functools import cache
@@ -42,11 +43,12 @@ if TYPE_CHECKING:
 
 NOT_ACQUIRED_ERROR = HTTPException(status_code=400, detail='Another instance operation is in progress.')
 START_BUSY_ERROR = HTTPException(
-    status_code=HTTPStatus.SERVICE_UNAVAILABLE,
-    detail='Lots of teams are starting instances right now. Please try again in a few seconds.',
+    status_code=400,
+    detail='The instance server is busy starting other instances. Wait about 10 seconds and press Start again.',
 )
 
 _start_slots = asyncio.Semaphore(config.MAX_CONCURRENT_STARTS) if config.MAX_CONCURRENT_STARTS > 0 else None
+_image_locks: defaultdict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
 
 
 @asynccontextmanager
@@ -93,20 +95,21 @@ def _ghcr_auth(image: str) -> dict[str, str] | None:
 
 
 async def _ensure_image(docker: Docker, image: str) -> None:
-    try:
-        await docker.images.get(image)
-    except DockerError:
-        pass
-    else:
-        return
+    async with _image_locks[image]:
+        try:
+            await docker.images.get(image)
+        except DockerError:
+            pass
+        else:
+            return
 
-    auth = _ghcr_auth(image)
-    if '@' in image:
-        await docker.images.pull(image, auth=auth)
-        return
+        auth = _ghcr_auth(image)
+        if '@' in image:
+            await docker.images.pull(image, auth=auth)
+            return
 
-    name, tag = _split_image_ref(image)
-    await docker.images.pull(name, tag=tag or 'latest', auth=auth)
+        name, tag = _split_image_ref(image)
+        await docker.images.pull(name, tag=tag or 'latest', auth=auth)
 
 
 async def _show_containers(containers: list[DockerContainer]) -> list[dict]:

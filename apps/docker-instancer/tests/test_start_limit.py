@@ -2,6 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from http import HTTPStatus
 from importlib import import_module
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock
 
@@ -81,10 +82,8 @@ def test_start_limit_rejects_overflow_and_releases_slots(
             *(instances.start_instance(form(instances, str(i))) for i in range(limit, limit * 2)),
             return_exceptions=True,
         )
-        assert all(
-            isinstance(err, HTTPException) and err.status_code == HTTPStatus.SERVICE_UNAVAILABLE for err in rejected
-        )
-        assert all('try again' in err.detail for err in rejected)
+        assert all(isinstance(err, HTTPException) and err.status_code == HTTPStatus.BAD_REQUEST for err in rejected)
+        assert all('press Start again' in err.detail for err in rejected)
         assert entered == limit
         release.set()
         results = await asyncio.gather(*builds)
@@ -124,6 +123,32 @@ def test_start_slot_released_after_failure_or_cancellation(
 
         async with instances._start_slot():
             pass
+
+    asyncio.run(scenario())
+
+
+def test_same_image_is_pulled_once(instances: ModuleType) -> None:
+    async def scenario() -> None:
+        pulled: set[str] = set()
+        pulls_running = 0
+        max_pulls_running = 0
+
+        async def get(image: str) -> None:
+            if image not in pulled:
+                raise instances.DockerError(404, {'message': 'missing'})
+
+        async def pull(name: str, **_kwargs: object) -> None:
+            nonlocal pulls_running, max_pulls_running
+            pulls_running += 1
+            max_pulls_running = max(max_pulls_running, pulls_running)
+            await asyncio.sleep(0.01)
+            pulled.add(f'{name}:latest')
+            pulls_running -= 1
+
+        docker = SimpleNamespace(images=SimpleNamespace(get=get, pull=AsyncMock(side_effect=pull)))
+        await asyncio.gather(*(instances._ensure_image(docker, 'challenge:latest') for _ in range(5)))
+        assert docker.images.pull.await_count == 1
+        assert max_pulls_running == 1
 
     asyncio.run(scenario())
 
