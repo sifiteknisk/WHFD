@@ -108,6 +108,20 @@ export const cacheLeaderboard = async (
   )
 
   await db.transaction(async tx => {
+    // Lock the rows the UPDATE below writes, in id order. The UPDATE alone
+    // locks them in whatever order its plan scans; any other transaction
+    // that locks several users rows (solve recompute) also goes in id order,
+    // so the two can't deadlock. Same predicate as the UPDATE's WHERE.
+    await tx.execute(sql`
+      SELECT u.id FROM users u
+      WHERE u.global_rank IS NOT NULL
+        OR u.bongs_total > 0
+        OR u.bongs_available > 0
+        OR u.id IN (SELECT jsonb_array_elements(${JSON.stringify(userUpdates)}::jsonb) ->> 'id')
+      ORDER BY u.id
+      FOR NO KEY UPDATE
+    `)
+
     // Preserve manual grants as well as bongs earned from points.
     await tx.execute(sql`
       UPDATE users SET

@@ -7,7 +7,7 @@ import type {
 } from '@rctf/db'
 import { scoreEvents, solves, users } from '@rctf/db'
 import type { ScoreContext } from '@rctf/scoring/base'
-import { and, asc, eq, sql } from 'drizzle-orm'
+import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 import type { PinoLogger } from 'hono-pino'
 import type { TypedRedis } from '../cache/scripts'
 import { inJsonbArray, insertInChunks } from '../lib/db-bulk'
@@ -85,6 +85,32 @@ const scoreEvent = (
 const requiresMaxSolves = (): boolean =>
   scoreProvider.requiredFields.includes('maxSolves')
 
+/**
+ * Share-lock the users rows of everyone who solved any of `challengeIds`, in
+ * id order. Every multi-row lock on users uses id order (the scoreboard write
+ * too), so two of them can never wait on each other in a cycle.
+ */
+const shareLockSolvers = async (
+  tx: DatabaseTx,
+  challengeIds: string[]
+): Promise<void> => {
+  if (challengeIds.length === 0) return
+  await tx
+    .select({ id: users.id })
+    .from(users)
+    .where(
+      inArray(
+        users.id,
+        tx
+          .select({ userid: solves.userid })
+          .from(solves)
+          .where(inJsonbArray(solves.challengeid, challengeIds))
+      )
+    )
+    .orderBy(asc(users.id))
+    .for('share')
+}
+
 const recomputeDecayWithinTx = async (
   tx: DatabaseTx,
   challenge: DecayChallenge,
@@ -94,8 +120,15 @@ const recomputeDecayWithinTx = async (
   /** Reprice only this solve; the others wait for the next full recompute. */
   onlySolveId?: string
 ): Promise<{ updatedCount: number; newPoints: number }> => {
-  // share-lock the solver rows so a concurrent ban/unban/delete can't commit
-  // between this read and our score event inserts
+  // A full recompute share-locks every solver row so a concurrent
+  // ban/unban/delete can't commit between this read and our score event
+  // inserts. Pricing one new solve skips that: it runs on the flag-submit path,
+  // and holding other teams' rows there deadlocked with the scoreboard write.
+  // Its caller locks the submitter's row instead; a stale ban of another
+  // solver only skews the count until the debounced full recompute.
+  if (onlySolveId === undefined) {
+    await shareLockSolvers(tx, [challenge.id])
+  }
   const rows = await tx
     .select({
       id: solves.id,
@@ -108,7 +141,6 @@ const recomputeDecayWithinTx = async (
     .innerJoin(users, eq(users.id, solves.userid))
     .where(eq(solves.challengeid, challenge.id))
     .orderBy(asc(solves.createdat))
-    .for('share', { of: users })
 
   const activeRows = rows.filter(row => !row.banned)
   const firstSolveTime = activeRows[0]
@@ -226,6 +258,12 @@ export const applyDecayPointsForAllChallenges = async (
     for (const challenge of decayChallenges) {
       await lockChallenge(tx, challenge.id)
     }
+    // all solver rows up front in one id-ordered pass; locking them challenge
+    // by challenge would interleave the order and could deadlock
+    await shareLockSolvers(
+      tx,
+      decayChallenges.map(challenge => challenge.id)
+    )
 
     const maxSolves = requiresMaxSolves() ? await getMaxSolveCount(tx) : 0
     let updatedCount = 0
@@ -275,6 +313,7 @@ export const upsertDynamicSolves = async (
             .where(
               and(inJsonbArray(users.id, involvedUserIds), userIsNotBanned)
             )
+            .orderBy(asc(users.id))
             .for('share')
             .then(rows => new Set(rows.map(r => r.id)))
 

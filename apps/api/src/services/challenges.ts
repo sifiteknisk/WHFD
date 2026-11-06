@@ -15,7 +15,7 @@ import {
   submissions,
   users,
 } from '@rctf/db'
-import { getErrorConstraint, takeUnique } from '@rctf/db/util'
+import { getErrorConstraint, retryTransaction, takeUnique } from '@rctf/db/util'
 import type {
   BadAlreadySolvedChallenge,
   BadChallenge,
@@ -350,62 +350,76 @@ export const createPricedSolve = async (
   const timing = await getCompetitionTiming(db)
 
   // the new solve is priced right here; the leaderboard worker picks up the
-  // recompute request and reprices every other solver on its next tick
-  return await db.transaction(async tx => {
-    await lockChallenge(tx, params.challengeId)
+  // recompute request and reprices every other solver on its next tick.
+  // Retried on deadlock: the scoreboard write updates every team's row and a
+  // rejected correct flag costs the team the solve (and maybe first blood).
+  return await retryTransaction(() =>
+    db.transaction(async tx => {
+      await lockChallenge(tx, params.challengeId)
 
-    // re-check under the lock so a concurrent delete can't orphan this solve
-    if (!(await getPrivateChallenge(tx, params.challengeId))) {
-      return null
-    }
+      // re-check under the lock so a concurrent delete can't orphan this solve
+      if (!(await getPrivateChallenge(tx, params.challengeId))) {
+        return null
+      }
 
-    const priorSolveCount = await countNonBannedSolvesForChallenge(
-      tx,
-      params.challengeId
-    )
+      // Only the submitter's row is locked, so this can't form a lock cycle
+      // with the scoreboard UPDATE. Taken before the insert so the first lock
+      // on the row is already the strongest this transaction needs. It keeps
+      // a concurrent ban/delete of the submitter from missing this solve.
+      await tx
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.id, params.userId))
+        .for('share')
 
-    await tx.insert(solves).values({
-      id: solveId,
-      challengeid: params.challengeId,
-      userid: params.userId,
-      createdat: sql`NOW()`,
-      submissionip: params.submissionIp ?? null,
+      const priorSolveCount = await countNonBannedSolvesForChallenge(
+        tx,
+        params.challengeId
+      )
+
+      await tx.insert(solves).values({
+        id: solveId,
+        challengeid: params.challengeId,
+        userid: params.userId,
+        createdat: sql`NOW()`,
+        submissionip: params.submissionIp ?? null,
+      })
+      const points = await priceNewSolveWithinTx(
+        tx,
+        params.challengeId,
+        solveId,
+        timing
+      )
+
+      await tx.insert(submissions).values({
+        id: submissionId,
+        kind: SubmissionKind.FLAG,
+        challengeId: params.challengeId,
+        userId: params.userId,
+        ip: params.submissionIp ?? 'unknown',
+        result: params.cheated
+          ? SubmissionResult.CHEATED
+          : SubmissionResult.CORRECT,
+        details: {
+          ...(params.submittedFlag
+            ? { submittedFlag: params.submittedFlag }
+            : {}),
+          ...(params.matchedFlag
+            ? {
+                matchedFlagIndex: params.matchedFlag.index,
+                matchedFlagProvider: params.matchedFlag.provider,
+                matchedFlagConfig: params.matchedFlag.config,
+              }
+            : {}),
+          ...(params.cheatedFrom ? { cheatedFrom: params.cheatedFrom } : {}),
+        },
+        relatedId: solveId,
+        createdAt: new Date().toISOString(),
+      })
+
+      return { bloodNumber: priorSolveCount + 1, points }
     })
-    const points = await priceNewSolveWithinTx(
-      tx,
-      params.challengeId,
-      solveId,
-      timing
-    )
-
-    await tx.insert(submissions).values({
-      id: submissionId,
-      kind: SubmissionKind.FLAG,
-      challengeId: params.challengeId,
-      userId: params.userId,
-      ip: params.submissionIp ?? 'unknown',
-      result: params.cheated
-        ? SubmissionResult.CHEATED
-        : SubmissionResult.CORRECT,
-      details: {
-        ...(params.submittedFlag
-          ? { submittedFlag: params.submittedFlag }
-          : {}),
-        ...(params.matchedFlag
-          ? {
-              matchedFlagIndex: params.matchedFlag.index,
-              matchedFlagProvider: params.matchedFlag.provider,
-              matchedFlagConfig: params.matchedFlag.config,
-            }
-          : {}),
-        ...(params.cheatedFrom ? { cheatedFrom: params.cheatedFrom } : {}),
-      },
-      relatedId: solveId,
-      createdAt: new Date().toISOString(),
-    })
-
-    return { bloodNumber: priorSolveCount + 1, points }
-  })
+  )
 }
 
 const defaultChallengeData: ChallengeData = {
