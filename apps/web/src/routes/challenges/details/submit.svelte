@@ -24,7 +24,8 @@
   interface Props {
     challenge: Challenge
     isSolved: boolean
-    onSolve: (challengeId: string) => void
+    /** `points` is what the solve earned, or `null` if it was already solved. */
+    onSolve: (challengeId: string, points: number | null) => void
   }
 
   let { challenge, isSolved, onSolve }: Props = $props()
@@ -57,14 +58,18 @@
     onSuccess: response => {
       if (response.kind === GoodFlag.kind) {
         toast.success('Flag correct!')
-        onSolve(challenge.id)
+        onSolve(challenge.id, response.data.points)
         form.setData({ flag: '' })
-      } else if (response.kind === BadAlreadySolvedChallenge.kind) {
-        toast.info('You already solved this challenge')
-        onSolve(challenge.id)
       }
     },
     onError: response => {
+      // A 409, so it lands here: usually a teammate's solve got in first.
+      if (response.kind === BadAlreadySolvedChallenge.kind) {
+        toast.info('Your team already solved this challenge')
+        onSolve(challenge.id, null)
+        form.setData({ flag: '' })
+        return
+      }
       showApiError(response)
     },
   })

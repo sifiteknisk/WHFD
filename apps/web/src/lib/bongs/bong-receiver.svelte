@@ -86,8 +86,9 @@
     // Tracked even when the data is identical so catch-up always ends.
     const userUpdatedAt = userQuery.dataUpdatedAt
     const solves = pendingSolves()
-    // Local predicts first so an optimistic bongsTotal bump cannot queue a
-    // second overlay on top of the same solve.
+    // Local predicts first so an optimistic bongsEarned bump cannot queue a
+    // second overlay on top of the same solve. The queue tracks bongs earned
+    // from points; admin grants only show up through availability.
     for (const solve of solves.slice(applied)) {
       queue = noteLocalSolve(queue, solve.score, solve.points, solve.bongPoints)
     }
@@ -97,7 +98,7 @@
     queue = (absorbing ? absorbServerBongs : noteServerBongs)(
       queue,
       userQuery.data?.score,
-      userQuery.data?.bongsTotal,
+      userQuery.data?.bongsEarned,
       userQuery.data?.bongsAvailable
     )
     if (refetchedAt !== undefined && userUpdatedAt >= refetchedAt) {

@@ -90,7 +90,9 @@ const recomputeDecayWithinTx = async (
   challenge: DecayChallenge,
   source: RecomputeSource,
   timing: CompetitionTiming,
-  maxSolves: number
+  maxSolves: number,
+  /** Reprice only this solve; the others wait for the next full recompute. */
+  onlySolveId?: string
 ): Promise<{ updatedCount: number; newPoints: number }> => {
   // share-lock the solver rows so a concurrent ban/unban/delete can't commit
   // between this read and our score event inserts
@@ -123,7 +125,11 @@ const recomputeDecayWithinTx = async (
     )
   )
 
-  const changedRows = activeRows.filter(row => row.points !== newPoints)
+  const changedRows = activeRows.filter(
+    row =>
+      row.points !== newPoints &&
+      (onlySolveId === undefined || row.id === onlySolveId)
+  )
   if (changedRows.length === 0) {
     return { updatedCount: 0, newPoints }
   }
@@ -166,6 +172,32 @@ export const applyDecayPointsForChallenge = async (
       (requiresMaxSolves() ? await getMaxSolveCount(tx) : 0)
     return recomputeDecayWithinTx(tx, challenge, source, timing, maxSolves)
   })
+}
+
+/**
+ * Price a just-inserted solve at the challenge's new value, inside the
+ * transaction that created it. Score and bong points (summed from score
+ * events) then move together the moment the flag is accepted; the debounced
+ * recompute later finds this row already priced and only decays the others.
+ */
+export const priceNewSolveWithinTx = async (
+  tx: DatabaseTx,
+  challengeId: string,
+  solveId: string,
+  timing: CompetitionTiming
+): Promise<number> => {
+  const challenge = await getDecayChallenge(tx, challengeId)
+  if (!challenge) return 0
+  const maxSolves = requiresMaxSolves() ? await getMaxSolveCount(tx) : 0
+  const { newPoints } = await recomputeDecayWithinTx(
+    tx,
+    challenge,
+    'flag',
+    timing,
+    maxSolves,
+    solveId
+  )
+  return newPoints
 }
 
 export const applyChallengeConfigChange = async (

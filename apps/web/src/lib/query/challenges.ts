@@ -303,9 +303,9 @@ export function invalidateAfterSolve(
   // FIXME(es3n1n): Small delay to allow the server's leaderboard worker to update the cache
   setTimeout(() => {
     queryClient.refetchQueries({ queryKey: queryKeys.challenges, exact: true })
-    // userSelf is left to the bong version poll: the solve's points are only
-    // written after the debounced recompute, so refetching here would replace
-    // the optimistic bong points with stale ones.
+    // The solve is priced in the same transaction that accepts the flag, so
+    // the server's bong points already include it; refetch for score/place.
+    queryClient.invalidateQueries({ queryKey: queryKeys.userSelf })
     queryClient.invalidateQueries({ queryKey: queryKeys.fullLeaderboard })
     queryClient.invalidateQueries({
       queryKey: queryKeys.challenge(challengeId),

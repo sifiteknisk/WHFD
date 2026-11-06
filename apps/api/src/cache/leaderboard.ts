@@ -112,8 +112,9 @@ export const cacheLeaderboard = async (
     await tx.execute(sql`
       UPDATE users SET
         score = COALESCE(resolved.score, 0),
-        bongs_total = GREATEST(users.bongs_total, ${earnedBongs}),
-        bongs_available = users.bongs_available + GREATEST(0, ${earnedBongs} - users.bongs_total),
+        bongs_earned = GREATEST(users.bongs_earned, ${earnedBongs}),
+        bongs_total = users.bongs_total + GREATEST(0, ${earnedBongs} - users.bongs_earned),
+        bongs_available = users.bongs_available + GREATEST(0, ${earnedBongs} - users.bongs_earned),
         global_rank = resolved.global_rank,
         division_rank = resolved.division_rank,
         last_solve_at = resolved.last_solve_at,

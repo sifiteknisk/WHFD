@@ -14,7 +14,8 @@
 
   interface Props {
     challenge: Challenge
-    onSolve: (challengeId: string) => void
+    /** `points` is what the solve earned, or `null` if it was already solved. */
+    onSolve: (challengeId: string, points: number | null) => void
   }
 
   let { challenge, onSolve }: Props = $props()

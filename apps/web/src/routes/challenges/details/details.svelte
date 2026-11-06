@@ -15,7 +15,8 @@
   type Props = {
     challenge: Challenge | null
     isSolved: boolean
-    onSolve: (challengeId: string) => void
+    /** `points` is what the solve earned, or `null` if it was already solved. */
+    onSolve: (challengeId: string, points: number | null) => void
   }
 
   let { challenge, isSolved, onSolve }: Props = $props()

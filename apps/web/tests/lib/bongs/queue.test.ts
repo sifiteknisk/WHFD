@@ -147,7 +147,7 @@ describe('noteServerBongs', () => {
   })
 
   test('optimistic total after a local predict does not queue a second play', () => {
-    // Same order as bong-receiver: local first, then optimistic bongsTotal.
+    // Same order as bong-receiver: local first, then optimistic bongsEarned.
     const announced = noteLocalSolve(ready(2), 500, 1000, 750)
     expect(announced.remaining).toBe(1)
     // Score still stale; total already bumped in the query cache.

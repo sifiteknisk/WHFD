@@ -1,0 +1,211 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+help() {
+  cat <<'HELP'
+Usage: rctf <command> [arguments]
+
+  status                       Containers, host services, disk and checkout
+  health                       App readiness, PostgreSQL, Redis and worker tunnel
+  logs [app|postgres|redis|nginx|workers|observability] [lines]
+  stats                        Counts of users, admins, challenges and solves
+  users [search]               List/search users by email or team name (max 100)
+  user <email>                Inspect a user through the application API
+  listadmins                   List administrator permissions
+  makeadmin <email> [--perms comma,separated,permissions]
+  removeadmin <email>          Revoke administrator permissions
+  ban <email>                 Ban a non-admin through the application API
+  unban <email>               Unban a non-admin through the application API
+  deleteuser <email> [--yes]   Confirm, back up the DB, then delete through the API
+  backup                       Back up DB, uploads, config and deployment files
+  backups                      List backup directories
+  restart                      Warm the other slot, switch traffic, drain the old slot
+  rollback                     Switch back to the retained previous slot
+  db                           Interactive PostgreSQL console
+  cli <arguments...>          Run the application's rctf CLI in its container
+
+Examples:
+  rctf logs app 200             # follows logs; Ctrl-C to stop
+  rctf users example.org
+  rctf makeadmin person@example.org
+  rctf cli test --help
+
+Backups: /srv/rctf-data/platform/backups (root only; no automatic pruning).
+Restart reuses the running image; it never pulls code or rebuilds images.
+Existing deployment script: /root/restart.sh in the installer backup directory.
+HELP
+}
+
+case "${1:-help}" in help|-h|--help) help; exit 0 ;; esac
+if (( EUID != 0 )); then
+  exec sudo -- "$(readlink -f "${BASH_SOURCE[0]}")" "$@"
+fi
+
+backup_root=${RCTF_BACKUP_DIR:-/srv/rctf-data/platform/backups}
+lib_dir=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+source "$lib_dir/common.sh"
+
+arity() { (( $# == 0 )) || fail 'Unexpected arguments. Run rctf help.'; }
+email_arg() { [[ -n "${1:-}" && "$1" == *@* ]] || fail 'An email address is required.'; }
+app_cli() {
+  local id
+  id=$(app_container) || return
+  docker exec "$id" rctf "$@"
+}
+sql() {
+  local id
+  id=$(container postgres) || return
+  docker exec -i "$id" psql -X -U rctf -d rctf -v ON_ERROR_STOP=1 "$@"
+}
+lookup_id() {
+  local id
+  id=$(sql -At -v "email=$1" <<'SQL'
+SELECT id FROM users WHERE lower(email) = lower(:'email');
+SQL
+  )
+  [[ -n "$id" && "$id" != *$'\n'* ]] || fail "Expected one user matching $1."
+  printf '%s\n' "$id"
+}
+api_user() {
+  local actor app
+  actor=$(sql -Atc 'SELECT id FROM users WHERE (perms & 16) <> 0 ORDER BY id LIMIT 1;')
+  [[ -n "$actor" ]] || fail 'No admin with usersWrite permission exists. Use makeadmin first.'
+  # Token creation and use stay inside the app container; no credential is printed.
+  app=$(app_container) || return
+  docker exec -i "$app" bun run - "$actor" "$1" "$2" < "$lib_dir/api-user.mjs"
+}
+new_backup() {
+  umask 077
+  mkdir -p "$backup_root"
+  chmod 700 "$backup_root"
+  backup_dir=$(mktemp -d "$backup_root/$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")
+}
+dump_database() {
+  local id
+  id=$(container postgres) || return
+  docker exec "$id" pg_dump -U rctf -d rctf -Fc > "$backup_dir/database.dump.partial"
+  [[ -s "$backup_dir/database.dump.partial" ]] || fail 'Database backup is empty.'
+  mv "$backup_dir/database.dump.partial" "$backup_dir/database.dump"
+}
+
+command=$1
+shift
+case "$command" in
+  status)
+    arity "$@"
+    echo "Live slot: $(active_color)"
+    "${compose[@]}" ps -a
+    for unit in whfd-platform whfd-workers-tunnel whfd-observability nginx; do
+      printf '%s: ' "$unit"
+      systemctl is-active "$unit" || true
+    done
+    df -h "$project"
+    git log -1 --format='%h %s'
+    git status --short
+    ;;
+  health)
+    arity "$@"
+    ready
+    printf '\n'
+    postgres=$(container postgres)
+    docker exec "$postgres" pg_isready -U rctf -d rctf
+    redis=$(container redis)
+    redis_health=$(docker inspect "$redis" --format '{{.State.Health.Status}}')
+    [[ "$redis_health" == healthy ]] || fail "Redis health: $redis_health"
+    echo 'Redis: healthy (authenticated PING healthcheck)'
+    systemctl is-active whfd-workers-tunnel nginx
+    ;;
+  logs)
+    (( $# <= 2 )) || fail 'Usage: rctf logs [service] [lines]'
+    service=${1:-app}
+    lines=${2:-100}
+    [[ "$lines" =~ ^[1-9][0-9]*$ ]] || fail 'Line count must be a positive integer.'
+    case "$service" in
+      app) service="rctf-$(active_color)" ;;
+      postgres|redis) ;;
+      nginx) exec journalctl -u nginx -n "$lines" -f ;;
+      workers) exec journalctl -u whfd-workers-tunnel -n "$lines" -f ;;
+      observability) exec journalctl -u whfd-observability -n "$lines" -f ;;
+      *) fail 'Unknown log service. Run rctf help.' ;;
+    esac
+    exec "${compose[@]}" logs --tail "$lines" -f "$service"
+    ;;
+  stats)
+    arity "$@"
+    sql <<'SQL'
+SELECT (SELECT count(*) FROM users) AS users,
+       (SELECT count(*) FROM users WHERE perms > 0) AS admins,
+       (SELECT count(*) FROM challenges) AS challenges,
+       (SELECT count(*) FROM solves) AS solves;
+SQL
+    ;;
+  users)
+    (( $# <= 1 )) || fail 'Usage: rctf users [search]'
+    sql -v "search=${1:-}" <<'SQL'
+SELECT id, name, email, division, perms, banned, score FROM users
+WHERE strpos(lower(coalesce(email, '')), lower(:'search')) > 0
+   OR strpos(lower(name), lower(:'search')) > 0
+ORDER BY name LIMIT 100;
+SQL
+    ;;
+  listadmins) arity "$@"; app_cli user list-admins ;;
+  makeadmin)
+    email_arg "${1:-}"
+    (( $# == 1 )) || { (( $# == 3 )) && [[ "$2" == --perms && -n "$3" ]]; } || fail 'Usage: rctf makeadmin <email> [--perms permissions]'
+    app_cli user promote "$@"
+    ;;
+  removeadmin)
+    email_arg "${1:-}"
+    (( $# == 1 )) || fail 'Usage: rctf removeadmin <email>'
+    app_cli user demote "$1"
+    ;;
+  user|ban|unban|deleteuser)
+    email_arg "${1:-}"
+    if [[ "$command" == deleteuser ]]; then
+      (( $# == 1 )) || { (( $# == 2 )) && [[ "$2" == --yes ]]; } || fail 'Usage: rctf deleteuser <email> [--yes]'
+    else
+      (( $# == 1 )) || fail "Usage: rctf $command <email>"
+    fi
+    target=$(lookup_id "$1")
+    if [[ "$command" == deleteuser ]]; then
+      api_user "$target" user
+      if [[ "${2:-}" != --yes ]]; then
+        [[ -t 0 ]] || fail 'Run interactively to confirm deletion, or explicitly pass --yes.'
+        read -r -p "Permanently delete this team and its solves? Type $1: " answer
+        [[ "$answer" == "$1" ]] || fail 'Cancelled.'
+      fi
+      new_backup
+      dump_database
+      echo "Pre-deletion database backup: $backup_dir/database.dump"
+    fi
+    api_user "$target" "$command"
+    ;;
+  backup)
+    arity "$@"
+    new_backup
+    dump_database
+    tar -czf "$backup_dir/platform.tar.gz.partial" .env rctf.d .data/uploads compose.nrec.yml
+    mv "$backup_dir/platform.tar.gz.partial" "$backup_dir/platform.tar.gz"
+    if [[ -f /etc/whfd-observability/runtime-image.yml ]]; then
+      cp /etc/whfd-observability/runtime-image.yml "$backup_dir/runtime-image.yml"
+    fi
+    cp "$slot_config" "$backup_dir/bluegreen.yml"
+    cp "$upstream" "$backup_dir/rctf-upstream.conf"
+    app=$(app_container)
+    docker inspect "$app" --format '{{.Image}}' > "$backup_dir/image-id.txt"
+    git rev-parse HEAD > "$backup_dir/commit.txt"
+    echo "Backup complete: $backup_dir"
+    ;;
+  backups) arity "$@"; ls -lht "$backup_root" ;;
+  restart|rollback)
+    arity "$@"
+    exec bash "$lib_dir/bluegreen.sh" "$command"
+    ;;
+  db)
+    arity "$@"
+    postgres=$(container postgres)
+    exec docker exec -it "$postgres" psql -X -U rctf -d rctf
+    ;;
+  cli) (( $# > 0 )) || fail 'Usage: rctf cli <arguments...>'; app_cli "$@" ;;
+  *) fail "Unknown command: $command. Run rctf help." ;;
+esac

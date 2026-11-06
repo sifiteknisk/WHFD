@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'HELP'
+Usage: deleteflagsubmissions [--dry-run]
+
+Reset ALL competition progress on nrec-rctf after typing exactly: confirm
+Clears solves, score events, submissions, admin-bot jobs, issued dynamic flags,
+team scores/ranks and ALL earned, granted and available bongs, plus their caches.
+Accounts, permissions, challenge definitions, files and settings are preserved.
+After confirmation the site briefly stops, a database backup is made, and the
+reset runs. A failed backup prevents deletion. No confirmation bypass exists.
+--dry-run only shows the current totals.
+HELP
+}
+case "${1:-}" in -h|--help) usage; exit 0 ;; esac
+(( $# == 0 )) || { (( $# == 1 )) && [[ "$1" == --dry-run ]]; } || { usage >&2; exit 1; }
+if (( EUID != 0 )); then
+  exec sudo -- "$(readlink -f "${BASH_SOURCE[0]}")" "$@"
+fi
+lib_dir=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+source "$lib_dir/common.sh"
+exec 9>/run/lock/rctf-tools-submissions.lock
+flock -n 9 || fail 'Another competition reset is running.'
+postgres=$(container postgres)
+psql=(docker exec -i "$postgres" psql -X -q -U rctf -d rctf -v ON_ERROR_STOP=1)
+"${psql[@]}" <<'SQL'
+SELECT (SELECT count(*) FROM solves) AS solves,
+       (SELECT count(*) FROM score_events) AS score_events,
+       (SELECT count(*) FROM submission_logs) AS submissions,
+       (SELECT count(*) FROM admin_bot_jobs) AS admin_bot_jobs,
+       (SELECT count(*) FROM dynamic_flags) AS issued_flags;
+SELECT count(*) AS teams, coalesce(sum(score), 0) AS total_score,
+       coalesce(sum(bongs_total), 0) AS total_bongs,
+       coalesce(sum(bongs_available), 0) AS available_bongs FROM users;
+SQL
+echo 'FULL RESET: all solves, scores, ranks, submissions, issued flags and bong progress will be cleared.'
+echo 'Accounts, permissions, challenge definitions, files and settings will be kept.'
+[[ "${1:-}" != --dry-run ]] || exit 0
+[[ -t 0 ]] || fail 'Run interactively to type confirm. No data was reset.'
+IFS= read -r -p 'Type confirm to back up and reset ALL competition progress (brief site downtime): ' answer || {
+  echo 'Cancelled. No data was reset.'; exit 0;
+}
+if [[ "$answer" != confirm ]]; then echo 'Cancelled. No data was reset.'; exit 0; fi
+
+exec 8>/run/lock/rctf-tools-restart.lock
+flock -n 8 || fail 'A restart or installation is running. Nothing was reset.'
+live=$(active_color)
+app=$(app_container)
+redis=$(container redis)
+redis_config=$(docker exec "$app" rctf config get database.redis)
+printf '%s' "$redis_config" | python3 "$lib_dir/reset-redis.py" "$redis" --check
+running=$("${compose[@]}" ps --status running -q rctf-blue rctf-green)
+[[ -n "$running" ]] || fail 'No running app slot found.'
+mapfile -t apps <<< "$running"
+umask 077
+backup_root=${RCTF_BACKUP_DIR:-/srv/rctf-data/platform/backups}
+mkdir -p "$backup_root"
+chmod 700 "$backup_root"
+backup_dir=$(mktemp -d "$backup_root/competition-reset-$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")
+stopped=0
+cleanup() {
+  local code=$?
+  trap - EXIT
+  if (( stopped == 1 )); then
+    echo 'Resuming previously running app slots after an interrupted reset.' >&2
+    docker start "${apps[@]}" || echo 'App restart failed. Check rctf status.' >&2
+  fi
+  if (( code != 0 )); then echo "Reset failed; inspect the output and backup at $backup_dir." >&2; fi
+  exit "$code"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+stopped=1
+docker stop "${apps[@]}"
+docker exec "$postgres" pg_dump -U rctf -d rctf -Fc > "$backup_dir/database.dump.partial"
+[[ -s "$backup_dir/database.dump.partial" ]] || fail 'Backup is empty; no data was reset.'
+mv "$backup_dir/database.dump.partial" "$backup_dir/database.dump"
+echo "Database backup: $backup_dir/database.dump"
+# Clear caches before SQL while every app/leaderboard worker is stopped. If SQL
+# fails, restarting simply rebuilds caches from the unchanged database.
+printf '%s' "$redis_config" | python3 "$lib_dir/reset-redis.py" "$redis"
+"${psql[@]}" < "$lib_dir/reset-competition.sql"
+docker start "${apps[@]}"
+stopped=0
+for (( attempt=0; attempt<60; attempt++ )); do
+  if ready "$(port_for "$live")" >/dev/null 2>&1; then
+    echo 'Competition progress reset. The site is ready; teams start from zero.'
+    exit 0
+  fi
+  sleep 2
+done
+fail 'Reset completed, but app readiness timed out. Check rctf logs app.'

@@ -53,13 +53,16 @@ export const GoodUserSelfDataV2 = response('goodUserSelfDataV2', {
       z.describe('Division the team competes in.')
     ),
     score: example(z.int(), 13370).check(z.describe('Total team score.')),
-    bongsTotal: example(z.int(), 13).check(
+    bongsEarned: example(z.int(), 4).check(
       z.describe(
-        'Bongs earned so far from points gained (decay does not revoke).'
+        'Bongs unlocked by points gained so far (decay does not revoke).'
       )
     ),
+    bongsTotal: example(z.int(), 5).check(
+      z.describe('Every bong received: earned from points plus manual grants.')
+    ),
     bongsAvailable: example(z.int(), 2).check(
-      z.describe('Available bongs, including manual adjustments.')
+      z.describe('Bongs not yet handed out; never more than `bongsTotal`.')
     ),
     bongPoints: example(z.int(), 1200).check(
       z.describe(

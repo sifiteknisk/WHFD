@@ -48,6 +48,7 @@ import {
 } from './challenge-queries'
 import { rateLimitFlag } from './rate-limit'
 import { getCompetitionTiming } from './settings'
+import { priceNewSolveWithinTx } from './solve-points'
 import { createSubmission } from './submissions'
 import { getUser } from './users'
 
@@ -331,7 +332,8 @@ export const getMaxSolveCount = async (
   return row?.max ?? 0
 }
 
-export const createSolveAndGetBloodNumber = async (
+/** Insert and price a flag solve; `bloodNumber` is its 1-based solve order. */
+export const createPricedSolve = async (
   db: DatabaseClient,
   params: {
     challengeId: string
@@ -342,12 +344,13 @@ export const createSolveAndGetBloodNumber = async (
     cheated?: boolean
     cheatedFrom?: string
   }
-): Promise<number | null> => {
+): Promise<{ bloodNumber: number; points: number } | null> => {
   const solveId = crypto.randomUUID()
   const submissionId = crypto.randomUUID()
+  const timing = await getCompetitionTiming(db)
 
-  // the leaderboard worker picks up the recompute request and reprices
-  // every solver of this challenge on its next tick
+  // the new solve is priced right here; the leaderboard worker picks up the
+  // recompute request and reprices every other solver on its next tick
   return await db.transaction(async tx => {
     await lockChallenge(tx, params.challengeId)
 
@@ -368,6 +371,12 @@ export const createSolveAndGetBloodNumber = async (
       createdat: sql`NOW()`,
       submissionip: params.submissionIp ?? null,
     })
+    const points = await priceNewSolveWithinTx(
+      tx,
+      params.challengeId,
+      solveId,
+      timing
+    )
 
     await tx.insert(submissions).values({
       id: submissionId,
@@ -395,7 +404,7 @@ export const createSolveAndGetBloodNumber = async (
       createdAt: new Date().toISOString(),
     })
 
-    return priorSolveCount + 1
+    return { bloodNumber: priorSolveCount + 1, points }
   })
 }
 
@@ -1231,9 +1240,9 @@ export const submitFlag = async (
     'successfull flag submission'
   )
 
-  let bloodNumber: number | null
+  let solve: Awaited<ReturnType<typeof createPricedSolve>>
   try {
-    bloodNumber = await createSolveAndGetBloodNumber(db, {
+    solve = await createPricedSolve(db, {
       challengeId: params.challengeId,
       userId: params.userId,
       submissionIp: params.submissionIp,
@@ -1266,9 +1275,10 @@ export const submitFlag = async (
     throw error
   }
 
-  if (bloodNumber === null) {
+  if (solve === null) {
     return res.badChallenge()
   }
+  const { bloodNumber } = solve
 
   if (shouldNotifyBloodbot(bloodNumber)) {
     getUser(db, params.userId)
@@ -1285,7 +1295,7 @@ export const submitFlag = async (
 
   requestChallengeRecompute(redis, params.challengeId, 'flag')
   forceLeaderboardUpdate(redis)
-  return res.goodFlag()
+  return res.goodFlag({ points: solve.points })
 }
 
 export const deleteSolve = async (

@@ -8,17 +8,26 @@ type Db = DatabaseClient | DatabaseTx
 /** Sources that undo/redo score for account state — not real point gains. */
 const BONG_POINTS_EXCLUDED_SOURCES = ['ban', 'delete'] as const
 
+export type BongCounts = {
+  /** Bongs unlocked by points (high-water mark). */
+  bongsEarned: number
+  /** Every bong received: earned plus manual grants. */
+  bongsTotal: number
+  bongsAvailable: number
+}
+
+/** Credit bongs newly unlocked by points; never revokes earned or granted ones. */
 export function settleBongCounts(
   pointsEarned: number,
-  bongsTotal: number,
-  bongsAvailable: number,
+  current: BongCounts,
   max = MAX_BONGS
-): { bongsTotal: number; bongsAvailable: number } {
+): BongCounts {
   const earned = bongsFromPoints(pointsEarned, max)
-  const newlyEarned = Math.max(0, earned - bongsTotal)
+  const newlyEarned = Math.max(0, earned - current.bongsEarned)
   return {
-    bongsTotal: bongsTotal + newlyEarned,
-    bongsAvailable: bongsAvailable + newlyEarned,
+    bongsEarned: current.bongsEarned + newlyEarned,
+    bongsTotal: current.bongsTotal + newlyEarned,
+    bongsAvailable: current.bongsAvailable + newlyEarned,
   }
 }
 
@@ -67,6 +76,7 @@ export const listBongs = async (db: DatabaseClient) => {
       name: users.name,
       avatarUrl: users.avatarUrl,
       score: users.score,
+      bongsEarned: users.bongsEarned,
       bongsTotal: users.bongsTotal,
       bongsAvailable: users.bongsAvailable,
     })
@@ -74,14 +84,18 @@ export const listBongs = async (db: DatabaseClient) => {
     .where(eq(users.banned, false))
     .orderBy(desc(users.bongsAvailable), desc(users.score), users.name)
 
-  return rows.map(row => ({
-    ...row,
-    ...settleBongCounts(
-      earnedByUser.get(row.id) ?? 0,
-      row.bongsTotal,
-      row.bongsAvailable
-    ),
-  }))
+  return rows.map(({ bongsEarned, bongsTotal, bongsAvailable, ...row }) => {
+    const settled = settleBongCounts(earnedByUser.get(row.id) ?? 0, {
+      bongsEarned,
+      bongsTotal,
+      bongsAvailable,
+    })
+    return {
+      ...row,
+      bongsTotal: settled.bongsTotal,
+      bongsAvailable: settled.bongsAvailable,
+    }
+  })
 }
 
 export const giveBong = async (
@@ -91,6 +105,7 @@ export const giveBong = async (
   return db.transaction(async tx => {
     const [current] = await tx
       .select({
+        bongsEarned: users.bongsEarned,
         bongsTotal: users.bongsTotal,
         bongsAvailable: users.bongsAvailable,
       })
@@ -99,16 +114,13 @@ export const giveBong = async (
       .for('update')
     if (!current) return undefined
 
-    const settled = settleBongCounts(
-      await bongPointsEarned(tx, id),
-      current.bongsTotal,
-      current.bongsAvailable
-    )
+    const settled = settleBongCounts(await bongPointsEarned(tx, id), current)
     if (settled.bongsAvailable <= 0) return undefined
 
     const [row] = await tx
       .update(users)
       .set({
+        bongsEarned: settled.bongsEarned,
         bongsTotal: settled.bongsTotal,
         bongsAvailable: settled.bongsAvailable - 1,
       })
@@ -118,7 +130,7 @@ export const giveBong = async (
   })
 }
 
-/** Manually grant one available bong (correction / compensation). */
+/** Manually grant one bong (correction / compensation); raises total too. */
 export const addBong = async (
   db: DatabaseClient,
   id: string
@@ -126,6 +138,7 @@ export const addBong = async (
   return db.transaction(async tx => {
     const [current] = await tx
       .select({
+        bongsEarned: users.bongsEarned,
         bongsTotal: users.bongsTotal,
         bongsAvailable: users.bongsAvailable,
       })
@@ -134,16 +147,13 @@ export const addBong = async (
       .for('update')
     if (!current) return undefined
 
-    const settled = settleBongCounts(
-      await bongPointsEarned(tx, id),
-      current.bongsTotal,
-      current.bongsAvailable
-    )
+    const settled = settleBongCounts(await bongPointsEarned(tx, id), current)
 
     const [row] = await tx
       .update(users)
       .set({
-        bongsTotal: settled.bongsTotal,
+        bongsEarned: settled.bongsEarned,
+        bongsTotal: settled.bongsTotal + 1,
         bongsAvailable: settled.bongsAvailable + 1,
       })
       .where(eq(users.id, id))

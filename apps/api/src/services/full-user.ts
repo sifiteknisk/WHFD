@@ -27,6 +27,7 @@ export type FullUser = Omit<User, 'email' | 'ctftimeId'> & {
   email: string | null
   ctftimeId: string | null
   score: number
+  bongsEarned: number
   bongsTotal: number
   bongsAvailable: number
   /** Cumulative points gained that count toward bongs. */
@@ -47,6 +48,7 @@ export const getFullUser = async (
       db
         .select({
           score: users.score,
+          bongsEarned: users.bongsEarned,
           bongsTotal: users.bongsTotal,
           bongsAvailable: users.bongsAvailable,
           globalRank: users.globalRank,
@@ -108,17 +110,18 @@ export const getFullUser = async (
   }
 
   const score = freshRanks?.score ?? 0
-  const bongs = settleBongCounts(
-    pointsEarned,
-    freshRanks?.bongsTotal ?? 0,
-    freshRanks?.bongsAvailable ?? 0
-  )
+  const bongs = settleBongCounts(pointsEarned, {
+    bongsEarned: freshRanks?.bongsEarned ?? 0,
+    bongsTotal: freshRanks?.bongsTotal ?? 0,
+    bongsAvailable: freshRanks?.bongsAvailable ?? 0,
+  })
 
   return {
     ...user,
     email: user.email ?? null,
     ctftimeId: user.ctftimeId ?? null,
     score,
+    bongsEarned: bongs.bongsEarned,
     bongsTotal: bongs.bongsTotal,
     bongsAvailable: bongs.bongsAvailable,
     bongPoints: pointsEarned,

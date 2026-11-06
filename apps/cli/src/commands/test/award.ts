@@ -74,11 +74,11 @@ export const awardTestSolve = async (
   )
 
   const row = await getUser(db, user.id)
-  const bongs = settleBongCounts(
-    await bongPointsEarned(db, user.id),
-    row?.bongsTotal ?? 0,
-    row?.bongsAvailable ?? 0
-  )
+  const bongs = settleBongCounts(await bongPointsEarned(db, user.id), {
+    bongsEarned: row?.bongsEarned ?? 0,
+    bongsTotal: row?.bongsTotal ?? 0,
+    bongsAvailable: row?.bongsAvailable ?? 0,
+  })
 
   return {
     challengeId,

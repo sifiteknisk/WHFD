@@ -29,6 +29,9 @@ export const users = pgTable(
     statusText: text('status_text'),
     banned: boolean().notNull().default(false),
     score: integer().notNull().default(0),
+    // Bongs unlocked by points gained (high-water mark; decay never lowers it).
+    bongsEarned: integer('bongs_earned').notNull().default(0),
+    // Every bong the team has received: earned from points plus manual grants.
     bongsTotal: integer('bongs_total').notNull().default(0),
     bongsAvailable: integer('bongs_available').notNull().default(0),
     globalRank: integer('global_rank'),
@@ -67,7 +70,7 @@ export const users = pgTable(
     ),
     check(
       'bongs_available_in_range',
-      sql`bongs_available >= 0 AND bongs_total >= 0`
+      sql`bongs_available >= 0 AND bongs_available <= bongs_total AND bongs_earned >= 0 AND bongs_earned <= bongs_total`
     ),
     index('users_global_leaderboard_idx')
       .using('btree', sql`global_rank ASC`)

@@ -40,7 +40,8 @@
   type ChallengeDetailProps = {
     challenge: Challenge | null
     isSolved: boolean
-    onSolve: (challengeId: string) => void
+    /** `points` is what the solve earned, or `null` if it was already solved. */
+    onSolve: (challengeId: string, points: number | null) => void
   }
 
   const DESKTOP_MIN_WIDTH = 768
@@ -113,18 +114,29 @@
     if (!open) closeDrawer('backdrop')
   }
 
-  function handleSolve(challengeId: string) {
-    const challenge = challenges.find(item => item.id === challengeId)
+  function handleSolve(challengeId: string, points: number | null) {
     const user = userQuery.data
-    if (challenge && user?.score !== undefined) {
-      announceSolvePoints(user.score, challenge.points, user.bongPoints)
-      const gained = bongsGainedFromSolve(user.bongPoints, challenge.points)
+    // Already solved (e.g. by a teammate): nothing new was earned here, so
+    // leave the counters to the server refetch instead of guessing.
+    if (points !== null && user) {
+      announceSolvePoints(user.score, points, user.bongPoints)
+      const gained = bongsGainedFromSolve(user.bongPoints, points)
       queryClient.setQueryData(queryKeys.userSelf, {
         ...user,
-        bongPoints: user.bongPoints + challenge.points,
+        bongPoints: user.bongPoints + points,
+        bongsEarned: user.bongsEarned + gained,
         bongsTotal: user.bongsTotal + gained,
         bongsAvailable: user.bongsAvailable + gained,
       })
+      // The awarded points are the challenge's value after counting this
+      // solve, so the list and its totals can show it before the refetch.
+      queryClient.setQueryData(queryKeys.challenges, (list?: Challenge[]) =>
+        list?.map(item =>
+          item.id === challengeId
+            ? { ...item, points, solves: item.solves + 1, yourScore: points }
+            : item
+        )
+      )
     }
     invalidateAfterSolve(queryClient, challengeId, id => localSolvedIds.add(id))
   }

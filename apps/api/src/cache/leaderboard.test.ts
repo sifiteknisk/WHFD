@@ -21,12 +21,12 @@ const emptyLeaderboard: CalculatedLeaderboard = {
 }
 
 describe.skipIf(!client)('leaderboard bong persistence', () => {
-  test('keeps five manual grants through repeated leaderboard refreshes and redemption', async () => {
+  test('keeps five manual grants (counted in total) through refreshes and redemption', async () => {
     await drizzle(client!).transaction(async tx => {
       // Shadow application tables so this test cannot update real teams.
       await tx.execute(sql`
         CREATE TEMP TABLE users (
-          id text PRIMARY KEY, name text, banned boolean DEFAULT false,
+          id text PRIMARY KEY, name text, avatar_url text, banned boolean DEFAULT false,
           score int DEFAULT 0, bongs_total int DEFAULT 0,
           bongs_available int DEFAULT 0, global_rank int, division_rank int,
           last_solve_at timestamptz, last_tiebreak_solve_at timestamptz,
@@ -41,34 +41,52 @@ describe.skipIf(!client)('leaderboard bong persistence', () => {
         ) ON COMMIT DROP;
         INSERT INTO users (id, name) VALUES ('manual-team', 'Manual team');
       `)
-      const migration = await Bun.file(
-        new URL(
-          '../../../../packages/db/migrations/0030_allow_manual_bong_balance.sql',
-          import.meta.url
-        )
-      ).text()
-      await tx.execute(sql.raw(migration))
+      for (const name of [
+        '0030_allow_manual_bong_balance',
+        '0031_enforce_bong_balance',
+      ]) {
+        const migration = await Bun.file(
+          new URL(
+            `../../../../packages/db/migrations/${name}.sql`,
+            import.meta.url
+          )
+        ).text()
+        await tx.execute(sql.raw(migration))
+      }
       const db = tx as unknown as DatabaseClient
       for (let i = 0; i < 5; i++) await addBong(db, 'manual-team')
       const counts = async () => {
         const [row] = await db
           .select({
+            bongsEarned: users.bongsEarned,
             bongsTotal: users.bongsTotal,
             bongsAvailable: users.bongsAvailable,
           })
           .from(users)
         return row
       }
-      expect(await counts()).toEqual({ bongsTotal: 0, bongsAvailable: 5 })
+      expect(await counts()).toEqual({
+        bongsEarned: 0,
+        bongsTotal: 5,
+        bongsAvailable: 5,
+      })
       for (let i = 0; i < 3; i++) {
         await cacheLeaderboard(db, emptyLeaderboard)
-        expect(await counts()).toEqual({ bongsTotal: 0, bongsAvailable: 5 })
+        expect(await counts()).toEqual({
+          bongsEarned: 0,
+          bongsTotal: 5,
+          bongsAvailable: 5,
+        })
       }
       expect(await giveBong(db, 'manual-team')).toBe(4)
       await cacheLeaderboard(db, emptyLeaderboard)
-      expect(await counts()).toEqual({ bongsTotal: 0, bongsAvailable: 4 })
+      expect(await counts()).toEqual({
+        bongsEarned: 0,
+        bongsTotal: 5,
+        bongsAvailable: 4,
+      })
       expect(await listBongs(db)).toMatchObject([
-        { id: 'manual-team', bongsTotal: 0, bongsAvailable: 4 },
+        { id: 'manual-team', bongsTotal: 5, bongsAvailable: 4 },
       ])
       await tx.execute(sql`
         INSERT INTO score_events (userid, points_delta, source)
@@ -88,20 +106,34 @@ describe.skipIf(!client)('leaderboard bong persistence', () => {
           },
         ],
       }
-      await cacheLeaderboard(db, earnedLeaderboard)
-      expect(await counts()).toEqual({ bongsTotal: 1, bongsAvailable: 5 })
-      await cacheLeaderboard(db, earnedLeaderboard)
-      expect(await counts()).toEqual({ bongsTotal: 1, bongsAvailable: 5 })
+      for (let i = 0; i < 2; i++) {
+        await cacheLeaderboard(db, earnedLeaderboard)
+        expect(await counts()).toEqual({
+          bongsEarned: 1,
+          bongsTotal: 6,
+          bongsAvailable: 5,
+        })
+      }
       for (let i = 4; i >= 0; i--) {
         expect(await giveBong(db, 'manual-team')).toBe(i)
       }
       expect(await giveBong(db, 'manual-team')).toBeUndefined()
       await cacheLeaderboard(db, earnedLeaderboard)
-      expect(await counts()).toEqual({ bongsTotal: 1, bongsAvailable: 0 })
+      expect(await counts()).toEqual({
+        bongsEarned: 1,
+        bongsTotal: 6,
+        bongsAvailable: 0,
+      })
       expect(await addBong(db, 'manual-team')).toEqual({
-        bongsTotal: 1,
+        bongsTotal: 7,
         bongsAvailable: 1,
       })
+      // The database itself refuses more available bongs than total.
+      await expect(
+        tx.transaction(sp =>
+          sp.execute(sql`UPDATE users SET bongs_available = bongs_total + 1`)
+        )
+      ).rejects.toThrow()
     })
   })
 })

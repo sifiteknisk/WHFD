@@ -40,7 +40,8 @@
     instancerExtendable: boolean
     instancerStoppable: boolean
     instancerActions: { id: string; label: string }[]
-    onSolve: (challengeId: string) => void
+    /** `points` is what the solve earned, or `null` if it was already solved. */
+    onSolve: (challengeId: string, points: number | null) => void
     admin?: boolean
   }
 
@@ -189,10 +190,10 @@
     const res = await apiRequest(SubmitFlagRoute, { id: challengeId, flag })
     if (res.kind === GoodFlag.kind) {
       toast.success('Flag correct!')
-      onSolve(challengeId)
+      onSolve(challengeId, res.data.points)
     } else if (res.kind === BadAlreadySolvedChallenge.kind) {
-      toast.info('You already solved this challenge')
-      onSolve(challengeId)
+      toast.info('Your team already solved this challenge')
+      onSolve(challengeId, null)
     } else {
       showApiError(res)
     }

@@ -25,6 +25,8 @@ To get started with rCTF, visit the [documentation](https://rctf.osec.io). A [li
 
 ## Development
 
+For the production server's SSH helpers, see [NREC operations](deploy/nrec/README.md).
+
 rCTF requires [Bun v1.0+](https://bun.sh/).
 
 1. Install dependencies:
