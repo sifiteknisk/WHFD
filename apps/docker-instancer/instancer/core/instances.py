@@ -125,7 +125,7 @@ async def _show_containers(containers: list[DockerContainer]) -> list[dict]:
 
 
 async def start_instance(form: protocol.RCTFCreateInstanceForm) -> protocol.RCTFInstanceDetails:
-    async with instance_lock(form.challenge_integration_id, form.team_id) as acquired:
+    async with _start_slot(), instance_lock(form.challenge_integration_id, form.team_id) as acquired:
         if not acquired:
             raise NOT_ACQUIRED_ERROR
 
@@ -133,77 +133,76 @@ async def start_instance(form: protocol.RCTFCreateInstanceForm) -> protocol.RCTF
         if await instance_exists(docker, form.challenge_integration_id, form.team_id):
             raise HTTPException(status_code=400, detail='Instance already exists, stop it first')
 
-        async with _start_slot():
-            started_at = timestamp_milliseconds()
-            expires_at = started_at + form.timeout_milliseconds
-            instance_id = uuid.uuid4().hex[:12]
+        started_at = timestamp_milliseconds()
+        expires_at = started_at + form.timeout_milliseconds
+        instance_id = uuid.uuid4().hex[:12]
 
-            common_labels = get_common_labels(
-                instance_id=instance_id,
-                expires_at=expires_at,
-                challenge_id=form.challenge_integration_id,
-                team_id=form.team_id,
-                started_at=started_at,
-            )
+        common_labels = get_common_labels(
+            instance_id=instance_id,
+            expires_at=expires_at,
+            challenge_id=form.challenge_integration_id,
+            team_id=form.team_id,
+            started_at=started_at,
+        )
 
-            exposes: dict[str, list[protocol.InstancerExpose]] = {}
-            expose_indices: dict[str, list[int]] = {}
-            for index, expose in enumerate(form.expose):
-                exposes.setdefault(expose.container_name, []).append(expose)
-                expose_indices.setdefault(expose.container_name, []).append(index)
+        exposes: dict[str, list[protocol.InstancerExpose]] = {}
+        expose_indices: dict[str, list[int]] = {}
+        for index, expose in enumerate(form.expose):
+            exposes.setdefault(expose.container_name, []).append(expose)
+            expose_indices.setdefault(expose.container_name, []).append(index)
 
-            env_context = {
-                'RCTF_FLAG': form.flags[0].flag if form.flags else '',
-                'RCTF_FLAGS': orjson.dumps([flag.model_dump() for flag in form.flags]).decode(),
-                'RCTF_EXPOSED_HOSTNAMES': orjson.dumps(build_exposed_hostnames(form.expose, instance_id)).decode(),
-            }
+        env_context = {
+            'RCTF_FLAG': form.flags[0].flag if form.flags else '',
+            'RCTF_FLAGS': orjson.dumps([flag.model_dump() for flag in form.flags]).decode(),
+            'RCTF_EXPOSED_HOSTNAMES': orjson.dumps(build_exposed_hostnames(form.expose, instance_id)).decode(),
+        }
 
-            created_containers: list[DockerContainer] = []
-            networks_created: dict[str, str] = {}
-            routing_networks_created: list[str] = []
-            volumes_created: dict[str, str] = {}
-            indexed_endpoints: list[tuple[int, protocol.RCTFInstanceDetails.Endpoint]] = []
+        created_containers: list[DockerContainer] = []
+        networks_created: dict[str, str] = {}
+        routing_networks_created: list[str] = []
+        volumes_created: dict[str, str] = {}
+        indexed_endpoints: list[tuple[int, protocol.RCTFInstanceDetails.Endpoint]] = []
 
-            try:
-                networks_created = await create_networks(docker, form.config.networks, common_labels)
-                volumes_created = await create_volumes(docker, form.config.volumes, common_labels)
-                for i, (svc_name, container) in enumerate(form.config.services.items()):
-                    await _ensure_image(docker, container.image)
+        try:
+            networks_created = await create_networks(docker, form.config.networks, common_labels)
+            volumes_created = await create_volumes(docker, form.config.volumes, common_labels)
+            for i, (svc_name, container) in enumerate(form.config.services.items()):
+                await _ensure_image(docker, container.image)
 
-                    routing_network: str | None = None
-                    if exposes.get(svc_name):
-                        routing_network = await create_routing_network(docker, instance_id, i, common_labels)
-                        routing_networks_created.append(routing_network)
+                routing_network: str | None = None
+                if exposes.get(svc_name):
+                    routing_network = await create_routing_network(docker, instance_id, i, common_labels)
+                    routing_networks_created.append(routing_network)
 
-                    created, endpoints = await create_container(
-                        docker=docker,
-                        challenge_integration_id=form.challenge_integration_id,
-                        exposes=exposes,
-                        networks_created=networks_created,
-                        volumes_created=volumes_created,
-                        common_labels=common_labels,
-                        svc_name=svc_name,
-                        container=container,
-                        routing_network=routing_network,
-                        global_indices=expose_indices.get(svc_name, []),
-                        env_context=env_context,
-                    )
-                    created_containers.append(created)
-                    indexed_endpoints.extend(zip(expose_indices.get(svc_name, []), endpoints, strict=True))
-
-                await asyncio.gather(*[container.start() for container in created_containers])
-            except Exception as err:
-                await cleanup_containers(created_containers)
-                await cleanup_networks(docker, list(networks_created.values()) + routing_networks_created)
-                await cleanup_volumes(docker, list(volumes_created.values()))
-
-                if isinstance(err, HTTPException):
-                    raise
-
-                logger.opt(exception=err).error(
-                    f'Failed to start instance: {form.challenge_integration_id=} {form.team_id=}'
+                created, endpoints = await create_container(
+                    docker=docker,
+                    challenge_integration_id=form.challenge_integration_id,
+                    exposes=exposes,
+                    networks_created=networks_created,
+                    volumes_created=volumes_created,
+                    common_labels=common_labels,
+                    svc_name=svc_name,
+                    container=container,
+                    routing_network=routing_network,
+                    global_indices=expose_indices.get(svc_name, []),
+                    env_context=env_context,
                 )
-                raise HTTPException(status_code=500, detail='Failed to start instance') from err
+                created_containers.append(created)
+                indexed_endpoints.extend(zip(expose_indices.get(svc_name, []), endpoints, strict=True))
+
+            await asyncio.gather(*[container.start() for container in created_containers])
+        except Exception as err:
+            await cleanup_containers(created_containers)
+            await cleanup_networks(docker, list(networks_created.values()) + routing_networks_created)
+            await cleanup_volumes(docker, list(volumes_created.values()))
+
+            if isinstance(err, HTTPException):
+                raise
+
+            logger.opt(exception=err).error(
+                f'Failed to start instance: {form.challenge_integration_id=} {form.team_id=}'
+            )
+            raise HTTPException(status_code=500, detail='Failed to start instance') from err
 
         all_endpoints = [endpoint for _, endpoint in sorted(indexed_endpoints, key=lambda item: item[0])]
         return protocol.RCTFInstanceDetails(
