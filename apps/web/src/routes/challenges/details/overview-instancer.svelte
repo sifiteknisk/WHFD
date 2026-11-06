@@ -37,6 +37,7 @@
   import {
     reportStartFailure,
     reportStartReady,
+    showPanel,
     startNotices,
   } from '$lib/instancer/start-feedback.svelte'
   import { useChallengeInstance } from '$lib/query/challenges'
@@ -99,6 +100,10 @@
   const startNotice = $derived(
     admin ? undefined : startNotices.get(challengeId)
   )
+
+  $effect(() => {
+    if (!admin) return showPanel(challengeId)
+  })
 
   const status = $derived(instanceQuery.data?.status ?? InstanceStatus.STOPPED)
   const endpoints = $derived(instanceQuery.data?.endpoints ?? [])

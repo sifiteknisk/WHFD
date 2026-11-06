@@ -1,17 +1,24 @@
 import { goto } from '$app/navigation'
-import { page } from '$app/state'
 import { toast } from '$lib/toast'
 import { SvelteMap } from 'svelte/reactivity'
 
 /** Why the last start of each challenge's instance failed, for its panel. */
 export const startNotices = new SvelteMap<string, string>()
 
+// NOTE: Tracked by the panels themselves rather than read from `page.url`,
+// which shallow routing (selecting a challenge) does not update.
+const shownPanels = new Set<string>()
+
+/** Marks a challenge's instancer panel as on screen until the returned cleanup runs. */
+export function showPanel(challengeId: string): () => void {
+  shownPanels.add(challengeId)
+  return () => {
+    shownPanels.delete(challengeId)
+  }
+}
+
 export function isViewingChallenge(challengeId: string): boolean {
-  return (
-    document.visibilityState === 'visible' &&
-    page.url.pathname.startsWith('/challenges') &&
-    page.url.searchParams.get('challenge') === challengeId
-  )
+  return document.visibilityState === 'visible' && shownPanels.has(challengeId)
 }
 
 function openChallenge(challengeId: string) {
