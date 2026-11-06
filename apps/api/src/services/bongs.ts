@@ -130,11 +130,16 @@ export const giveBong = async (
   })
 }
 
-/** Manually grant one bong (correction / compensation); raises total too. */
+/**
+ * Manually grant one bong (correction / compensation); raises total too.
+ * Refused with `'max'` once the team has received `MAX_BONGS` in total.
+ */
 export const addBong = async (
   db: DatabaseClient,
   id: string
-): Promise<{ bongsTotal: number; bongsAvailable: number } | undefined> => {
+): Promise<
+  { bongsTotal: number; bongsAvailable: number } | 'max' | undefined
+> => {
   return db.transaction(async tx => {
     const [current] = await tx
       .select({
@@ -148,6 +153,7 @@ export const addBong = async (
     if (!current) return undefined
 
     const settled = settleBongCounts(await bongPointsEarned(tx, id), current)
+    if (settled.bongsTotal >= MAX_BONGS) return 'max'
 
     const [row] = await tx
       .update(users)

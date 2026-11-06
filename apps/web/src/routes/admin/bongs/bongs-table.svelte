@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { MAX_BONGS } from '@rctf/util'
   import { IconCaretDown, IconSearch, IconTicket } from '$lib/icons'
   import EmptyState from '$lib/ui/empty-state.svelte'
   import LazyAvatar from '$lib/ui/lazy-avatar.svelte'
@@ -103,6 +104,7 @@
 
 {#snippet row(team: BongTeam, index: number)}
   {@const busy = decreasingId === team.id || increasingId === team.id}
+  {@const maxed = team.bongsTotal >= MAX_BONGS}
   <bongs-row
     data-even={index % 2 === 0 || undefined}
     data-ready={team.bongsAvailable > 0 || undefined}
@@ -133,9 +135,11 @@
       <actions>
         <button
           type="button"
-          disabled={busy}
+          disabled={maxed || busy}
           aria-label="Increase available bongs for {team.name} by 1"
-          title="Increase available bongs by 1"
+          title={maxed
+            ? `Already received the max of ${MAX_BONGS} bongs`
+            : 'Increase available bongs by 1'}
           onclick={() => onIncrease(team)}
         >
           {#if increasingId === team.id}

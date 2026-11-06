@@ -55,3 +55,8 @@ export const BadNoAvailableBongs = response('badNoAvailableBongs', {
   status: 409,
   message: 'The team has no available bongs.',
 })
+
+export const BadMaxBongs = response('badMaxBongs', {
+  status: 409,
+  message: 'The team has already received the maximum number of bongs.',
+})

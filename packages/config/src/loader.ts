@@ -133,6 +133,7 @@ export const loadEnvConfig = (): ConfigLayer => {
     ['meta', meta],
     ['faviconUrl', getEnvString('RCTF_FAVICON_URL')],
     ['globalSiteTag', getEnvString('RCTF_GLOBAL_SITE_TAG')],
+    ['researchTracking', getEnvBoolean('RCTF_RESEARCH_TRACKING')],
     ['email', email],
     ['startTime', getEnvInteger('RCTF_START_TIME')],
     ['endTime', getEnvInteger('RCTF_END_TIME')],

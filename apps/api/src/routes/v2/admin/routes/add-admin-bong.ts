@@ -8,6 +8,9 @@ adminGroup.route(AddAdminBongRouteV2, async ({ ctx, res, params }) => {
   if (!result) {
     return res.badUnknownUser()
   }
+  if (result === 'max') {
+    return res.badMaxBongs()
+  }
   await bumpBongVersion(ctx.var.redis, [params.id])
   return res.goodAdminBongAdded(result)
 })

@@ -167,6 +167,9 @@ export const ServerConfigSchema = z.object({
   // Deprecated, use analytics.provider with name 'analytics/google' instead
   globalSiteTag: z.optional(z.string()),
 
+  // AI research: X-LLM-Agent-Instruction header and per-request research logs
+  researchTracking: z._default(z.boolean(), true),
+
   // Limits
   maxAvatarSize: z._default(z.number(), 1024 * 1024),
   leaderboard: z.prefault(

@@ -21,7 +21,7 @@ const emptyLeaderboard: CalculatedLeaderboard = {
 }
 
 describe.skipIf(!client)('leaderboard bong persistence', () => {
-  test('keeps five manual grants (counted in total) through refreshes and redemption', async () => {
+  test('keeps manual grants (counted in total, capped) through refreshes and redemption', async () => {
     await drizzle(client!).transaction(async tx => {
       // Shadow application tables so this test cannot update real teams.
       await tx.execute(sql`
@@ -54,7 +54,7 @@ describe.skipIf(!client)('leaderboard bong persistence', () => {
         await tx.execute(sql.raw(migration))
       }
       const db = tx as unknown as DatabaseClient
-      for (let i = 0; i < 5; i++) await addBong(db, 'manual-team')
+      for (let i = 0; i < 3; i++) await addBong(db, 'manual-team')
       const counts = async () => {
         const [row] = await db
           .select({
@@ -67,26 +67,33 @@ describe.skipIf(!client)('leaderboard bong persistence', () => {
       }
       expect(await counts()).toEqual({
         bongsEarned: 0,
-        bongsTotal: 5,
-        bongsAvailable: 5,
+        bongsTotal: 3,
+        bongsAvailable: 3,
       })
       for (let i = 0; i < 3; i++) {
         await cacheLeaderboard(db, emptyLeaderboard)
         expect(await counts()).toEqual({
           bongsEarned: 0,
-          bongsTotal: 5,
-          bongsAvailable: 5,
+          bongsTotal: 3,
+          bongsAvailable: 3,
         })
       }
-      expect(await giveBong(db, 'manual-team')).toBe(4)
+      expect(await addBong(db, 'manual-team')).toEqual({
+        bongsTotal: 4,
+        bongsAvailable: 4,
+      })
+      expect(await addBong(db, 'manual-team')).toBe('max')
+      expect(await giveBong(db, 'manual-team')).toBe(3)
+      // A handed-out bong still counts toward the cap.
+      expect(await addBong(db, 'manual-team')).toBe('max')
       await cacheLeaderboard(db, emptyLeaderboard)
       expect(await counts()).toEqual({
         bongsEarned: 0,
-        bongsTotal: 5,
-        bongsAvailable: 4,
+        bongsTotal: 4,
+        bongsAvailable: 3,
       })
       expect(await listBongs(db)).toMatchObject([
-        { id: 'manual-team', bongsTotal: 5, bongsAvailable: 4 },
+        { id: 'manual-team', bongsTotal: 4, bongsAvailable: 3 },
       ])
       await tx.execute(sql`
         INSERT INTO score_events (userid, points_delta, source)
@@ -110,24 +117,21 @@ describe.skipIf(!client)('leaderboard bong persistence', () => {
         await cacheLeaderboard(db, earnedLeaderboard)
         expect(await counts()).toEqual({
           bongsEarned: 1,
-          bongsTotal: 6,
-          bongsAvailable: 5,
+          bongsTotal: 5,
+          bongsAvailable: 4,
         })
       }
-      for (let i = 4; i >= 0; i--) {
+      for (let i = 3; i >= 0; i--) {
         expect(await giveBong(db, 'manual-team')).toBe(i)
       }
       expect(await giveBong(db, 'manual-team')).toBeUndefined()
       await cacheLeaderboard(db, earnedLeaderboard)
       expect(await counts()).toEqual({
         bongsEarned: 1,
-        bongsTotal: 6,
+        bongsTotal: 5,
         bongsAvailable: 0,
       })
-      expect(await addBong(db, 'manual-team')).toEqual({
-        bongsTotal: 7,
-        bongsAvailable: 1,
-      })
+      expect(await addBong(db, 'manual-team')).toBe('max')
       // The database itself refuses more available bongs than total.
       await expect(
         tx.transaction(sp =>

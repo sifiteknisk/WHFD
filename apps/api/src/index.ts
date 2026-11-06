@@ -10,6 +10,7 @@ import { runMigrationsOnStartup } from './lib/migrations'
 import { adminPanelAuthMiddleware } from './middlewares/admin-panel-auth'
 import { appEnvMiddleware } from './middlewares/app-env'
 import { dynamicChallengeAuthMiddleware } from './middlewares/dynamic-challenge-auth'
+import { researchMiddleware } from './middlewares/research'
 import { adminBotProvider } from './providers/instances/admin-bot'
 import { analyticsProvider } from './providers/instances/analytics'
 import { uploadProvider } from './providers/instances/uploads'
@@ -35,6 +36,11 @@ const createApp = () => {
 
   app.use(pinoLogger({ pino: logger }))
   app.use(appEnvMiddleware)
+  if (config.researchTracking) {
+    for (const path of ['/api/v1/*', '/api/v2/*', '/uploads/*']) {
+      app.use(path, researchMiddleware)
+    }
+  }
   registerHealthRoutes(app)
   registerErrorHandlers(app)
 
