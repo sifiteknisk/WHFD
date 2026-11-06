@@ -21,6 +21,10 @@
   import { apiRequest, showApiError } from '$lib/api'
   import CaptchaNotice from '$lib/components/captcha-notice.svelte'
   import { IconArrowSquareOut, IconCopy, IconSignIn } from '$lib/icons'
+  import {
+    runInstanceAction,
+    runningInstanceAction,
+  } from '$lib/instancer/instance-actions.svelte'
   import { isAlreadyStartingError } from '$lib/instancer/pending-start-rules'
   import {
     isStartPending,
@@ -38,7 +42,6 @@
   import Button from '$lib/ui/button.svelte'
   import Progress from '$lib/ui/progress.svelte'
   import Spinner from '$lib/ui/spinner.svelte'
-  import { createAsyncAction } from '$lib/utils/async-action.svelte'
   import { CaptchaError } from '$lib/utils/captcha'
   import { copyText } from '$lib/utils/clipboard'
   import { formatEndpoint } from '$lib/utils/instancer'
@@ -84,7 +87,10 @@
     () => admin
   )
 
-  const instanceAction = createAsyncAction<string>()
+  const actionScope = $derived(admin ? `admin:${challengeId}` : challengeId)
+  const runningAction = $derived(runningInstanceAction(actionScope))
+  const actionKey = $derived(runningAction?.key ?? null)
+  const startIsSlow = $derived(actionKey === 'start' && runningAction?.slow)
 
   const status = $derived(instanceQuery.data?.status ?? InstanceStatus.STOPPED)
   const endpoints = $derived(instanceQuery.data?.endpoints ?? [])
@@ -97,7 +103,7 @@
   // A start that timed out or was queued: the instancer may still be building
   // it, so show that instead of offering Start again.
   const startPending = $derived(
-    !admin && instanceAction.key !== 'start' && isStartPending(challengeId)
+    !admin && actionKey !== 'start' && isStartPending(challengeId)
   )
 
   const transitioning = $derived(
@@ -123,7 +129,8 @@
       return 'queued'
     }
     if (instanceQuery.isLoading) return 'loading'
-    if (instanceQuery.isError) return 'error'
+    // A failed poll keeps the last known status rather than hiding the instance.
+    if (instanceQuery.isError && !instanceQuery.data) return 'error'
     if (status === InstanceStatus.STOPPED) {
       return 'stopped'
     }
@@ -131,7 +138,7 @@
   })
 
   const actionsDisabled = $derived(
-    instanceAction.pending || status === InstanceStatus.STOPPING
+    runningAction !== undefined || status === InstanceStatus.STOPPING
   )
 
   const instanceKey = $derived(
@@ -169,7 +176,9 @@
       pendingStarts.get(id)?.startedAt === tracked.startedAt &&
       userQuery.data?.id === owner
 
-    await instanceAction.run(
+    await runInstanceAction(
+      actionScope,
+      'start',
       async () => {
         if (!isAdmin && owner) {
           tracked = trackStart({
@@ -190,11 +199,12 @@
           queryClient.setQueryData(key, res.data)
           void queryClient.invalidateQueries({ queryKey: key })
           if (!isAdmin && res.data.status === InstanceStatus.STARTING) {
+            // The panel shows it starting; the watcher toasts once it is ready.
             markStarting(id)
-          } else if (!isAdmin) {
-            untrackStart(id)
+          } else {
+            if (!isAdmin) untrackStart(id)
+            toast.success('Instance started', { description: name })
           }
-          toast.success('Instance started')
         } else if (
           !isAdmin &&
           res.kind === BadInstancerError.kind &&
@@ -210,27 +220,19 @@
           }
         }
       },
-      {
-        key: 'start',
-        onError: error => {
-          if (error instanceof CaptchaError) {
-            // The request never went out, and the captcha already toasted.
-            if (stillTracked()) untrackStart(id)
-          } else if (isAdmin) {
-            toast.error(
-              error instanceof Error
-                ? error.message
-                : 'Failed to start instance'
-            )
-          } else if (stillTracked()) {
-            // A 504 or dropped connection can leave the build running.
-            void queryClient.invalidateQueries({ queryKey: key })
-            toast.info('Lots of teams are starting instances', {
-              description:
-                "Yours is still starting. We'll tell you when it's ready.",
-            })
-          }
-        },
+      error => {
+        if (error instanceof CaptchaError) {
+          // The request never went out, and the captcha already toasted.
+          if (stillTracked()) untrackStart(id)
+        } else if (isAdmin) {
+          toast.error(
+            error instanceof Error ? error.message : 'Failed to start instance'
+          )
+        } else if (stillTracked()) {
+          // A 504 or dropped connection can leave the build running. The panel
+          // says so, and the watcher toasts once it is ready.
+          void queryClient.invalidateQueries({ queryKey: key })
+        }
       }
     )
   }
@@ -240,7 +242,9 @@
     const key = instanceKey
     const isAdmin = admin
     const owner = userId
-    await instanceAction.run(
+    await runInstanceAction(
+      actionScope,
+      'stop',
       async () => {
         const res = isAdmin
           ? await apiRequest(DeleteAdminInstanceRouteV2, { id })
@@ -257,12 +261,14 @@
           showApiError(res)
         }
       },
-      { key: 'stop', errorMessage: 'Failed to stop instance' }
+      'Failed to stop instance'
     )
   }
 
   async function extend() {
-    await instanceAction.run(
+    await runInstanceAction(
+      actionScope,
+      'extend',
       async () => {
         const res = admin
           ? await apiRequest(ExtendAdminInstanceRouteV2, { id: challengeId })
@@ -277,7 +283,7 @@
           showApiError(res)
         }
       },
-      { key: 'extend', errorMessage: 'Failed to extend instance' }
+      'Failed to extend instance'
     )
   }
 
@@ -301,7 +307,9 @@
   }
 
   async function runAction(actionId: string) {
-    await instanceAction.run(
+    await runInstanceAction(
+      actionScope,
+      actionId,
       async () => {
         const res = await apiRequest(
           admin ? RunAdminInstanceActionRouteV2 : RunInstanceActionRouteV2,
@@ -324,7 +332,7 @@
           showApiError(res)
         }
       },
-      { key: actionId, errorMessage: 'Failed to run instance action' }
+      'Failed to run instance action'
     )
   }
 
@@ -357,9 +365,15 @@
     </instancer-empty>
   {:else if view === 'stopped'}
     <instancer-empty>
-      <instancer-message>No instance running.</instancer-message>
-      <Button onclick={start} disabled={instanceAction.pending}>
-        {#if instanceAction.key === 'start'}<Spinner />{/if}
+      <instancer-message>
+        {#if startIsSlow}
+          Lots of teams are starting instances, so this can take a minute.
+        {:else}
+          No instance running.
+        {/if}
+      </instancer-message>
+      <Button onclick={start} disabled={runningAction !== undefined}>
+        {#if actionKey === 'start'}<Spinner />{/if}
         Start instance
       </Button>
       <CaptchaNotice
@@ -371,8 +385,8 @@
     <instancer-empty>
       <instancer-status><Spinner /><span>Starting…</span></instancer-status>
       <instancer-message>
-        Lots of teams are starting instances. You can keep browsing; we'll tell
-        you when it's ready.
+        Still starting in the background. You can keep browsing; we'll tell you
+        when it's ready.
       </instancer-message>
     </instancer-empty>
   {:else}
@@ -440,7 +454,7 @@
               onclick={() => runAction(action.id)}
               disabled={actionsDisabled}
             >
-              {#if instanceAction.key === action.id}<Spinner />{/if}
+              {#if actionKey === action.id}<Spinner />{/if}
               {action.label}
             </Button>
           {/each}
@@ -450,7 +464,7 @@
               onclick={extend}
               disabled={actionsDisabled}
             >
-              {#if instanceAction.key === 'extend'}<Spinner />{/if}
+              {#if actionKey === 'extend'}<Spinner />{/if}
               Extend
             </Button>
           {/if}
@@ -460,7 +474,7 @@
               onclick={stop}
               disabled={actionsDisabled}
             >
-              {#if instanceAction.key === 'stop'}<Spinner />{/if}
+              {#if actionKey === 'stop'}<Spinner />{/if}
               Stop
             </Button>
           {/if}

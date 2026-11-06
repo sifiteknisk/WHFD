@@ -12,9 +12,10 @@ Run `rctfscript` after `ssh nrec-rctf`, or connect directly with:
 ssh -t nrec-rctf rctfscript
 ```
 
-The Charm Gum TUI is a short list of command names. `pull` and `restart` are
-first. Type to filter, then Enter. It remembers the last command. Esc cancels a
-form. Ctrl-C quits. Guided inputs keep your text after validation errors.
+The Charm Gum TUI is a short list of command names. `ready` is first: it pulls
+code and restarts in one go. Type to filter, then Enter. It remembers the last
+command. Esc cancels a form. Ctrl-C quits. Guided inputs keep your text after
+validation errors.
 Ctrl-C stops following logs and returns to the results. Output stays up until
 you continue; read-only views can refresh.
 
@@ -69,8 +70,8 @@ rctf ban person@example.org
 rctf unban person@example.org
 rctf backup
 rctf backups
+rctf ready
 rctf restart
-rctf pull
 rctf rollback
 rctf cli test --help
 ```
@@ -99,8 +100,9 @@ traffic switch. It does not restore the database or uploads. The nginx upstream
 snippet records the active slot; all helpers follow it. A systemd drop-in makes
 `whfd-platform` start the selected slot after reboot and stop both slots on shutdown.
 
-Restart does not pull or rebuild source. `rctf pull` fast-forwards git, backs up
-the database, builds the app image and deploys through the same traffic switch.
+`rctf ready` fast-forwards git, backs up the database, builds the app image, then
+restarts onto that build through the traffic switch. `rctf pull` is the same
+command. `rctf restart` does not pull or rebuild; it reuses the running image.
 Both slots share PostgreSQL, Redis and uploads.
 
 ## Backups

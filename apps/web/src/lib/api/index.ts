@@ -273,6 +273,20 @@ export async function apiRequest<TRoute extends AnyRouteDefinition>(
     body: requestBody,
   })
 
-  const payload = await res.json()
+  const payload = await res.json().catch(() => null)
+  if (!res.ok && typeof payload?.kind !== 'string') {
+    throw new ServerUnavailableError(res.status)
+  }
   return parseResponse(route, payload)
+}
+
+/**
+ * The API itself did not answer, e.g. Cloudflare gave up waiting (504) or the
+ * API is down, so the body is a proxy error page rather than an API response.
+ */
+export class ServerUnavailableError extends Error {
+  constructor(public readonly status: number) {
+    super('The server is busy right now. Please try again in a moment.')
+    this.name = 'ServerUnavailableError'
+  }
 }

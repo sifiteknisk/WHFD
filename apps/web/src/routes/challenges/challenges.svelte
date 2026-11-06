@@ -164,8 +164,20 @@
     latched = true
   })
 
-  afterNavigate(() => {
+  afterNavigate(({ type }) => {
     routerReady = true
+    // Links into a challenge (e.g. a toast's Open) while this page is already
+    // mounted; the first load is handled by the deep-link latch above.
+    const linkedId =
+      type === 'goto' || type === 'link'
+        ? getDeepLinkId(page.url, challengeIds)
+        : null
+    if (linkedId) {
+      selectedId = linkedId
+      deepLinkTarget = linkedId
+      pendingDrawerId = isMobile ? linkedId : null
+      void tick().then(() => scrollToRow(linkedId))
+    }
     if (pendingDrawerId && isMobile && page.state.challengeDrawer !== true) {
       const id = pendingDrawerId
       pendingDrawerId = null

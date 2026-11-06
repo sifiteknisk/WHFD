@@ -19,9 +19,9 @@ Usage: rctf <command> [arguments]
   deleteuser <email> [--yes]   Confirm, back up the DB, then delete through the API
   backup                       Back up DB, uploads, config and deployment files
   backups                      List backup directories
+  ready                        Pull code, build, then restart onto that build
   restart                      Warm the other slot, switch traffic, drain the old slot
   rollback                     Switch back to the retained previous slot
-  pull                         Pull code, build and switch to the updated app
   db                           Interactive PostgreSQL console
   cli <arguments...>          Run the application's rctf CLI in its container
 
@@ -32,8 +32,8 @@ Examples:
   rctf cli test --help
 
 Backups: /srv/rctf-data/platform/backups (root only; no automatic pruning).
-Restart reuses the running image; it never pulls code or rebuilds images.
-Pull uses git pull --ff-only, backs up the database and deploys through blue/green.
+ready pulls code, backs up the database, builds, then restarts through blue/green.
+rctf pull is the same command. Restart alone reuses the running image.
 HELP
 }
 
@@ -198,7 +198,11 @@ SQL
     echo "Backup complete: $backup_dir"
     ;;
   backups) arity "$@"; ls -lht "$backup_root" ;;
-  restart|rollback|pull)
+  ready|pull)
+    arity "$@"
+    exec bash "$lib_dir/bluegreen.sh" pull
+    ;;
+  restart|rollback)
     arity "$@"
     exec bash "$lib_dir/bluegreen.sh" "$command"
     ;;
