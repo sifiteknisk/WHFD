@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 
 if [ "$#" -eq 0 ]; then
   echo 'Usage: bun rctf:docker <command> [arguments...]' >&2
-  echo 'Example: bun rctf:docker test first-blood fabianta@uio.no --force' >&2
+  echo 'Example: bun rctf:docker test first-blood person@example.org --force' >&2
   exit 1
 fi
 
