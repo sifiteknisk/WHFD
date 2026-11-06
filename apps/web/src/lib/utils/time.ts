@@ -95,6 +95,12 @@ export function formatCountdown(ms: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
+/** Rounds an estimated wait to something a person can plan around. */
+export function formatWaitEstimate(ms: number): string {
+  if (ms < 60_000) return 'less than a minute'
+  return `about ${Math.round(ms / 60_000)} min`
+}
+
 export function formatClockTime(timestamp: number): string {
   const date = new Date(timestamp)
   const pad = (value: number) => value.toString().padStart(2, '0')

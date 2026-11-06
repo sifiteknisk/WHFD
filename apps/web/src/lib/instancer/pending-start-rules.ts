@@ -3,7 +3,8 @@ import { InstanceStatus } from '@rctf/types'
 /**
  * How long a start is watched before the team is told to try again. Cloudflare
  * drops the Start request after about 100 s, but the instancer keeps going, and
- * pulling a challenge image for the first time can take minutes.
+ * pulling a challenge image for the first time can take minutes. Time spent
+ * waiting in the instancer's start queue does not count.
  */
 export const PENDING_START_TIMEOUT_MS = 300_000
 
@@ -12,21 +13,36 @@ export type PendingStartOutcome =
   | 'errored'
   | 'failed'
   | 'timed-out'
+  | 'queued'
   | 'starting'
   | 'waiting'
 
+type PendingStartTiming = {
+  startedAt: number
+  seenStarting: boolean
+  /** Last time the instancer reported the start as waiting in its queue. */
+  queuedAt?: number
+}
+
+/** When the timeout clock for a tracked start began. */
+export function pendingSince(entry: PendingStartTiming): number {
+  return entry.queuedAt ?? entry.startedAt
+}
+
 /** Decides what a status check means for a tracked start. */
 export function resolvePendingStart(
-  entry: { startedAt: number; seenStarting: boolean },
+  entry: PendingStartTiming,
   status: InstanceStatus | undefined,
-  now: number
+  now: number,
+  queued = false
 ): PendingStartOutcome {
   if (status === InstanceStatus.RUNNING) return 'ready'
   if (status === InstanceStatus.ERRORED) return 'errored'
   // NOTE: The instancer removes everything when a build fails, so an instance
   // that was starting and is now stopped did not make it.
   if (status === InstanceStatus.STOPPED && entry.seenStarting) return 'failed'
-  if (now - entry.startedAt >= PENDING_START_TIMEOUT_MS) return 'timed-out'
+  if (queued) return 'queued'
+  if (now - pendingSince(entry) >= PENDING_START_TIMEOUT_MS) return 'timed-out'
   return status === InstanceStatus.STARTING ? 'starting' : 'waiting'
 }
 

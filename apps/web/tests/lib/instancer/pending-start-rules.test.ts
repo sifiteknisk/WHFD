@@ -2,6 +2,7 @@ import { InstanceStatus } from '@rctf/types'
 import {
   isAlreadyStartingError,
   PENDING_START_TIMEOUT_MS,
+  pendingSince,
   resolvePendingStart,
 } from '$lib/instancer/pending-start-rules'
 import { describe, expect, test } from 'bun:test'
@@ -45,6 +46,39 @@ describe('resolvePendingStart', () => {
     expect(resolvePendingStart(fresh, InstanceStatus.STOPPED, late)).toBe(
       'timed-out'
     )
+  })
+})
+
+describe('queued starts', () => {
+  test('waiting in the queue never times out', () => {
+    expect(
+      resolvePendingStart(building, InstanceStatus.STARTING, late, true)
+    ).toBe('queued')
+  })
+
+  test('the timeout counts from the last time it was seen queued', () => {
+    const leftQueue = { ...building, queuedAt: late }
+    expect(pendingSince(leftQueue)).toBe(late)
+    expect(
+      resolvePendingStart(leftQueue, InstanceStatus.STARTING, late + 5_000)
+    ).toBe('starting')
+    expect(
+      resolvePendingStart(
+        leftQueue,
+        InstanceStatus.STARTING,
+        late + PENDING_START_TIMEOUT_MS
+      )
+    ).toBe('timed-out')
+  })
+
+  test('stopped while queued means it was stopped or failed', () => {
+    expect(
+      resolvePendingStart(
+        { ...building, queuedAt: soon },
+        InstanceStatus.STOPPED,
+        soon
+      )
+    ).toBe('failed')
   })
 })
 

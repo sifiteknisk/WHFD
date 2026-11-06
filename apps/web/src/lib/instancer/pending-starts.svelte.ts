@@ -1,6 +1,6 @@
 import { browser } from '$app/environment'
 import { SvelteMap } from 'svelte/reactivity'
-import { PENDING_START_TIMEOUT_MS } from './pending-start-rules'
+import { PENDING_START_TIMEOUT_MS, pendingSince } from './pending-start-rules'
 
 /**
  * Instance starts the page is still waiting on. When lots of teams press Start
@@ -15,6 +15,8 @@ export type PendingStart = {
   startedAt: number
   /** Set once the instancer reported the instance as starting. */
   seenStarting: boolean
+  /** Last time the instancer reported the start as waiting in its queue. */
+  queuedAt?: number
 }
 
 const STORAGE_KEY = 'pendingInstanceStarts'
@@ -49,8 +51,11 @@ export function restorePendingStarts(): void {
         typeof entry.startedAt === 'number' &&
         Number.isFinite(entry.startedAt) &&
         typeof entry.seenStarting === 'boolean' &&
+        (entry.queuedAt === undefined ||
+          (typeof entry.queuedAt === 'number' &&
+            Number.isFinite(entry.queuedAt))) &&
         entry.startedAt <= now &&
-        now - entry.startedAt < PENDING_START_TIMEOUT_MS
+        now - pendingSince(entry) < PENDING_START_TIMEOUT_MS
       ) {
         pendingStarts.set(entry.challengeId, entry)
       }
@@ -77,6 +82,18 @@ export function markStarting(challengeId: string): void {
   const entry = pendingStarts.get(challengeId)
   if (!entry || entry.seenStarting) return
   pendingStarts.set(challengeId, { ...entry, seenStarting: true })
+  persist()
+}
+
+/** Restarts the timeout clock: a start waiting in the queue has not begun building. */
+export function markQueued(challengeId: string): void {
+  const entry = pendingStarts.get(challengeId)
+  if (!entry) return
+  pendingStarts.set(challengeId, {
+    ...entry,
+    seenStarting: true,
+    queuedAt: Date.now(),
+  })
   persist()
 }
 

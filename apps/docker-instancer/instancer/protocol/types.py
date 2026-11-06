@@ -163,6 +163,9 @@ class RCTFInstanceDetails(BaseModel):
     status: InstanceStatus
     time_left_milliseconds: int | None = Field(serialization_alias='timeLeftMilliseconds')
     endpoints: list[Endpoint] | None
+    # Set while the start waits for the builder; position 1 is built next.
+    queue_position: int | None = Field(default=None, serialization_alias='queuePosition')
+    queue_eta_milliseconds: int | None = Field(default=None, serialization_alias='queueEtaMilliseconds')
 
 
 class RCTFInstancerError(BaseModel):

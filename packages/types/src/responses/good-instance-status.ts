@@ -14,5 +14,19 @@ export const GoodInstanceStatus = response('goodInstanceStatus', {
       z.describe('Milliseconds until expiry, or `null` when not running.')
     ),
     endpoints: z.nullable(z.array(EndpointSchema)),
+    queuePosition: z
+      .optional(z.nullable(z.int()))
+      .check(
+        z.describe(
+          'Place in the start queue while the instance waits to be built; 1 is next.'
+        )
+      ),
+    queueEtaMilliseconds: z
+      .optional(z.nullable(z.int()))
+      .check(
+        z.describe(
+          'Estimated milliseconds until a queued instance has been built.'
+        )
+      ),
   }),
 })

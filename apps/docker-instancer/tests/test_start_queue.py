@@ -98,6 +98,47 @@ def test_start_queues_once_and_reports_starting(m: SimpleNamespace) -> None:
     asyncio.run(scenario())
 
 
+def test_queued_start_reports_position_and_estimate(m: SimpleNamespace, monkeypatch: pytest.MonkeyPatch) -> None:
+    async def scenario() -> None:
+        monkeypatch.setattr(m.instances.config, 'MAX_CONCURRENT_STARTS', 2)
+        first = await m.instances.start_instance(form(m, 'a'))
+        assert first.queue_position == 1
+        assert first.queue_eta_milliseconds == m.instances.ASSUMED_BUILD_SECONDS * 1000
+        for team in 'bc':
+            await m.instances.start_instance(form(m, team))
+
+        await m.cache.record_build_seconds(4)
+        third = await m.instances.get_instance('challenge', 'c')
+        assert third.queue_position == 3
+        assert third.queue_eta_milliseconds == 8000
+        assert third.model_dump(by_alias=True)['queueEtaMilliseconds'] == 8000
+
+        await m.cache.next_start(0.01)
+        building = await m.instances.get_instance('challenge', 'a')
+        assert building.status == STARTING
+        assert building.queue_position is None
+        assert (await m.instances.get_instance('challenge', 'b')).queue_position == 1
+
+    asyncio.run(scenario())
+
+
+def test_builder_records_build_time(m: SimpleNamespace, monkeypatch: pytest.MonkeyPatch) -> None:
+    async def scenario() -> None:
+        build = AsyncMock()
+        monkeypatch.setattr(m.builder, 'build_instance', build)
+        await m.instances.start_instance(form(m))
+        async with running_builder(m):
+            await until(lambda: build.await_count == 1)
+            async with asyncio.timeout(2):
+                while await m.cache.get_build_seconds() is None:
+                    await asyncio.sleep(0.005)
+
+        await m.cache.record_build_seconds(10)
+        assert await m.cache.get_build_seconds() == pytest.approx(2, abs=0.1)
+
+    asyncio.run(scenario())
+
+
 def test_start_rejected_when_queue_full(m: SimpleNamespace, monkeypatch: pytest.MonkeyPatch) -> None:
     async def scenario() -> None:
         monkeypatch.setattr(m.instances.config, 'MAX_QUEUED_STARTS', 2)

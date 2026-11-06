@@ -28,6 +28,7 @@
   import { isAlreadyStartingError } from '$lib/instancer/pending-start-rules'
   import {
     isStartPending,
+    markQueued,
     markStarting,
     pendingStarts,
     trackStart,
@@ -51,7 +52,7 @@
   import { CaptchaError } from '$lib/utils/captcha'
   import { copyText } from '$lib/utils/clipboard'
   import { formatEndpoint } from '$lib/utils/instancer'
-  import { formatCountdown } from '$lib/utils/time'
+  import { formatCountdown, formatWaitEstimate } from '$lib/utils/time'
 
   interface Props {
     challengeId: string
@@ -107,6 +108,11 @@
 
   const status = $derived(instanceQuery.data?.status ?? InstanceStatus.STOPPED)
   const endpoints = $derived(instanceQuery.data?.endpoints ?? [])
+  const queuePosition = $derived(instanceQuery.data?.queuePosition ?? null)
+  const queueEta = $derived(instanceQuery.data?.queueEtaMilliseconds ?? null)
+  const queued = $derived(
+    status === InstanceStatus.STARTING && queuePosition !== null
+  )
   const formattedEndpoints = $derived(
     endpoints.map((endpoint, index) =>
       formatEndpoint(endpoint, index, endpoints.length)
@@ -216,7 +222,8 @@
             toast.success('Instance started')
           } else if (res.data.status === InstanceStatus.STARTING) {
             // The panel shows it starting; the watcher reports when it is ready.
-            markStarting(id)
+            if (res.data.queuePosition != null) markQueued(id)
+            else markStarting(id)
           } else {
             untrackStart(id)
             reportStartReady(id, name)
@@ -414,7 +421,19 @@
     </instancer-empty>
   {:else}
     <instancer-running>
-      {#if status === InstanceStatus.STARTING}
+      {#if queued}
+        <instancer-status
+          ><Spinner /><span>You're #{queuePosition} in the queue</span
+          ></instancer-status
+        >
+        <instancer-message>
+          {#if queueEta !== null}
+            Estimated wait: {formatWaitEstimate(queueEta)}.
+          {/if}
+          Lots of teams are starting instances right now. You can keep browsing; we'll
+          tell you when it's ready.
+        </instancer-message>
+      {:else if status === InstanceStatus.STARTING}
         <instancer-status><Spinner /><span>Starting…</span></instancer-status>
       {:else if status === InstanceStatus.STOPPING}
         <instancer-status><Spinner /><span>Stopping…</span></instancer-status>
@@ -469,7 +488,14 @@
         </instancer-countdown>
       {/if}
 
-      {#if hasActionRow}
+      {#if queued && instancerStoppable}
+        <instancer-actions>
+          <Button variant="secondary" onclick={stop} disabled={actionsDisabled}>
+            {#if actionKey === 'stop'}<Spinner />{/if}
+            Leave queue
+          </Button>
+        </instancer-actions>
+      {:else if hasActionRow && !queued}
         <instancer-actions>
           {#each instancerActions as action (action.id)}
             <Button

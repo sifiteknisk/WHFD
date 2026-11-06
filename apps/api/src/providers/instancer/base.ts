@@ -35,6 +35,8 @@ export const instanceDetailsSchema = z.object({
   status: z.enum(InstanceStatus),
   timeLeftMilliseconds: z.nullable(z.int()),
   endpoints: z.nullable(z.array(instancerEndpointSchema)),
+  queuePosition: z.optional(z.nullable(z.int())),
+  queueEtaMilliseconds: z.optional(z.nullable(z.int())),
 })
 
 export const instancerErrorSchema = z.object({

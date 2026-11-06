@@ -76,13 +76,32 @@ async def mark_instance_ready(instance_id: str, expires_at_ms: int, now_ms: int)
 START_QUEUE_KEY = f'{config.PREFIX}:start-queue'
 START_JOBS_KEY = f'{config.PREFIX}:start-jobs'
 
+BUILD_SECONDS_KEY = f'{config.PREFIX}:build-seconds'
+
 
 def start_job_key(challenge: str, team_id: str) -> str:
     return orjson.dumps([challenge, team_id]).decode()
 
 
-async def is_start_queued(challenge: str, team_id: str) -> bool:
-    return bool(await redis.hexists(START_JOBS_KEY, start_job_key(challenge, team_id)))
+async def get_start_state(challenge: str, team_id: str) -> tuple[bool, int | None]:
+    """Returns whether the team has a start job, and its 1-based place in the queue while it waits."""
+    key = start_job_key(challenge, team_id)
+    async with redis.pipeline(transaction=False) as pipe:
+        pipe.hexists(START_JOBS_KEY, key)
+        pipe.zrank(START_QUEUE_KEY, key)
+        exists, rank = await pipe.execute()
+    return bool(exists), None if rank is None else rank + 1
+
+
+async def get_build_seconds() -> float | None:
+    value = await redis.get(BUILD_SECONDS_KEY)
+    return float(value) if value else None
+
+
+async def record_build_seconds(seconds: float) -> None:
+    """Keeps a moving average of build time, written only by the builder process."""
+    average = await get_build_seconds()
+    await redis.set(BUILD_SECONDS_KEY, seconds if average is None else average * 0.8 + seconds * 0.2)
 
 
 async def queued_start_count() -> int:

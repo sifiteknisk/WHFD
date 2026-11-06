@@ -1,10 +1,18 @@
 import asyncio
+import time
 from contextlib import suppress
 
 import orjson
 from redis.exceptions import RedisError
 
-from instancer.core.cache import finish_start, get_start_job, instance_lock, next_start, requeue_unfinished_starts
+from instancer.core.cache import (
+    finish_start,
+    get_start_job,
+    instance_lock,
+    next_start,
+    record_build_seconds,
+    requeue_unfinished_starts,
+)
 from instancer.core.config import config
 from instancer.core.instances import build_instance, memory_low
 from instancer.protocol import types as protocol
@@ -31,7 +39,9 @@ async def _build(key: str) -> None:
             if not acquired:
                 logger.warning(f'Dropped start, instance is locked {challenge=} {team_id=}')
                 return
+            started = time.monotonic()
             await build_instance(protocol.RCTFCreateInstanceForm.model_validate_json(job, by_name=True))
+            await record_build_seconds(time.monotonic() - started)
             logger.info(f'Built instance {challenge=} {team_id=}')
         except Exception as err:  # noqa: BLE001 -- one failed build must not stop the builder
             logger.opt(exception=err).error(f'Failed to build instance {challenge=} {team_id=}')

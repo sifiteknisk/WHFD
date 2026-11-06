@@ -14,9 +14,10 @@ from fastapi import HTTPException
 from instancer.core.cache import (
     cancel_start,
     delete_instance_expiration,
+    get_build_seconds,
+    get_start_state,
     instance_lock,
     is_instance_ready,
-    is_start_queued,
     mark_instance_ready,
     queue_start,
     queued_start_count,
@@ -51,6 +52,9 @@ START_FULL_ERROR = HTTPException(
 
 _image_locks: defaultdict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
 
+# Queue estimates use this until the builder has timed a real build.
+ASSUMED_BUILD_SECONDS = 5.0
+
 
 def _memory_available_mb() -> int:
     lines = Path('/proc/meminfo').read_text().splitlines()
@@ -63,6 +67,20 @@ def memory_low() -> bool:
 
 def _details(status: protocol.InstanceStatus) -> protocol.RCTFInstanceDetails:
     return protocol.RCTFInstanceDetails(status=status, time_left_milliseconds=None, endpoints=None)
+
+
+async def _queued_details(challenge: str, team_id: str) -> protocol.RCTFInstanceDetails | None:
+    queued, position = await get_start_state(challenge, team_id)
+    if not queued:
+        return None
+
+    details = _details(protocol.InstanceStatus.STARTING)
+    if position is not None:
+        build_seconds = await get_build_seconds() or ASSUMED_BUILD_SECONDS
+        rounds = (position - 1) / config.MAX_CONCURRENT_STARTS + 1
+        details.queue_position = position
+        details.queue_eta_milliseconds = int(rounds * build_seconds * 1000)
+    return details
 
 
 @cache
@@ -120,8 +138,8 @@ async def _show_containers(containers: list[DockerContainer]) -> list[dict]:
 
 
 async def start_instance(form: protocol.RCTFCreateInstanceForm) -> protocol.RCTFInstanceDetails:
-    if await is_start_queued(form.challenge_integration_id, form.team_id):
-        return _details(protocol.InstanceStatus.STARTING)
+    if queued := await _queued_details(form.challenge_integration_id, form.team_id):
+        return queued
 
     if memory_low():
         logger.warning('Instance start rejected: host memory low')
@@ -131,7 +149,8 @@ async def start_instance(form: protocol.RCTFCreateInstanceForm) -> protocol.RCTF
         raise START_FULL_ERROR
 
     await queue_start(form.challenge_integration_id, form.team_id, form.model_dump_json(), timestamp_milliseconds())
-    return _details(protocol.InstanceStatus.STARTING)
+    queued = await _queued_details(form.challenge_integration_id, form.team_id)
+    return queued or _details(protocol.InstanceStatus.STARTING)
 
 
 async def build_instance(form: protocol.RCTFCreateInstanceForm) -> None:
@@ -344,8 +363,8 @@ async def get_instance(challenge_name: str, team_id: str) -> protocol.RCTFInstan
     if details:
         expires_at = await get_effective_expiration(details[0]['Config']['Labels'])
         status = await _get_instance_status(details, endpoints, expires_at)
-    elif await is_start_queued(challenge_name, team_id):
-        return _details(protocol.InstanceStatus.STARTING)
+    elif queued := await _queued_details(challenge_name, team_id):
+        return queued
 
     return protocol.RCTFInstanceDetails(
         status=status,

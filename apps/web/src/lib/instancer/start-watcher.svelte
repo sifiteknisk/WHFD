@@ -10,6 +10,7 @@
   } from './start-feedback.svelte'
   import {
     clearPendingStarts,
+    markQueued,
     markStarting,
     pendingStarts,
     restorePendingStarts,
@@ -18,6 +19,7 @@
   } from './pending-starts.svelte'
   import {
     PENDING_START_TIMEOUT_MS,
+    pendingSince,
     resolvePendingStart,
   } from './pending-start-rules'
   import type { InstanceStatus } from '@rctf/types'
@@ -46,6 +48,7 @@
 
   async function check(entry: PendingStart): Promise<void> {
     let status
+    let queued = false
     try {
       // NOTE: Shares the challenge panel's cache, so the panel updates too and
       // a fresh result from the panel's own polling is reused.
@@ -56,20 +59,25 @@
         networkMode: 'always',
       })
       status = data.status
+      queued = data.queuePosition != null
     } catch {
       status = undefined
     }
 
-    finishCheck(entry, status)
+    finishCheck(entry, status, queued)
   }
 
-  function finishCheck(entry: PendingStart, status?: InstanceStatus): void {
+  function finishCheck(
+    entry: PendingStart,
+    status?: InstanceStatus,
+    queued = false
+  ): void {
     // The team may have stopped or restarted it while this check was running.
     if (pendingStarts.get(entry.challengeId) !== entry) return
     if (entry.userId !== userQuery.data?.id) return
 
     const { challengeId, challengeName } = entry
-    switch (resolvePendingStart(entry, status, Date.now())) {
+    switch (resolvePendingStart(entry, status, Date.now(), queued)) {
       case 'ready':
         untrackStart(challengeId)
         reportStartReady(challengeId, challengeName)
@@ -101,6 +109,9 @@
           'Instance still not ready'
         )
         break
+      case 'queued':
+        markQueued(entry.challengeId)
+        break
       case 'starting':
         markStarting(entry.challengeId)
         break
@@ -117,7 +128,7 @@
     const tick = () => {
       for (const entry of pendingStarts.values()) {
         if (entry.userId !== owner) continue
-        if (Date.now() - entry.startedAt >= PENDING_START_TIMEOUT_MS) {
+        if (Date.now() - pendingSince(entry) >= PENDING_START_TIMEOUT_MS) {
           finishCheck(entry)
         } else if (!inFlight.has(entry)) {
           inFlight.add(entry)
